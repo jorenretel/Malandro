@@ -148,9 +148,7 @@ cdef class autoAssign :
     self.DataModel.setupChain()
 
     self.createSpinSytemsAndResonances()
-    
-    #cProfile.runctx( 'self.simulateSpectraNew()', globals(), locals(), filename="/home/joren/combine54_test6.profile" )
-      
+        
     self.updateInfoText('Simulating spectra...')
     
     self.simulateSpectra()
@@ -177,8 +175,8 @@ cdef class autoAssign :
     self.updateInfoText('Setting up the model...')
 
     self.DataModel = myDataModel()
+    
     self.DataModel.passData(self)
-    #self.DataModel.setupChain()
     
     self.updateInfoText('Setup-up all spectra...')
     
@@ -188,8 +186,6 @@ cdef class autoAssign :
   cdef void doRandomAssignment(self):
     
     self.updateInfoText('Making a random assignment...')
-
-    #Function mergeDictionariesContainingLists = self.mergeDictionariesContainingLists
     
     cdef myDataModel DataModel
     
@@ -298,17 +294,8 @@ cdef class autoAssign :
         for spinSystem in listWithSpinSystems :
           
           if spinSystem.ccpnSeqCode == seqCode :
-            
-            #if spinSystem.currentResidueAssignment :                          This IF statement used to be just there for debugging purposes            
-              #print '1 ppppppppppppppppppp'
-              #print spinSystem.currentResidueAssignment  
-              #print seqCode
-            
+             
             spinSystem.currentResidueAssignment = res
-            
-            #spinSystem.currentResidueImin1 = resimin1
-  
-            #spinSystem.currentResidueIplus1 = resiplus1
             
             res.currentSpinSystemAssigned = spinSystem
             
@@ -335,12 +322,6 @@ cdef class autoAssign :
             
             
           randomSpinSystem =  sample(listWithFittingSpinSystems)                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))]                   # get a random element out of the list
-            
-          #if randomSpinSystem.currentResidueAssignment :
-          
-            #print '2 ppppppppppppppppppp'
-            #print randomSpinSystem.currentResidueAssignment
-            #print seqCode  
             
           randomSpinSystem.currentResidueAssignment = res
           
@@ -369,14 +350,7 @@ cdef class autoAssign :
           
                       
           randomSpinSystem = sample( listWithFittingSpinSystems)                                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))] 
-            
-            
-          #if randomSpinSystem.currentResidueAssignment :
-          
-            #print '3 ppppppppppppppppppp'
-            #print randomSpinSystem.currentResidueAssignment  
-            #print seqCode
-            
+             
           randomSpinSystem.currentResidueAssignment = res
           
           res.currentSpinSystemAssigned = randomSpinSystem 
@@ -398,28 +372,17 @@ cdef class autoAssign :
     
 
     useAssignments = self.useAssignments
-    useTentative = self.useTentative
-    
-    #calcDeltaPeakScore = CcalcDeltaPeakScore
-    
+    useTentative = self.useTentative    
 
-    
     amountOfStepsPerTemperature = self.amountOfSteps
-    
-    #clock = time.clock
-    
-    DataModel = self.DataModel
-    
-    #dummyLink = spinSystemLink()
         
+    DataModel = self.DataModel
+            
     exp = math.exp
     cutoff = random.random
     sample = random.choice
     randint = random.randint
-    
-    
-    #AcceptanceConstantList = [0, 0.1, 0.2,0.4, 0.8,1.0, 1.1, 1.2, 1.4, 1.6,2.0, 2.4,2.8, 3.2,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0]
-    
+        
     AcceptanceConstantList = self.acceptanceConstantList
     
     justTypedSpinSystems =DataModel.justTypedSpinSystems
@@ -427,8 +390,6 @@ cdef class autoAssign :
     tentativeSpinSystems = DataModel.tentativeSpinSystems
     allSpinSystemsWithoutAssigned = DataModel.allSpinSystemsWithoutAssigned
 
-    
-    
     
     if useAssignments :                                                 # If the already made assignments are used, the dictionary will just include unassigned spinsystems and Joker spinsystems
       dict = allSpinSystemsWithoutAssigned
@@ -443,16 +404,7 @@ cdef class autoAssign :
       
     listWithSpinSystems = list(set(listWithSpinSystems))
       
-      
-      
-      
-      
-      
-      
-      
-    score = 0  
- 
-    #self.updateInfoText('Start the annealing process...'
+    score = 0
     
     for x,AcceptanceConstant in enumerate(AcceptanceConstantList) :
       
@@ -494,19 +446,6 @@ cdef class autoAssign :
       
       self.runAnnealling()
       
-      #self.addEnergyPoint(self.score,x)
-      
-
-      
-      #runAnnealling = self.runAnnealling
-      #cProfile.runctx('self.runAnnealling()',globals(),locals())
-      
-      #cProfile.runctx( 'self.runAnnealling()', globals(), locals(), filename="/home/joren/combine54_test6.profile" )
-
-
-
-      
-      
       i = 1
       matches = 0
 
@@ -517,21 +456,13 @@ cdef class autoAssign :
         res.currentSpinSystemAssigned.solutions.append(res)
         
         
-  
-        #print '----'
-        #print i
-        #print res.currentSpinSystemAssigned.spinSystemNumber
-        
-        
         if res.ccpnResidue.findFirstResonanceGroup() :
-          #print res.ccpnResidue.findFirstResonanceGroup().serial
+
           if res.currentSpinSystemAssigned.spinSystemNumber == res.ccpnResidue.findFirstResonanceGroup().serial :
-            #print 'match'''
+
             matches = matches + 1
         i = i + 1
-      #print '-------------------'
-      #print 'total amount of matches:'  
-      #print matches
+
     self.convertToPythonStyleDataModel()
     
     self.updateInfoText('Done')
@@ -582,10 +513,6 @@ cdef class autoAssign :
       for spinSys in spinSystemList :
 
         spinSys.currentResidueAssignment = None
-          
-        #spinSys.currentResidueImin1 = None
-        
-        #spinSys.currentResidueIplus1 = None
         
         
     for key,  spinSystemList in tentativeSpinSystems.items() :                                 # also de-assigning residues from tentative assigned spinsystems
@@ -594,11 +521,6 @@ cdef class autoAssign :
 
         spinSys.currentResidueAssignment = None
           
-        #spinSys.currentResidueImin1 = None
-        
-        #spinSys.currentResidueIplus1 = None
-        
-        
         
     for res in residues :                                                                       # de-assigning spinsystems from residues
       
@@ -686,9 +608,7 @@ cdef class autoAssign :
     keys = []
     
     dicts = []
-    
-    #makePrivateCopyOfDictContainingLists = self.makePrivateCopyOfDictContainingLists
-    
+      
     for dictio in dictionaries :
       
       dicts.append(self.makePrivateCopyOfDictContainingLists(dictio))
@@ -717,6 +637,13 @@ cdef class autoAssign :
           
   cdef void createJokerSpinSystems(self):
     
+    '''
+    When there are less spin systems that are typed to a
+    certain amino acid type than there are residues of that
+    type in the sequence, some Jokers have to be introduced. 
+    
+    '''
+    
     cdef myDataModel DataModel
     
     cdef str key
@@ -737,12 +664,7 @@ cdef class autoAssign :
     
     cdef mySpinSystem newSpinSystem
     
-
-    
-    
-    DataModel = self.DataModel
-    #scoreMatrix = DataModel.scoreMatrix
-    
+    DataModel = self.DataModel    
     
     
     i = 1
@@ -792,8 +714,7 @@ cdef class autoAssign :
       if short < 0 :
         
         string = 'You seem to have more ' + key + ' spin systems than residues of this type are in the sequence'
-        #print string
-        #print str(amountOfAssignedSpinsystems + amountOfTypedSpinSystems + amountOfTentativeSpinSystemsWithOnlyOneCcpCode)
+
         short = 0
       
       for x in range(short) :
@@ -848,7 +769,6 @@ cdef class autoAssign :
         
     
     string = str(i-1) + ' joker spinsystems are used in this calculation.'    
-    #print string
 
   cdef void simulateSpectra(self) :
     
@@ -989,10 +909,6 @@ cdef class autoAssign :
       scheme = spectrum.labellingScheme
       
       simulatedPeakMatrix = spectrum.simulatedPeakMatrix
-      
-      
-      
-      
     
       refExperiment = ccpnSpectrum.experiment.refExperiment
       
@@ -1005,6 +921,7 @@ cdef class autoAssign :
       recordedExpMeasuments = {}
       
       expTransfers = expGraph.sortedExpTransfers()
+      
       
       # Looking which expMeasurements where actually done
       
@@ -1021,7 +938,7 @@ cdef class autoAssign :
       
       # Making a list of atomSites that are visited during the experiment and another list of the same length that marks whether they were recorded and if so, to which dimension
       
-      for expStep in  expGraph.sortedExpSteps() :                                                   # TODO: This is not good with in and out experiments, rather take atomSites from ExpTransfers
+      for expStep in expGraph.sortedExpSteps() :                                                   # TODO: This is not good with in and out experiments, rather take atomSites from ExpTransfers
         
         atomSitePathWay.append(expStep.expMeasurement.findFirstAtomSite())
         
@@ -1047,23 +964,11 @@ cdef class autoAssign :
           
       resPathWays =  resPathWaysTemp   
           
-          
-      
-      #posResPathWays = resPathWays[:]
-      
-      #print '1'
       for i, resA in enumerate(residues[:-1]) :
     
-            
-        
         peaks = []
-        
-        
-        #print i
           
         resB = residues[i+1]
-        
-        #atomPathWays = []
         
         atomPathWayResA = []
         atomPathWayResB = []
@@ -1071,9 +976,7 @@ cdef class autoAssign :
         possibleAtomPathWays = []
         
         # Transforming atomSides into atoms for both residues in the sequential pair of resA and resB, thereby filling the lists atomPathWayResA and atomPathWayResB
-        
-        #print '2'
-        
+     
         for atomPathWayResX,  res in zip([atomPathWayResA, atomPathWayResB], [resA, resB]) :
         
           for atomSite in atomSitePathWay :
@@ -1109,11 +1012,7 @@ cdef class autoAssign :
           atomPathWays = [[]]
           
           atomGroupPathWays = []
-          
-          #print '3'
-          #print atomPathWayResA
-          #print atomPathWayResB
-          #print resPathWay
+
           #Lining up the different atoms that can be visited in a nested list
           for ii,  resID in enumerate(resPathWay) :               # looping through sequence of 1s and 2s
           
@@ -1125,7 +1024,7 @@ cdef class autoAssign :
               
               atomGroupPathWays.append(atomPathWayResB[ii])
           
-          #print '4'
+
           #Making all possible routes between different atoms that could be there (when not considering the type of transfers yet).    
           for atomGroup in atomGroupPathWays :
         
@@ -1139,17 +1038,15 @@ cdef class autoAssign :
                 
             atomPathWays = tempList
             
-          #print '5'  
-          # Now we're going to check which of these pathways can actually really happen when we take the type of transfer (for instance 'one bond' into account.  
+
+          # Now we're going to check which of these pathways can actually really happen when we take the type of transfer (for instance 'one bond') into account.  
           for atomPathWay in atomPathWays :
             
             isPossible = True
-            
-            #print '6'
+
             # Therefore we'll look whether every transfer is possible
             for ii, transfer in enumerate(expTransfers):
               
-              #print '7'
               atomA = atomPathWay[ii]
               atomB = atomPathWay[ii+1]
               
@@ -1157,49 +1054,32 @@ cdef class autoAssign :
               resIDB = resPathWay[ii+1]
               
               
-              
-              #atomNameA = atomA.name
-              #atomNameB = atomB.name
-              
               if (transfer.transferType == 'onebond' or transfer.transferType == 'Jcoupling')  :
                 
+                
+                # Over the amide bond
                 if (atomA.atomName == 'N' and atomB.atomName == 'C' and resIDA == 2 and resIDB == 1) or (atomA.atomName == 'C' and atomB.atomName == 'N' and resIDA == 1 and resIDB == 2) :
               
                   pass
                   
-                 # print 'pos1'
-              
+                # Within the same residue and directly bonded
                 elif resIDA == resIDB and atomA.ccpnAtom.chemAtom.getChemBonds().intersection(atomB.ccpnAtom.chemAtom.getChemBonds()):
                   
                   pass
                   
-                  #print 'pos2'
-                  
+                # In all other cases the transfer pathway is not possible  
                 else :
-                
-                  #print 'neg'  
                   
                   isPossible = False
                   
                   break
                   
-                #print 'thouggh bond'
-                  
-                #print ii
-                #print atomA.residue.seqCode
-                #print atomA.atomName
-                #print atomB.residue.seqCode
-                #print atomB.atomName
+
 
             if isPossible :
            
-              #print 'possible'
-              
-              #atomNames = [a.name for a in atomPathWay]
-              
               possibleAtomPathWays.append(atomPathWay)
-           
-              #colabelling = self.getCoLabellingFractionNew(spectrum,[atomA, atomB])   
+              
               
               
         importantAtoms = set()
@@ -1231,15 +1111,8 @@ cdef class autoAssign :
               isotopomers = rlf.isotopomers
               
               for isotopomer in isotopomers :
-#                print '----'
-#                print subType
-#                print atomName
-#                print isotopomer.atomLabels
-#                print '***'
                 
                 atomLabels = isotopomer.findAllAtomLabels(name=atomName, subType=subType)
-#                print 'atomLabels'
-#                print atomLabels
                 
                 atom.labelInfoTemp[isotopomer] = atomLabels
                 
@@ -1248,11 +1121,7 @@ cdef class autoAssign :
         for atomPathWay in possibleAtomPathWays :
           
           colabelling = self.getCoLabellingFractionNew(spectrum,atomPathWay)   
-          #print '***-**'
-          #print colabelling
-          
-          
-          
+
 
           if colabelling > minIsoFrac :
               
@@ -1284,7 +1153,6 @@ cdef class autoAssign :
             
             peaks.append(newPeak)
             
-        #print peaks    
         simulatedPeakMatrix.append(peaks)    
 
      
@@ -1305,11 +1173,8 @@ cdef class autoAssign :
     cdef list oneList
     cdef int i
     
-    
-    
     lists = [[]]
 
-    
     for i in range(length):
       
       newLists = []
@@ -1707,9 +1572,6 @@ cdef class autoAssign :
     
     cdef int hc
     
-    
-    
-    
     hc = self.hc
     
       
@@ -2065,13 +1927,9 @@ cdef class autoAssign :
     
     
     dimAtomsDict = {}
-    
-    #print 'here'
-    #print spectrum
-    #print spectrum.peaks
+
     
     if spectrum.peaks:
-      #print 'yes'
       
       firstPeak = spectrum.peaks[0]
       
@@ -2120,9 +1978,6 @@ cdef class autoAssign :
           dimAtomsDict[dim.dimNumber] = 0
         
           print 'Isotope not implemented yet'  
-          
-          
-      #print dimAtomsDict
     
     
     
@@ -2187,10 +2042,6 @@ cdef class autoAssign :
               possible = True
               
             if possible :
-              
-              #print 'possible'
-              #print ppmValue
-              #print resonance.atomName
                               
               dim.possibleContributions.append(resonance)
               
@@ -2355,12 +2206,6 @@ cdef class autoAssign :
               
       spinSys.exchangeSpinSystems = list(set(spinSys.exchangeSpinSystems))          
       
-
-
-
-     # if useAssignments and spinSys.ccpnSeqCode :
-          
-     #   spinSys.allowedResidues = set([spinSys.ccpnSeqCode])   
           
       if useTentative and spinSys.tentativeSeqCodes :
           
@@ -2398,16 +2243,7 @@ cdef class autoAssign :
         
         
           
-          
-    #for key in allSpinSystems :
-      
-    #  listWithSpinSystems = listWithSpinSystems + (dictio[key])
-      
-    #listWithSpinSystems = list(set(listWithSpinSystems))
-    
-   # for spinSys in listWithSpinSystems :
-      
-   #   spinSys.allowedResidues = set(spinSys.allowedResidues)
+
       
 
 
@@ -3127,8 +2963,6 @@ cdef class autoAssign :
 
   cdef dict getIsotopomerSingleAtomFractionsForChemAtom(self,  set isotopomers, anAtom atom) :
     
-   # print 'bla'
-    
     cdef dict fractionDict
     cdef double isoWeightSum
     
@@ -3155,26 +2989,19 @@ cdef class autoAssign :
 
     for isotopomer in isotopomers :
       
-    #  print 'h'
-      
       atomLabels = atom.labelInfoTemp[isotopomer]
-      
-      #allAtomLabels = isotopomer.atomLabels
-      
-
-          
+  
       atWeightSum = sum([x.weight for x in atomLabels])
       atFactor    = isotopomer.weight  / isoWeightSum
       
       for atomLabel in atomLabels:
         
         isotopeCode = atomLabel.isotopeCode
-        #print isotopeCode
+
         contrib     = atFactor * atomLabel.weight / atWeightSum
-        #print contrib
+
         fractionDict[isotopeCode] = fractionDict.get(isotopeCode,0.0) + contrib
-          
-   # print fractionDict      
+  
     return fractionDict
       
 
@@ -4303,10 +4130,6 @@ cdef class autoAssign :
     DataModel = self.DataModel
    
     chain = DataModel.myChain
-    
-    #pyDataModel = pyDataModel()
-    
-    #pyDataModel.pyChain = pyChain()
   
     for res in chain.residues :
       
@@ -4475,13 +4298,7 @@ cdef class myDataModel :
   
   cdef list NXresonances
     
-  #cdef dict scoreMatrix
-    
   cdef dict residueTypeFrequencyDict 
-    
-  #cdef dict linkMatrix
-    
-  #cdef dict invertedLinkMatrix 
 
   cdef autoAssign auto
   
@@ -4512,11 +4329,6 @@ cdef class myDataModel :
     self.allSpinSystemsWithoutAssigned = {}
     
     self.jokerSpinSystems = {}
-    
-    
-    
-    
-    
         
     self.Nresonances = []
     
@@ -4534,27 +4346,8 @@ cdef class myDataModel :
     
     self.Hresonances = []
     
-    #self.scoreMatrix = {}
-    
     self.residueTypeFrequencyDict = {}
-    
-    #self.linkMatrix = {}
-    
-    #self.invertedLinkMatrix = {}
-    
-    
-    
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'popup' in state :
-      #print 'been here'
-      del state['popup']
-    return state
-    
-    
 
-        
-      
         
 
     
@@ -4740,7 +4533,7 @@ cdef class myChain :
         
         self.residuesByCcpCode[res.ccpCode] = [newresidue]
         
-    #print self.residues    
+
     
     
 
@@ -4890,14 +4683,7 @@ cdef class anAtom :
     
     self.labelInfoTemp = {}
     
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'ccpnAtom' in state :
-      del state['ccpnAtom']
-    if 'popup' in state :
-      del state['popup']
-    return state
-    
+
   def passData(self,autoAssign auto, myDataModel):
 
     self.auto = auto
@@ -5100,14 +4886,7 @@ cdef class aPeak :
     
     self.intraResidual = False
     
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'ccpnPeak' in state :
-      del state['ccpnPeak']
-    if 'popup' in state :
-      del state['popup']
-    return state
-  
+
     
   def passData(self,myDataModel):
 
@@ -5467,25 +5246,7 @@ cdef class mySpinSystem :
     
     self.allowedResidues = set()                                      # This is later on going to be a Frozen Set for fast membership testing during the annealing run. If the set is empty that means everything residue is allowed, if has members, only these residues are allowed.
     
-    #self.currentScore = 0
-    
-  def __getstate__(self):
-    state = self.__dict__.copy()
-    if 'ccpnResonanceGroup' in state :
-      del state['ccpnResonanceGroup']
-    if 'currentResidueAssignment' in state :
-      del state['currentResidueAssignment']
-    if 'currentResidueImin1' in state :
-      del state['currentResidueImin1']
-    if 'currentResidueIplus1' in state :
-      del state['currentResidueIplus1']
-    return state
-      
-#  def __setstate__(self, d):
- #   self.__dict__.update(d)
-
-    
-    
+ 
     
   cdef void createPythonStyleObject(self) :
     
@@ -5510,8 +5271,7 @@ cdef class mySpinSystem :
     self.pySpinSystem.tentativeSeqCodes = self.tentativeSeqCodes
     
     self.pySpinSystem.allowedResidues = self.allowedResidues
-    
-    #self.pySpinSystem.solutions = self.solutions                                                               #!!!
+
     
     
     for res in self.solutions :
@@ -5557,18 +5317,7 @@ cdef class myResonance :
     
     self.ccpnResonance = None
     
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'ccpnResonance' in state :
-      del state['ccpnResonance']
-    if 'peakDimsLib' in state :
-      del state['peakDimsLib']
-    if 'peakDimsLibUnlabelled' in state :
-      del state ['peakDimsLibUnlabelled']
-    if 'mySpinSystem' in state :
-      del state['mySpinSystem']
-      
-    return state
+
 
 
 
