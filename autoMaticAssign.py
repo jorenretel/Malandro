@@ -2178,33 +2178,6 @@ class ViewAssignmentPopup(BasePopup):
   def noAction(self):
       
     pass
-
-  def changeAutoIntra(self,  x):                                                    # Throw this out
-    
-    if self.selectedAutoSpec.intraresidualPeaksInThisSpectrum == False :
-      self.selectedAutoSpec.changeIntra(True)
-    elif self.selectedAutoSpec.intraresidualPeaksInThisSpectrum == True :
-      self.selectedAutoSpec.changeIntra(False)
-      
-    self.updateAutoMatrix()
-       
-  def changeAutoSequential(self, x):                                            # Throw this out
-
-    if self.selectedAutoSpec.sequentialPeaksInThisSpectrum  == False :
-      self.selectedAutoSpec.changeSequential(True)
-    elif self.selectedAutoSpec.sequentialPeaksInThisSpectrum  == True :
-      self.selectedAutoSpec.changeSequential(False)
-      
-    self.updateAutoMatrix()
-       
-  def changeAutoLongRange(self,  x):                                            # Throw this out
-    
-    if self.selectedAutoSpec.longRangePeaksInThisSpectrum == False :
-      self.selectedAutoSpec.changeLongRange(True)
-    elif self.selectedAutoSpec.longRangePeaksInThisSpectrum == True :
-      self.selectedAutoSpec.changeLongRange(False)
-      
-    self.updateAutoMatrix()
       
   def changeUse(self,  x):
     
