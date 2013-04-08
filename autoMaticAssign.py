@@ -324,6 +324,93 @@ class connector(object):
     print string
     
     self.GUI.updateInfoText(string)
+    
+  def saveDataToPyc(self, fileName):
+    
+    if self.results :
+
+      #fileName = self.fileselectionBox.getFile()
+      
+      if not fileName[-4:] == '.pyc' :
+        
+        fileName = fileName + '.pyc'
+      
+      if os.path.exists(fileName) and not showYesNo('File exists', 'File "%s" exists, overwrite?' % fileName, parent=self.GUI) :
+          
+          return
+        
+      writeFile = open(fileName,  'wb')
+      
+      cPickle.dump(self.results,  writeFile)
+      
+      writeFile.close()
+     
+       
+    
+    else :
+      
+      string = 'There are no results to save at the moment.'
+    
+      showWarning('No results to save', string,  parent=self.GUI)
+      
+  def loadDataFromPyc(self, fileName):
+    
+    results = None
+    
+    fileExists = False
+    
+    print fileName
+    print type(fileName)
+        
+    if os.path.exists(fileName) :
+      
+      fileExists = True
+      
+    elif  os.path.exists(fileName + '.pyc') :
+      
+      fileName = fileName + '.pyc'
+      
+      fileExists = True
+    
+    if fileExists :
+      
+      try :
+   
+        readFile =open(fileName,  'rb') 
+    
+        results = cPickle.load(readFile)
+        
+        readFile.close()
+    
+      except :
+        
+        string = 'Probably the file you try to open is not of the correct type.'
+      
+        showWarning('Can not open file', string,  parent=self)
+        
+      if results :
+       
+        if str(type(results)) == "<class 'pythonStyleClasses.pyDataModel'>" :
+      
+          self.results = results
+          self.GUI.updateresultsTab()
+          self.GUI.sortDisplayResultsTable()
+          
+        else :
+          
+          string = 'You are trying to open a file that was not created using this macro.'
+      
+          showWarning('Can not open file', string,  parent=self.GUI)
+        
+            
+      
+        
+      
+    else :
+      
+      string = 'The file you selected does not exist.'
+      
+      showWarning('No Such File', string,  parent=self.GUI)
 
 
 class spectrumSettings(object):
@@ -781,7 +868,7 @@ class ViewAssignmentPopup(BasePopup):
 
     editGetCallbacks = [self.selectSpinSystemE, self.selectSpinSystemE, self.selectSpinSystemE]
 
-    editSetCallbacks = [None, None, None] #self.setAutoLabellingScheme]
+    editSetCallbacks = [None, None, None]
 
     self.displayResultsTable5 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
                                        editWidgets=editWidgets, multiSelect=False,
@@ -926,96 +1013,16 @@ class ViewAssignmentPopup(BasePopup):
     if self.connector.results :
       
       self.updateresultsTab()
-      
-  def saveDataToPyc(self):
-    
-    if self.connector.results :
-
-      fileName = self.fileselectionBox.getFile()
-      
-      if not fileName[-4:] == '.pyc' :
-        
-        fileName = fileName + '.pyc'
-      
-      if os.path.exists(fileName) and not showYesNo('File exists', 'File "%s" exists, overwrite?' % fileName, parent=self) :
-          
-          return
-        
-      writeFile = open(fileName,  'wb')
-      
-      cPickle.dump(self.connector.results,  writeFile)
-      
-      writeFile.close()
-     
-       
-    
-    else :
-      
-      string = 'There are no results to save at the moment.'
-    
-      showWarning('No results to save', string,  parent=self)
-      
-  def loadDataFromPyc(self):
-    
-    results = None
-    
-    fileExists = False
+  
+  def saveDataToPyc(self) :
     
     fileName = self.fileselectionBox.getFile()
-    print fileName
-    print type(fileName)
-        
-    if os.path.exists(fileName) :
-      
-      fileExists = True
-      
-    elif  os.path.exists(fileName + '.pyc') :
-      
-      fileName = fileName + '.pyc'
-      
-      fileExists = True
+    self.connector.saveDataToPyc(fileName)
     
-    if fileExists :
-      
-      try :
-   
-        readFile =open(fileName,  'rb') 
+  def loadDataFromPyc(self) :
     
-        results = cPickle.load(readFile)
-        
-        readFile.close()
-    
-        
-        
-      except :
-        
-        string = 'Probably the file you try to open is not of the correct type.'
-      
-        showWarning('Can not open file', string,  parent=self)
-        
-      if results :
-       
-        if str(type(results)) == "<class 'pythonStyleClasses.pyDataModel'>" :
-      
-          self.connector.results = results
-          self.updateresultsTab()
-          self.sortDisplayResultsTable()
-          
-        else :
-          
-          string = 'You are trying to open a file that was not created using this macro.'
-      
-          showWarning('Can not open file', string,  parent=self)
-        
-            
-      
-        
-      
-    else :
-      
-      string = 'The file you selected does not exist.'
-      
-      showWarning('No Such File', string,  parent=self)
+    fileName = self.fileselectionBox.getFile()
+    self.connector.loadDataFromPyc(fileName)
     
   def clickLinkA1(self):
     
