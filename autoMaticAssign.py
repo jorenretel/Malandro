@@ -2306,55 +2306,7 @@ class ViewAssignmentPopup(BasePopup):
     else :
       self.amountOfRepeats = value
       self.repeatEntry.set(value)
-      
-  def updateNANToleranceInSpectrumEntry(self,  event =None):            # Bullshit
-    
-    value = self.NANToleranceInSpectrumEntry.get()
-    if value == self.NANToleranceInSpectrum:
-      return 
-    if value < 0:
-      self.NANToleranceInSpectrumEntry.set(0)
-      self.NANToleranceInSpectrum = 0
-    else :
-      self.NANToleranceInSpectrum = value
-      self.NANToleranceInSpectrumEntry.set(value)
-      
-  def updateNANToleranceBetweenSpectraEntry(self,  event =None):        # Bullshit
-      
-    value = self.NANToleranceBetweenSpectraEntry.get()
-    if value == self.NANToleranceBetweenSpectra:
-      return 
-    if value < 0:
-      self.NANToleranceBetweenSpectraEntry.set(0)
-      self.NANToleranceBetweenSpectra = 0
-    else :
-      self.NANToleranceBetweenSpectra = value
-      self.NANToleranceBetweenSpectraEntry.set(value)
-      
-  def updateNACToleranceInSpectrumEntry(self,  event =None):            # Bullshit
-    
-    value = self.NACToleranceInSpectrumEntry.get()
-    if value == self.NACToleranceInSpectrum:
-      return 
-    if value < 0:
-      self.NACToleranceInSpectrumEntry.set(0)
-      self.NACToleranceInSpectrum = 0
-    else :
-      self.NACToleranceInSpectrum = value
-      self.NACToleranceInSpectrumEntry.set(value)
-      
-  def updateNACToleranceBetweenSpectraEntry(self,  event =None):        # Bullshit
-      
-    value = self.NACToleranceBetweenSpectraEntry.get()
-    if value == self.NACToleranceBetweenSpectra:
-      return 
-    if value < 0:
-      self.NACToleranceBetweenSpectraEntry.set(0)
-      self.NACToleranceBetweenSpectra = 0
-    else :
-      self.NACToleranceBetweenSpectra = value
-      self.NACToleranceBetweenSpectraEntry.set(value)
-      
+       
   def updateInfoText(self,string):
     
     self.infoLabel.set(string)
