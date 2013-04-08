@@ -486,26 +486,26 @@ class ViewAssignmentPopup(BasePopup):
 
     self.chain         = None
     self.spectra       = []
-    self.canvasDict    = {}
-    self.guiNameDict   = {}
-    self.atomNamesDict = {}
+    #self.canvasDict    = {}
+    #self.guiNameDict   = {}
+    #self.atomNamesDict = {}
 
-    self.atomNamesList = []
-    self.residuesDict  = {}
-    self.bindDict = {}
-    self.residueColorMode = 'None'
-    self.maxConnectionDist = 4
-    self.minConnectionDist = 0
-    self.atomSelectionColumns = 10
-    self.specSelectionColumns = 5
+    #self.atomNamesList = []
+    #self.residuesDict  = {}
+    #self.bindDict = {}
+    #self.residueColorMode = 'None'
+    #self.maxConnectionDist = 4
+    #self.minConnectionDist = 0
+    #self.atomSelectionColumns = 10
+    #self.specSelectionColumns = 5
     self.selectedPeak = None
     self.amountOfRepeats = 10
     self.amountOfSteps = 10000
     self.acceptanceConstantList = [0, 0.1, 0.2,0.4, 0.8,1.0, 1.1, 1.2, 1.4, 1.6,2.0, 2.4,2.8, 3.2,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0]
-    self.NANToleranceInSpectrum = 0
-    self.NANToleranceBetweenSpectra = 0
-    self.NACToleranceInSpectrum = 0
-    self.NACToleranceBetweenSpectra = 0
+    #self.NANToleranceInSpectrum = 0
+    #self.NANToleranceBetweenSpectra = 0
+    #self.NACToleranceInSpectrum = 0
+    #self.NACToleranceBetweenSpectra = 0
 
     self.updateSpecSelection()
 
@@ -2313,11 +2313,6 @@ class ViewAssignmentPopup(BasePopup):
     
     self.infoLabel.update()
     
-    #self.updateAfter()
-    
-    #self.infoLabel.configure(text=string)
-    
-    
   def addEnergyPoint(self,energy,time) :
     
     point = (time,energy)
@@ -2340,7 +2335,6 @@ class ViewAssignmentPopup(BasePopup):
     colorList = (NdataSets/Ncolors)*colors + colors[:NdataSets%Ncolors]
     
     self.energyPlot.update(dataSets=self.energyDataSets, dataColors=colorList)
-    
     
   def updateAcceptanceConstantList(self,event=None) :
     
