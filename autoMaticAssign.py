@@ -567,17 +567,6 @@ class ViewAssignmentPopup(BasePopup):
     self.displayTable.grid(row=2, column=0, sticky='nsew')
 
 
-    #self.updateLabellingSchemes()
-    
-
-    
-    
-
-
-
-    
-    
-
 
 ############################################################################################
 ############################# Here the Network Anchoring tab ###############################
@@ -1969,28 +1958,6 @@ class ViewAssignmentPopup(BasePopup):
     
     notifyFunc(self.updateChains, 'ccp.molecule.MolSystem.Chain', 'delete')
     notifyFunc(self.updateChains, 'ccp.molecule.MolSystem.Chain', '__init__')
-    notifyFunc(self.updateResidue, 'ccp.molecule.MolSystem.Residue', 'setSeqCode')
-
-    
-    
-    
-  def updateResidue(self, residue):                         # Not used
-  
-    if residue.chain is self.chain:
-      self.updateAfter()
-      
-  def getCcpCodes(self):                                    # Not really used
-  
-    ccpCodeList = []
-    residues = self.chain.residues
-    for residue in residues:
-      ccpCode = getResidueCode(residue)
-      
-      if ccpCode not in ccpCodeList:
-        ccpCodeList.append(ccpCode)
-        
-    ccpCodeList.sort()
-    return ccpCodeList
     
   def changeMolecule(self, chain):
   
@@ -2045,12 +2012,12 @@ class ViewAssignmentPopup(BasePopup):
       self.chain = chain
       self.update()
   
-  def update(self):                                                               # Not used
+  def update(self):
     
     self.toggleTab(self.tabbedFrame.selected) 
     self.waiting = False
       
-  def destroy(self):                                                      # Not used
+  def destroy(self):                                                      
   
     self.administerNotifiers(self.unregisterNotify)
     
