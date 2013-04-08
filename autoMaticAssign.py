@@ -5,7 +5,8 @@ def open_reference(argServer):
      Inputs: ArgumentServer
      Output: None
   """
-  popup = ViewAssignmentPopup(argServer.parent)
+  print 'version...'
+  program = connector(argServer) #ViewAssignmentPopup(argServer.parent)
 
 import Tkinter
 import re
@@ -50,8 +51,6 @@ from memops.gui.MessageReporter import showWarning,  showYesNo
 from memops.gui.ScrolledGraph import ScrolledGraph
 from memops.gui.Entry import Entry
 
-
-
 from ccpnmr.analysis.core.AssignmentBasic import isAtomAssigned, getShiftLists
 from ccpnmr.analysis.core.MoleculeBasic import STANDARD_ISOTOPES, unicodeGreek
 
@@ -62,8 +61,6 @@ from ccpnmr.analysis.core.MoleculeBasic import getResidueCode
 from ccpnmr.analysis.core.Util import stringFromExperimentSpectrum, getSpectrumPosContourColor
 
 from ccp.util.LabeledMolecule import getIsotopomerSingleAtomFractions, getIsotopomerAtomPairFractions,  atomPairFrac,  atomPairFractions
-
-
 
 from memops.gui.ScrolledGraph import ScrolledGraph
 from memops.gui.ScrolledDensityMatrix import ScrolledDensityMatrix
@@ -85,16 +82,9 @@ import helperModuleNew
 
 #reload(helperModuleNew13)
 
-
 from helperModuleNew import autoAssign
 
 from pythonStyleClasses import *
-
-
-
-
-
-
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
 
@@ -104,11 +94,11 @@ AMINO_ACIDS = standardResidueCcpCodes['protein']
 class connector(object):
   '''This is just a little class that contains all settings the user configures in the GUI'''
   
-  def __init__(self, GUI,  auto):
+  def __init__(self, argServer):
     
-    self.GUI = GUI
+    #self.GUI = GUI
     
-    self.auto = auto
+    #self.auto = auto
     
     self.chain = None
     
@@ -137,6 +127,10 @@ class connector(object):
     self.ranPreCalculations = False
     
     self.results = None #self.auto.DataModel.pyDataModel
+    
+    self.GUI = ViewAssignmentPopup(argServer.parent, self)
+    
+    self.auto = autoAssign()
     
     self.addEnergyPoint = self.GUI.addEnergyPoint
         
@@ -350,7 +344,6 @@ class connector(object):
     
     self.GUI.updateInfoText(string)
 
-        
 
 class spectrumSettings(object):
 
@@ -385,7 +378,7 @@ class spectrumSettings(object):
 class ViewAssignmentPopup(BasePopup):
 
 
-  def __init__(self, parent, *args, **kw):
+  def __init__(self, parent, controler, *args, **kw):
     
   
     self.font = 'Helvetica 10'
@@ -395,17 +388,15 @@ class ViewAssignmentPopup(BasePopup):
 
     self.sourceName = 'RefDB'
     
-    self.auto = autoAssign()
-    self.connector = connector(self,  self.auto)
+    #self.auto = autoAssign()
+    #self.connector = connector(self,  self.auto)
+    
+    self.connector = controler
     
     self.selectedLinkA = None
     self.selectedLinkB = None
     
     self.energyDataSets = [[]]
-
-    
-    
-    
     
     self.waiting   = False
     
@@ -421,11 +412,6 @@ class ViewAssignmentPopup(BasePopup):
   def body(self, guiFrame):
 
     self.geometry('1200x400')
-    
-    
-    
-
-
 
     self.minIsoFrac = 0.1
     self.maxNotLabelledFrac = 0.05
@@ -538,32 +524,6 @@ class ViewAssignmentPopup(BasePopup):
     self.molPulldown = PulldownList(autoFrame, callback=self.changeMolecule, grid=(1,0))
     self.updateChains()    
 
-#    headingList = ['#','Spectrum', 'use?','intra-residual?', 'sequential?',
-#                   'long range?', 'labelling scheme']
-#
-#    tipTexts = [ 'Row number','spectrum name',  'use this spectrum?'
-#                 'are there intra-residual crosspeaks picked in this spectrum?',
-#                 'are there sequential crosspeaks picked in this spectrum?',
-#                 'are there sequential crosspeaks picked in this spectrum?',
-#                 'Which labelling scheme belongs to this spectrum?']
-#
-#
-#    self.autoLabellingPulldown = PulldownList(self, self.setAutoLabellingScheme)                                            # Bit strange, why do I actively pass self as a first argument, look at this
-#
-#
-#    editWidgets = [None, None, None, None, None, None, self.autoLabellingPulldown]
-#
-#    editGetCallbacks = [None, None, self.changeUse, self.changeAutoIntra, self.changeAutoSequential, self.changeAutoLongRange,  self.getAutoLabellingSchemes]
-#
-#    editSetCallbacks = [None, None, None, None, None, None,  None] #self.setAutoLabellingScheme]
-#
-#    self.displayTable = ScrolledMatrix(autoFrame,headingList=headingList,
-#                                       callback=self.selectAutoSpec,
-#                                       editWidgets=editWidgets, multiSelect=True,
-#                                       editGetCallbacks=editGetCallbacks,
-#                                       editSetCallbacks=editSetCallbacks,
-#                                       tipTexts=tipTexts)
-#    self.displayTable.grid(row=2, column=0, sticky='nsew')
 
 
 
@@ -609,7 +569,7 @@ class ViewAssignmentPopup(BasePopup):
 
 
 ############################################################################################
-############################# Here the Network Anchoring tab ##########################################
+############################# Here the Network Anchoring tab ###############################
 ############################################################################################
 
 
@@ -716,7 +676,7 @@ class ViewAssignmentPopup(BasePopup):
     
     
 ##############################################################################
-############### The Results Tab#####################################################
+############### The Results Tab###############################################
 ##############################################################################
 
     resultsFrame.expandGrid(5,0)
@@ -2316,7 +2276,7 @@ class ViewAssignmentPopup(BasePopup):
     
     
     
-  def updateResidue(self, residue):
+  def updateResidue(self, residue):                         # Not used
   
     if residue.chain is self.chain:
       self.updateAfter()
@@ -2673,7 +2633,7 @@ class ViewAssignmentPopup(BasePopup):
       self.amountOfRepeats = value
       self.repeatEntry.set(value)
       
-  def updateNANToleranceInSpectrumEntry(self,  event =None):
+  def updateNANToleranceInSpectrumEntry(self,  event =None):            # Bullshit
     
     value = self.NANToleranceInSpectrumEntry.get()
     if value == self.NANToleranceInSpectrum:
@@ -2685,7 +2645,7 @@ class ViewAssignmentPopup(BasePopup):
       self.NANToleranceInSpectrum = value
       self.NANToleranceInSpectrumEntry.set(value)
       
-  def updateNANToleranceBetweenSpectraEntry(self,  event =None):
+  def updateNANToleranceBetweenSpectraEntry(self,  event =None):        # Bullshit
       
     value = self.NANToleranceBetweenSpectraEntry.get()
     if value == self.NANToleranceBetweenSpectra:
@@ -2697,7 +2657,7 @@ class ViewAssignmentPopup(BasePopup):
       self.NANToleranceBetweenSpectra = value
       self.NANToleranceBetweenSpectraEntry.set(value)
       
-  def updateNACToleranceInSpectrumEntry(self,  event =None):
+  def updateNACToleranceInSpectrumEntry(self,  event =None):            # Bullshit
     
     value = self.NACToleranceInSpectrumEntry.get()
     if value == self.NACToleranceInSpectrum:
@@ -2709,7 +2669,7 @@ class ViewAssignmentPopup(BasePopup):
       self.NACToleranceInSpectrum = value
       self.NACToleranceInSpectrumEntry.set(value)
       
-  def updateNACToleranceBetweenSpectraEntry(self,  event =None):
+  def updateNACToleranceBetweenSpectraEntry(self,  event =None):        # Bullshit
       
     value = self.NACToleranceBetweenSpectraEntry.get()
     if value == self.NACToleranceBetweenSpectra:
