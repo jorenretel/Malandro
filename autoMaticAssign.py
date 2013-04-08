@@ -6,7 +6,7 @@ def open_reference(argServer):
      Output: None
   """
   print 'version...'
-  program = connector(argServer) #ViewAssignmentPopup(argServer.parent)
+  program = connector(argServer.parent)
 
 import Tkinter
 import re
@@ -16,8 +16,6 @@ import math
 import time
 
 import cProfile
-
-#import numpy
 
 import cPickle
 
@@ -80,8 +78,6 @@ import ccpnmr.analysis.core.WindowBasic as WindowBasic
 
 import helperModuleNew
 
-#reload(helperModuleNew13)
-
 from helperModuleNew import autoAssign
 
 from pythonStyleClasses import *
@@ -94,11 +90,7 @@ AMINO_ACIDS = standardResidueCcpCodes['protein']
 class connector(object):
   '''This is just a little class that contains all settings the user configures in the GUI'''
   
-  def __init__(self, argServer):
-    
-    #self.GUI = GUI
-    
-    #self.auto = auto
+  def __init__(self, guiParent):
     
     self.chain = None
     
@@ -126,15 +118,19 @@ class connector(object):
     
     self.ranPreCalculations = False
     
-    self.results = None #self.auto.DataModel.pyDataModel
+    self.results = None
     
-    self.GUI = ViewAssignmentPopup(argServer.parent, self)
+    self.GUI = ViewAssignmentPopup(guiParent, self)
     
     self.auto = autoAssign()
     
     self.addEnergyPoint = self.GUI.addEnergyPoint
         
   def update(self):
+    
+    '''
+    Pulls all settings out of the GUI and gives them to the assignment algorithm written in Cython
+    '''
     
     self.chain = self.GUI.chain
     
@@ -210,21 +206,6 @@ class connector(object):
       self.GUI.updateresultsTab()
       self.GUI.sortDisplayResultsTable()
     
-
-      
-      
-    
-#  def saveDataToPyc(self, fileName):
-#
-#        
-#    writeFile = open(fileName,  'wb')
-#    
-#    #setrecursionlimit(10)
-#    
-#    pickle.dump(self.auto.DataModel,  writeFile)
-#    
-#    writeFile.close() 
-
   def checkPoint1(self):
     
     if self.checkSpectraAndLabelling() and self.checkChain():
@@ -252,6 +233,12 @@ class connector(object):
     return False  
     
   def checkSpectraAndLabelling(self) :
+    
+    '''
+    Check whether some spectra are selected by the user and whether a reference experiment has been set
+    for this experiment (needed to simulate the spectra) and if the user said the labelling scheme should
+    come automatically from the labelled sample, the labelled mixture should be set.
+    '''
     
     if not self.selectedSpectra :
       
@@ -298,6 +285,9 @@ class connector(object):
     return True
     
   def checkChain(self):
+    '''
+    Checks whether a chain is configured and whether this chain has residues.
+    '''
    
      
     if not self.chain :
@@ -319,23 +309,14 @@ class connector(object):
     return True
         
   def getResults(self):
+    '''
+    Gets the results from the assignment algorithm.
+    '''
     
     if self.ranAnnealling :
 
       self.results = self.auto.getResults()
       
-      
-#    else :
-#    
-#      string = 'There are no results to show since the annealing did not run yet.'
-#      
-#      showWarning('Run Annealing first', string,  parent=self.GUI)
-#      
-#      return False
-        
-        
-       
-       
   def updateInfoText(self,string):
     
     #self.GUI.waiting = True
@@ -346,6 +327,10 @@ class connector(object):
 
 
 class spectrumSettings(object):
+  
+  '''
+  A small class to temporarely store some info about spectra the user configures in the GUI.
+  '''
 
   def __init__(self):
     
@@ -356,8 +341,7 @@ class spectrumSettings(object):
     self.peakList = None
     
     self.used = False
-    
-    
+   
   def setupLabellingScheme(self, labellingScheme):
 
     self.labellingScheme = labellingScheme
@@ -376,7 +360,9 @@ class spectrumSettings(object):
  
  
 class ViewAssignmentPopup(BasePopup):
-
+  '''
+  The main popup that is shown when the macro is loaded.
+  '''
 
   def __init__(self, parent, controler, *args, **kw):
     
@@ -387,9 +373,6 @@ class ViewAssignmentPopup(BasePopup):
     self.guiParent = parent
 
     self.sourceName = 'RefDB'
-    
-    #self.auto = autoAssign()
-    #self.connector = connector(self,  self.auto)
     
     self.connector = controler
     
@@ -402,8 +385,6 @@ class ViewAssignmentPopup(BasePopup):
     
     BasePopup.__init__(self, parent, title= "Assignment Suggestions", **kw)
     
-
-
   def open(self):
   
     self.updateAfter()
@@ -411,7 +392,7 @@ class ViewAssignmentPopup(BasePopup):
 
   def body(self, guiFrame):
 
-    self.geometry('1200x400')
+    self.geometry('900x700')
 
     self.minIsoFrac = 0.1
     self.maxNotLabelledFrac = 0.05
@@ -432,31 +413,16 @@ class ViewAssignmentPopup(BasePopup):
     self.minConnectionDist = 0
     self.atomSelectionColumns = 10
     self.specSelectionColumns = 5
-    #self.labellingScheme = True
     self.selectedPeak = None
-
-
-
     self.amountOfRepeats = 10
-    
     self.amountOfSteps = 10000
-    
     self.acceptanceConstantList = [0, 0.1, 0.2,0.4, 0.8,1.0, 1.1, 1.2, 1.4, 1.6,2.0, 2.4,2.8, 3.2,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0]
-    
-    
     self.NANToleranceInSpectrum = 0
     self.NANToleranceBetweenSpectra = 0
-    
     self.NACToleranceInSpectrum = 0
     self.NACToleranceBetweenSpectra = 0
 
-
-    #self.specConfigList = []
-
     self.updateSpecSelection()
-    
-    #isotopes = self.getIsotopes()
-    #self.isotope = isotopes[1]
 
     guiFrame.grid_columnconfigure(0, weight=1)
     guiFrame.grid_rowconfigure(0, weight=1)
@@ -466,10 +432,6 @@ class ViewAssignmentPopup(BasePopup):
     self.tabbedFrame = tabbedFrame
 
     autoFrame,  NAFrame,  resultsFrame,  saveFrame = tabbedFrame.frames
-    #graphFrame.expandGrid(1,0)
-    #optFrame.expandGrid(5,0)
-    
-    
     
     file_types = [ FileType('pyc', ['*.pyc']) ]
     self.fileselectionBox = FileSelect(saveFrame, multiSelect=False,  file_types=file_types)        #, single_callback=self.chooseFiles)
@@ -480,18 +442,11 @@ class ViewAssignmentPopup(BasePopup):
     self.loadAndSaveButtons= ButtonList(saveFrame,commands=commands, texts=texts)
     self.loadAndSaveButtons.grid(row=1, column=0, sticky='nsew')
     
-    
-    
     self.resultsResidueNumber = 1
-    
-    
-    
+  
     self.waiting = False
     self.updateAfter()
-
-
-
-
+    
     texts = ['Update',]
     commands = [self.noAction,]
     self.bottomButtons = UtilityButtonList(tabbedFrame.sideFrame, texts=texts,
@@ -499,11 +454,6 @@ class ViewAssignmentPopup(BasePopup):
     self.bottomButtons.grid(row=0, column=0, sticky = 'e')
 
     self.administerNotifiers(self.registerNotify)
-
-    
-    
-    
-    
     
     saveFrame.grid_rowconfigure(0, weight=1)
     saveFrame.grid_columnconfigure(0,  weight=1)
@@ -523,12 +473,6 @@ class ViewAssignmentPopup(BasePopup):
     label = Label(autoFrame, text='Chain:', grid=(1,0))
     self.molPulldown = PulldownList(autoFrame, callback=self.changeMolecule, grid=(1,0))
     self.updateChains()    
-
-
-
-
-
-
 
 
     headingList = ['#','Spectrum', 'Peak List','use?','labelling scheme']
@@ -609,51 +553,26 @@ class ViewAssignmentPopup(BasePopup):
     self.tempEntry = Entry(NAFrame, text=map(str, self.acceptanceConstantList), width=64, grid=(3,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
     
     
-    
-    #label = Label(NAFrame, text='Nitrogen tolerance within same spectrum', grid=(3,0))      
-    #tipText = 'The amount of ppm used in the window function to determine whether to peaks within the same spectrum could have a contribution in common.'
-    #self.NANToleranceInSpectrumEntry = FloatEntry(NAFrame, text=0.25, width=8, grid=(3,1))
-    
-    
-      
-    
     label = Label(NAFrame, text='Type untyped spin systems on the fly.', grid=(4,0))      
     tipText = 'Spin system typing can be carried out so also untyped spin systems can be used. Only amino acid types that have a reasonable score (i.e. higher than the random chance) will be considered'
-    #self.NANToleranceBetweenSpectraEntry = FloatEntry(NAFrame, text=0.25, width=8, grid=(4,1))
+
     self.typeSpinSystemsCheck = CheckButton(NAFrame, selected=False, grid=(4,1))
-
-
-
-
 
     label = Label(NAFrame, text='Only use present dimensional assignments for peaks', grid=(5,0))      
     tipText = 'If one or more dimensions of a peak is already assigned, assume that this assignment is the only option. If not the program will assume the peak can have other assignment options as well.'
-    #self.NACToleranceInSpectrumEntry = FloatEntry(NAFrame, text=0.25, width=8, grid=(5,1))
     self.useDimenionalAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(5,1))
     
-    
-    
-    #label = Label(NAFrame, text='Carbon tolerance between spectra', grid=(6,0))      
-    #tipText = 'The amount of ppm used in the window function to determine whether to peaks in different spectra could have a contribution in common.'
-    #self.NACToleranceBetweenSpectraEntry = FloatEntry(NAFrame, text=0.25, width=8, grid=(6,1))
-    
-    
+
     label= Label(NAFrame, text = 'Use the assignment of the spin systems in the project:', grid=(7,0))
     self.useAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(7,1))
     
     label= Label(NAFrame, text = 'Use the tentative assignment(s) for the spin systems in the project:', grid=(8,0))
     self.useTentativeCheck = CheckButton(NAFrame, selected=True, grid=(8,1))
-    
-    
-    self.shiftList=None
-    
-    if not self.shiftList:
-      shiftLists = getShiftLists(self.nmrProject)
-      if shiftLists:
-        self.shiftList = shiftLists[0]
 
     self.shiftListLabel    = Label(NAFrame, text ='Shift List:', grid=(9,0), sticky='w')
     self.shiftListPulldown = PulldownList(NAFrame, self.changeShiftList, grid=(9,1), sticky='w')
+    
+    self.updateShiftLists()
     
     
     self.energyPlot = ScrolledGraph(NAFrame,symbolSize=2, width=500,
@@ -662,18 +581,6 @@ class ViewAssignmentPopup(BasePopup):
     self.energyPlot.grid(row=10, column=0, columnspan=10, sticky='nsew')
     
 
-
-    self.updateShiftLists()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
 ##############################################################################
 ############### The Results Tab###############################################
@@ -683,22 +590,9 @@ class ViewAssignmentPopup(BasePopup):
 
     resultTopFrame = LabelFrame(resultsFrame, text='Which results to show')
     resultTopFrame.grid(row=0, column=0, sticky='ew')
-
-  
-#    texts    = ['Show Results']
-#    commands = [self.showResults]
-#    self.showButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
-#    self.showButton.grid(row=0, column=0, sticky='nsew')
-    
-    
-    
-  
-    
     
     self.resultsResidueNumber = 3
-    
-    
-    
+
     texts    = [' < ']
     commands = [self.resultsPrevResidue]
     self.resultsPreviousButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
@@ -823,64 +717,18 @@ class ViewAssignmentPopup(BasePopup):
     
     
     
-    
-    
-    
-    
-    
-
-    
-    
-    
     resultsSecondFrame = LabelFrame(resultsFrame, text='Spin Systems')
     resultsSecondFrame.grid(row=2, column=0, sticky='nsew')
-    
-    
-    
-    
-   # resultsSecondFrame.grid_rowconfigure(2, weight=2)
-#    
-#    resultsSecondFrame.grid_rowconfigure(0,  weight=1) 
-#    resultsSecondFrame.grid_rowconfigure(1,  weight=0)        
-#    resultsSecondFrame.grid_rowconfigure(2,  weight=0)    
-#    resultsSecondFrame.grid_rowconfigure(3,  weight=0)    
-#    resultsSecondFrame.grid_rowconfigure(4,  weight=0) 
-    
     
     resultsSecondFrame.grid_columnconfigure(0,  weight=1) 
     resultsSecondFrame.grid_columnconfigure(1,  weight=1)        
     resultsSecondFrame.grid_columnconfigure(2,  weight=1)    
     resultsSecondFrame.grid_columnconfigure(3,  weight=1)    
     resultsSecondFrame.grid_columnconfigure(4,  weight=1) 
-    
-    
-    
-    #resultsSecondFrame.expandGrid(5,0)
-
-
- #   self.displayTable = ScrolledMatrix(autoFrame,headingList=headingList,
-  #                                     callback=self.selectAutoSpec,
-   #                                    editWidgets=editWidgets, multiSelect=True,
-   #                                    editGetCallbacks=editGetCallbacks,
-   #                                    editSetCallbacks=editSetCallbacks,
-   #                                    tipTexts=tipTexts)
-   # self.displayTable.grid(row=2, column=0, sticky='nsew')
-    
-
-
-
-
-
-
 
     headingList = [ '#','taken by:',  '%']
 
     tipTexts = [ 'Indidcating other residues where this spinsystem in selected for',  'percentage of the solutions that connected this spinsystem to this residue']
-
-
-
-
-
 
     editWidgets = [None, None, None]
 
@@ -962,39 +810,6 @@ class ViewAssignmentPopup(BasePopup):
     
     self.sortDisplayResultsTable()
     
-    
-    
-#    texts    = ['choose']
-#    commands = [self.noAction]
-#    self.chooseButton1 = ButtonList(resultsSecondFrame,commands=commands, texts=texts)
-#    self.chooseButton1.grid(row=1, column=0, sticky='nsew')  
-#    
-#    texts    = ['choose']
-#    commands = [self.noAction]
-#    self.chooseButton2 = ButtonList(resultsSecondFrame,commands=commands, texts=texts)
-#    self.chooseButton2.grid(row=1, column=1, sticky='nsew')  
-#    
-#    texts    = ['choose']
-#    commands = [self.noAction]
-#    self.chooseButton3 = ButtonList(resultsSecondFrame,commands=commands, texts=texts)
-#    self.chooseButton3.grid(row=1, column=2, sticky='nsew')  
-#    
-#    texts    = ['choose']
-#    commands = [self.noAction]
-#    self.chooseButton4 = ButtonList(resultsSecondFrame,commands=commands, texts=texts)
-#    self.chooseButton4.grid(row=1, column=3, sticky='nsew')  
-#    
-#    texts    = ['choose']
-#    commands = [self.noAction]
-#    self.chooseButton5 = ButtonList(resultsSecondFrame,commands=commands, texts=texts)
-#    self.chooseButton5.grid(row=1, column=4, sticky='nsew')  
-    
-    
-    
-    
-    #resultsFrame.grid_rowconfigure(0, weight=4)
-    #resultsFrame.grid_rowconfigure(1, weight=3)
-    #resultsFrame.grid_rowconfigure(2, weight=3)
     resultsFrame.grid_rowconfigure(3, weight=2)
     
     resultsThirdFrame = LabelFrame(resultsFrame, text='info')
@@ -1096,17 +911,6 @@ class ViewAssignmentPopup(BasePopup):
 
     self.windowPane = 'None'
     self.updateWindows()
-    
-    
-    
-    #self.auto.setGUIReference(self)
-    
-    
-    #self.auto.setupMyDataModel()
-    
-    #self.DataModel = self.auto.DataModel
-    
-    
     self.setupSpectrumSettings()
     self.updateAutoMatrix()
     
@@ -1243,20 +1047,6 @@ class ViewAssignmentPopup(BasePopup):
       
       showWarning('No Such File', string,  parent=self)
     
-    #self.connector.ranAnnealling = True
-    
-    
-    
-    
-#  def chooseFiles(self, *file):
-#  
-#    directory = self.fileselectionBox.getDirectory()
-#
-#    fileNames = self.fileselectionBox.fileList.currentObjects
-#    self.fullFileName = [joinPath(directory, x) for x in fileNames][0]
-#    print self.fullFileName
- 
-
   def clickLinkA1(self):
     
     DataModel = self.connector.results
@@ -1586,9 +1376,6 @@ class ViewAssignmentPopup(BasePopup):
     spinSystem.userDefinedSolutions.append(res)
     
     self.updateresultsTab()
-    
-    
-    #ccpCode = spinsystem.ccpCode
     
     DataModel = self.connector.results
     
@@ -2300,43 +2087,7 @@ class ViewAssignmentPopup(BasePopup):
       self.chain = chain
       self.atomNamesList = []
       self.update()
-      
-      
-#  def greekSort(self,dataList):
-#  
-#    sortList = []
-#    for x, molType in dataList:
-#      sortName = x
-#      sortName = re.sub('(.+\')', 'zzz@\\1', sortName)
-#      sortName = re.sub('^(\d)','zz@\\1', sortName)
-#      sortName = re.sub('N(\S*)','\'\'@N\\1',sortName)
-#      sortName = re.sub('CO','\'\'@CO',sortName)
-#      sortName = re.sub('g', 'c@g', sortName)
-#      sortName = re.sub('z', 'f@z', sortName)
-#      sortList.append( (sortName,x,molType) )
-#    sortList.sort()
-#    dataList = [e[1:] for e in sortList]
-#    
-#    return dataList
-    
-    
-#  def updateAssign(self, resonanceSet):
-#    
-#    residue = resonanceSet.findFirstAtomSet().findFirstAtom().residue
-#    resonances = resonanceSet.resonances
-#      
-#    if self.canvasDict.get(residue) is not None:
-#      spectra = {}
-#      for resonance in resonances:
-#        for contrib in resonance.peakDimContribs:
-#          spec = contrib.peakDim.peak.peakList.dataSource
-#          spectra[spec] = True
-#        
-#      self.updateResidueAtoms(residue)
-#      for spectrum in spectra.keys():
-#        self.updateConnections(spectrum)
-        
-        
+       
   def getChainName(self, chain):
   
     return '%s:%s (%s)' % (chain.molSystem.code,chain.code,chain.molecule.molType)
@@ -2404,19 +2155,13 @@ class ViewAssignmentPopup(BasePopup):
     index = 0
     shiftLists = getShiftLists(self.nmrProject) + [None,]
     shiftListNames = self.getShiftListNames(shiftLists[:-1]) + ['None',]
-    shiftList = self.shiftList
     
     if shiftListNames:
-      if shiftList not in shiftLists:
-        shiftList = shiftLists[0]
-      
-      index = shiftLists.index(shiftList)
+      self.shiftList = shiftLists[0]
+      index = 0
       
     else:
       shiftList = None
-    
-    if self.shiftList is not shiftList:
-      self.changeShiftList(shiftList)
     
     self.shiftListPulldown.setup(shiftListNames,shiftLists,index)
 
