@@ -485,9 +485,7 @@ class ViewAssignmentPopup(BasePopup):
     self.maxNotLabelledFrac = 0.05
 
     self.chain         = None
-    self.spectraDict   = {}
     self.spectra       = []
-    self.spectraNames  = []
     self.canvasDict    = {}
     self.guiNameDict   = {}
     self.atomNamesDict = {}
@@ -983,8 +981,7 @@ class ViewAssignmentPopup(BasePopup):
     self.updateWindows()
     self.setupSpectrumSettings()
     self.updateAutoMatrix()
-    
-    
+     
   def getCcpnPeakForMyPeak(self,  myPeak) :
     
     spectrumName = myPeak.spectrum.name
@@ -1238,8 +1235,6 @@ class ViewAssignmentPopup(BasePopup):
     print self.windowPane
 
     if self.selectedPeak and self.windowPane:
-      print 'yes'
-      #if self.markFoundCheck.get():
       
       ccpnPeak = self.getCcpnPeakForMyPeak(self.selectedPeak)
       createPeakMark(ccpnPeak, lineWidth=2.0)
@@ -1606,13 +1601,15 @@ class ViewAssignmentPopup(BasePopup):
       self.resultsResidueNumber = new_value
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
       self.updateresultsTab()
-      #self.sortDisplayResultsTable()
   
   def resultsChangeSelectedCcpCode(self, ccpCode):
   
     self.resultsSelectedCcpCode = ccpCode
   
-  def resultsUpdateAfterEntry(self, event=None):              #JR: update for entry of residue number in strip plots
+  def resultsUpdateAfterEntry(self, event=None):
+    '''
+    Update for entry of residue number in strip plots
+    '''
 
     residues = self.connector.results.chain.residues
 
@@ -1633,7 +1630,10 @@ class ViewAssignmentPopup(BasePopup):
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
       self.updateresultsTab()
 
-  def solutionUpdateAfterEntry(self, event=None):              #JR: update for entry of residue number in strip plots
+  def solutionUpdateAfterEntry(self, event=None):
+    '''
+    Update for entry of residue number in strip plots
+    '''
   
     Nsolutions = len(self.connector.results.chain.residues[0].solutions)
 
@@ -1900,8 +1900,6 @@ class ViewAssignmentPopup(BasePopup):
     
     tableList = [self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
     
-    print '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
-    
     for table in tableList :
       print table
       print type(table)
@@ -1939,11 +1937,6 @@ class ViewAssignmentPopup(BasePopup):
     green = self.rgbToHex(green)
     blue = self.rgbToHex(blue)
 
-    #print red
-    #print green
-    #print blue
-
-
     color = '#' + red + green + blue
     return color
     
@@ -1973,24 +1966,10 @@ class ViewAssignmentPopup(BasePopup):
     for expt in self.nmrProject.sortedExperiments():
       for spec in expt.sortedDataSources():
         if spec.dataType == 'processed':
-          spectraNames.append( stringFromExperimentSpectrum(expt.name,spec.name) )
           spectra.append( spec )
-          if self.spectraDict.get( spec ) is None:
-            self.spectraDict[spec] = False
         
     self.spectra = spectra
-    analysisProject = self.analysisProject
-    colors = []
-    fonts  = []
-    
-    for i in range(len(spectra)):
-      font = self.font
-      
-      hexColors = spectra[i].analysisSpectrum.posColors
-      hexColor = hexColors[int(0.7*len(hexColors))]
-        
-      colors.append( hexColor )
-      fonts.append(font)
+
   
   def toggleTab(self, index):
   
