@@ -1,7 +1,7 @@
 
 
 def open_reference(argServer):
-  """Descrn: Opens the shift reference pop-up for two residue types.
+  """Descrn: Opens the macro.
      Inputs: ArgumentServer
      Output: None
   """
@@ -711,7 +711,7 @@ class ViewAssignmentPopup(BasePopup):
 
     
     texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
-    commands = [self.noAction, self.clickLinkA1, self.noAction, self.clickLinkA2, self.noAction, self.clickLinkA3, self.noAction, self.clickLinkA4, self.noAction]
+    commands = [self.noAction, lambda: self.selectLink(1,True), self.noAction, lambda: self.selectLink(2,True), self.noAction, lambda: self.selectLink(3,True), self.noAction, lambda: self.selectLink(4,True), self.noAction]
     self.sequenceButtons = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
     self.sequenceButtons.grid(row=0, column=0, sticky='nsew')   
     
@@ -737,7 +737,7 @@ class ViewAssignmentPopup(BasePopup):
     spacer.grid(row=1, column=0, sticky='nsew') 
     
     texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
-    commands = [self.noAction, self.clickLinkB1, self.noAction, self.clickLinkB2, self.noAction, self.clickLinkB3, self.noAction, self.clickLinkB4, self.noAction]
+    commands = commands = [self.noAction, lambda: self.selectLink(1,False), self.noAction, lambda: self.selectLink(2,False), self.noAction, lambda: self.selectLink(3,False), self.noAction, lambda: self.selectLink(4,False), self.noAction]
     self.sequenceButtonsB = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
     self.sequenceButtonsB.grid(row=2, column=0, sticky='nsew')    
  
@@ -992,145 +992,59 @@ class ViewAssignmentPopup(BasePopup):
     fileName = self.fileselectionBox.getFile()
     self.connector.loadDataFromPyc(fileName)
     
-  def clickLinkA1(self):
+  def selectLink(self,number, topRow) :
+    
+    if topRow :
+      
+      self.selectedLinkA = number
+      self.selectedLinkB = None
+      
+    else :
+      
+      self.selectedLinkA = None
+      self.selectedLinkB = number
+      
+    self.updateButtonHighLights()
+    self.updateLink()
+    
+  def updateLink(self) :
     
     DataModel = self.connector.results
+    resNumber = self.resultsResidueNumber
+    chain = DataModel.chain
+    residues = chain.residues    
+    solutionNumber = self.selectedSolution-1
     
-    resA = DataModel.chain.residues[self.resultsResidueNumber-3]
-    resB = DataModel.chain.residues[self.resultsResidueNumber-2]
-  
-    spinSystemA = resA.solutions[self.selectedSolution-1]
-    spinSystemB = resB.solutions[self.selectedSolution-1] 
+    number = self.selectedLinkA or self.selectedLinkB
     
-    self.selectedLinkA = 0
-    self.selectedLinkB = None
+    print number
     
-    self.updateButtonHighLights() 
+    if not number:
+      
+      return
     
-    self.updatePeakTables(resA, spinSystemA, spinSystemB)
+    resA = residues[resNumber-4 + number]
+    resB = residues[resNumber-3 + number]
     
-  def clickLinkB1(self):
     
-    DataModel = self.connector.results
-    
-    resA = DataModel.chain.residues[self.resultsResidueNumber-3]
-    resB = DataModel.chain.residues[self.resultsResidueNumber-2]
-    
-    self.selectedLinkA = None
-    self.selectedLinkB = 0
-    
-    self.updateButtonHighLights() 
-    
-    if resA.userDefinedSolution and resB.userDefinedSolution :
-      spinSystemA = resA.userDefinedSolution
-      spinSystemB = resB.userDefinedSolution
-   
-      self.updatePeakTables(resA, spinSystemA, spinSystemB)    
-          
-  def clickLinkA2(self):
-    
-    DataModel = self.connector.results
-    
-    resA = DataModel.chain.residues[self.resultsResidueNumber-2]
-    resB = DataModel.chain.residues[self.resultsResidueNumber-1]
-  
-    spinSystemA = resA.solutions[self.selectedSolution-1]
-    spinSystemB = resB.solutions[self.selectedSolution-1] 
-    
-    self.selectedLinkA = 1
-    self.selectedLinkB = None
-    
-    self.updateButtonHighLights() 
-    
-    self.updatePeakTables(resA, spinSystemA, spinSystemB)
-    
-  def clickLinkB2(self):
-    
-    DataModel = self.connector.results
-    
-    resA = DataModel.chain.residues[self.resultsResidueNumber-2]
-    resB = DataModel.chain.residues[self.resultsResidueNumber-1]
-    
-    self.selectedLinkA = None
-    self.selectedLinkB = 1
-    
-    self.updateButtonHighLights() 
-    
-    if resA.userDefinedSolution and resB.userDefinedSolution :
-      spinSystemA = resA.userDefinedSolution
-      spinSystemB = resB.userDefinedSolution
-   
-      self.updatePeakTables(resA, spinSystemA, spinSystemB)    
+    if self.selectedLinkA:
+      
+      spinSystemA = resA.solutions[solutionNumber]
+      spinSystemB = resB.solutions[solutionNumber]
+      
+      self.updatePeakTables(resA, spinSystemA, spinSystemB)
+      
+    else :  
+      
+      if resA.userDefinedSolution and resB.userDefinedSolution :
+        spinSystemA = resA.userDefinedSolution
+        spinSystemB = resB.userDefinedSolution
         
-  def clickLinkA3(self):
-    
-    DataModel = self.connector.results
-    
-    resA = DataModel.chain.residues[self.resultsResidueNumber-1]
-    resB = DataModel.chain.residues[self.resultsResidueNumber]
-  
-    spinSystemA = resA.solutions[self.selectedSolution-1]
-    spinSystemB = resB.solutions[self.selectedSolution-1] 
-    
-    self.selectedLinkA = 2
-    self.selectedLinkB = None
-    
-    self.updateButtonHighLights() 
-    
-    self.updatePeakTables(resA, spinSystemA, spinSystemB)
-    
-  def clickLinkB3(self):
-    
-    DataModel = self.connector.results
-    
-    resA = DataModel.chain.residues[self.resultsResidueNumber-1]
-    resB = DataModel.chain.residues[self.resultsResidueNumber]
-    
-    self.selectedLinkA = None
-    self.selectedLinkB = 2
-    
-    self.updateButtonHighLights() 
-    
-    if resA.userDefinedSolution and resB.userDefinedSolution :
-      spinSystemA = resA.userDefinedSolution
-      spinSystemB = resB.userDefinedSolution
-   
-      self.updatePeakTables(resA, spinSystemA, spinSystemB)    
- 
-  def clickLinkA4(self):
-    
-    DataModel = self.connector.results
-    
-    resA = DataModel.chain.residues[self.resultsResidueNumber]
-    resB = DataModel.chain.residues[self.resultsResidueNumber+1]
-  
-    spinSystemA = resA.solutions[self.selectedSolution-1]
-    spinSystemB = resB.solutions[self.selectedSolution-1] 
-    
-    self.selectedLinkA = 3
-    self.selectedLinkB = None
-    
-    self.updateButtonHighLights() 
-    
-    self.updatePeakTables(resA, spinSystemA, spinSystemB)
-     
-  def clickLinkB4(self):
-    
-    DataModel = self.connector.results
-    
-    resA = DataModel.chain.residues[self.resultsResidueNumber]
-    resB = DataModel.chain.residues[self.resultsResidueNumber+1]
-    
-    self.selectedLinkA = None
-    self.selectedLinkB = 3
-    
-    self.updateButtonHighLights() 
-    
-    if resA.userDefinedSolution and resB.userDefinedSolution :
-      spinSystemA = resA.userDefinedSolution
-      spinSystemB = resB.userDefinedSolution
-   
-      self.updatePeakTables(resA, spinSystemA, spinSystemB)    
+        self.updatePeakTables(resA, spinSystemA, spinSystemB)
+        
+      else :
+        
+        self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
         
   def updatePeakTables(self, resA,  spinSystemA,  spinSystemB):
     
@@ -1389,119 +1303,8 @@ class ViewAssignmentPopup(BasePopup):
     print self.selectedLinkA
     print res.seqCode
     
-    self.updatePeakTableIfNescesarry()
-    
-    
-#    if self.selectedLinkB :
-#      
-#      resA = res
-#      resB = residues[res.seqCode]
-#    
-#    if res.seqCode == self.selectedLinkB :                                               # TODO: continue here
-#      
-#      resA = res
-#      
-#      spinSystemA = spinSystem
-#      
-#      nextResidue = residues[res.seqCode]
-#      
-#      print nextResidue
-#      
-#      spinSystemB = nextResidue.userDefinedSolution
-#      
-#      print 'ooooooooooooooooooooooo'
-#      
-#      print nextResidue.seqCode
-#      
-#      print spinSystemB
-#      
-#      if spinSystemB :
-#   
-#        self.updatePeakTables(resA, spinSystemA, spinSystemB)  
-#      
-#    elif (res.seqCode -1) == self.selectedLinkB :
-#      
-#      print 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhh'
-#      
-#      spinSystemB = spinSystem
-#      
-#      resA = residues[res.seqCode-1]
-#      
-#      spinSystemA = resA.userDefinedSolution
-#      
-#      print spinSystemA
-#      
-#      if spinSystemA :
-#   
-#        self.updatePeakTables(resA, spinSystemA, spinSystemB)  
-      
-      
-          
-          
-  #      if res in spinsystem.userDefinedSolutions
-          
-          
-          
-          
-        
-        
-        
-    
-        
-  def updatePeakTableIfNescesarry(self): 
-    
-
-    
-    resNumber = self.resultsResidueNumber    
-    
-    DataModel = self.connector.results
-    
-    chain = DataModel.chain
-    
-    residues = chain.residues
-  
-#    resA = residues[resNumber -3]
-#    resB = residues[resNumber -2]
-#    resC = residues[resNumber - 1]
-#    resD = residues[resNumber]
-#    resE = residues[resNumber +1]
-#    
-#    resList = [resA, resB, resC, resD, resE]
-
-    if self.selectedLinkA :
-      
-      selectedLink = self.selectedLinkA
-      
-      resA = residues[resNumber -3 + selectedLink]
-      resB = residues[resNumber -2 + selectedLink]
-      
-      spinSystemA = resA.solutions[self.selectedSolution-1]
-      spinSystemB = resB.solutions[self.selectedSolution-1] 
-      
-      self.updatePeakTables(resA, spinSystemA, spinSystemB)   
-      
-      
-
-      
-      
-    
-    elif self.selectedLinkB :
-      
-      selectedLink = self.selectedLinkB
-    
-      resA = residues[resNumber -3 + selectedLink]
-      resB = residues[resNumber -2 + selectedLink]
-      
-      if resA.userDefinedSolution and resB.userDefinedSolution :
-        spinSystemA = resA.userDefinedSolution
-        spinSystemB = resB.userDefinedSolution
+    self.updateLink()
      
-        self.updatePeakTables(resA, spinSystemA, spinSystemB)   
-        
-      else : 
-        
-        self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
-        
   def adoptSolution(self):
     
     DataModel = self.connector.results
@@ -1842,31 +1645,29 @@ class ViewAssignmentPopup(BasePopup):
         button.config(text=text,  bg='grey83')
         
     
-    self.updatePeakTableIfNescesarry()    
+    self.updateLink()    
         
   def updateButtonHighLights(self):
     
-    buttons = [self.sequenceButtons.buttons[1], self.sequenceButtons.buttons[3], self.sequenceButtons.buttons[5], self.sequenceButtons.buttons[7]]
-
-    for button in buttons :
-
-        button.config(bg='grey83') 
-       
-    if not self.selectedLinkA is None:
-      
-      buttons[self.selectedLinkA].config(bg='yellow')    
-        
-        
-    buttons = [self.sequenceButtonsB.buttons[1], self.sequenceButtonsB.buttons[3], self.sequenceButtonsB.buttons[5], self.sequenceButtonsB.buttons[7]]
+    self.setAllButtonsToGrey()
     
-    for button in buttons :
+    if self.selectedLinkA :
       
-      button.config(bg='grey83')  
+      buttons = [self.sequenceButtons.buttons[1], self.sequenceButtons.buttons[3], self.sequenceButtons.buttons[5], self.sequenceButtons.buttons[7]]
+      buttons[self.selectedLinkA - 1].config(bg='yellow')
+
+    elif self.selectedLinkB :
       
-    if not self.selectedLinkB is None :
+      buttons = [self.sequenceButtonsB.buttons[1], self.sequenceButtonsB.buttons[3], self.sequenceButtonsB.buttons[5], self.sequenceButtonsB.buttons[7]]
+      buttons[self.selectedLinkB - 1].config(bg='yellow')
       
-      buttons[self.selectedLinkB].config(bg='yellow')   
-       
+  def setAllButtonsToGrey(self) :
+    
+    for i in [1,3,5,7] :
+      
+      self.sequenceButtons.buttons[i].config(bg='grey83')
+      self.sequenceButtonsB.buttons[i].config(bg='grey83')
+    
   def sortDisplayResultsTable(self) :
     
     tableList = [self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
