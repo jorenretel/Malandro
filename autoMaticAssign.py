@@ -482,30 +482,12 @@ class ViewAssignmentPopup(BasePopup):
     self.geometry('900x700')
 
     self.minIsoFrac = 0.1
-    self.maxNotLabelledFrac = 0.05
-
     self.chain         = None
     self.spectra       = []
-    #self.canvasDict    = {}
-    #self.guiNameDict   = {}
-    #self.atomNamesDict = {}
-
-    #self.atomNamesList = []
-    #self.residuesDict  = {}
-    #self.bindDict = {}
-    #self.residueColorMode = 'None'
-    #self.maxConnectionDist = 4
-    #self.minConnectionDist = 0
-    #self.atomSelectionColumns = 10
-    #self.specSelectionColumns = 5
     self.selectedPeak = None
     self.amountOfRepeats = 10
     self.amountOfSteps = 10000
     self.acceptanceConstantList = [0, 0.1, 0.2,0.4, 0.8,1.0, 1.1, 1.2, 1.4, 1.6,2.0, 2.4,2.8, 3.2,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0]
-    #self.NANToleranceInSpectrum = 0
-    #self.NANToleranceBetweenSpectra = 0
-    #self.NACToleranceInSpectrum = 0
-    #self.NACToleranceBetweenSpectra = 0
 
     self.updateSpecSelection()
 
@@ -585,7 +567,7 @@ class ViewAssignmentPopup(BasePopup):
     self.displayTable.grid(row=2, column=0, sticky='nsew')
 
 
-    self.updateLabellingSchemes()
+    #self.updateLabellingSchemes()
     
 
     
@@ -802,7 +784,7 @@ class ViewAssignmentPopup(BasePopup):
 
     editGetCallbacks = [self.selectSpinSystemA, self.selectSpinSystemA, self.selectSpinSystemA]
 
-    editSetCallbacks = [None, None, None] #self.setAutoLabellingScheme]
+    editSetCallbacks = [None, None, None] 
 
     self.displayResultsTable1 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
                                        editWidgets=editWidgets, multiSelect=False,
@@ -820,7 +802,7 @@ class ViewAssignmentPopup(BasePopup):
 
     editGetCallbacks = [self.selectSpinSystemB, self.selectSpinSystemB, self.selectSpinSystemB]
 
-    editSetCallbacks = [None, None, None] #self.setAutoLabellingScheme]
+    editSetCallbacks = [None, None, None]
 
     self.displayResultsTable2 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
                                        editWidgets=editWidgets, multiSelect=False,
@@ -836,7 +818,7 @@ class ViewAssignmentPopup(BasePopup):
 
     editGetCallbacks = [self.selectSpinSystemC, self.selectSpinSystemC, self.selectSpinSystemC]
 
-    editSetCallbacks = [None, None, None] #self.setAutoLabellingScheme]
+    editSetCallbacks = [None, None, None]
 
     self.displayResultsTable3 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
                                        editWidgets=editWidgets, multiSelect=False,
@@ -851,7 +833,7 @@ class ViewAssignmentPopup(BasePopup):
 
     editGetCallbacks = [self.selectSpinSystemD, self.selectSpinSystemD, self.selectSpinSystemD]
 
-    editSetCallbacks = [None, None, None] #self.setAutoLabellingScheme]
+    editSetCallbacks = [None, None, None]
 
     self.displayResultsTable4 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
                                        editWidgets=editWidgets, multiSelect=False,
@@ -1969,8 +1951,7 @@ class ViewAssignmentPopup(BasePopup):
           spectra.append( spec )
         
     self.spectra = spectra
-
-  
+ 
   def toggleTab(self, index):
   
     a = 0
@@ -1978,30 +1959,8 @@ class ViewAssignmentPopup(BasePopup):
   def getLabellingSchemes(self):
   
     return [True, None,] + self.project.sortedLabelingSchemes()
-    
-  def updateLabellingSchemes(self, notifyScheme=None):
-  
-    #if notifyScheme and (notifyScheme is not self.labellingScheme):
-    #  return
-  
-    names = []
-    index = 0
-    
-    #scheme = self.labellingScheme
-    schemes = self.getLabellingSchemes()
-
-    for sc in schemes[2:]:                    #Just setting the natural abundance labelling scheme, need this later.
-      if sc.name == 'NatAbun' :
-        self.NatAbun = sc
-
-    
-    if schemes:
-      names = ['Automatic from sample','<None>'] + [sc.name for sc in schemes[2:]]
      
   def administerNotifiers(self, notifyFunc):
-
-#    notifyFunc(self.updateAssign, 'ccp.nmr.Nmr.ResonanceSet', 'delete')
-#    notifyFunc(self.updateAssign, 'ccp.nmr.Nmr.ResonanceSet', '__init__')
 
     notifyFunc(self.updateAfter, 'ccp.nmr.Nmr.Experiment', 'setName')
     notifyFunc(self.updateAfter, 'ccp.nmr.Nmr.DataSource', 'setName')
@@ -2012,10 +1971,6 @@ class ViewAssignmentPopup(BasePopup):
     notifyFunc(self.updateChains, 'ccp.molecule.MolSystem.Chain', '__init__')
     notifyFunc(self.updateResidue, 'ccp.molecule.MolSystem.Residue', 'setSeqCode')
 
-    notifyFunc(self.updateLabellingSchemes, 'ccp.molecule.ChemCompLabel.LabelingScheme', '__init__') 
-    notifyFunc(self.updateLabellingSchemes, 'ccp.molecule.ChemCompLabel.LabelingScheme', 'delete') 
-
-    #notifyFunc(self.updateSpectrumColors, 'memops.Implementation.AppDataString', 'setValue')
     
     
     
