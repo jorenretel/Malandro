@@ -524,18 +524,11 @@ class ViewAssignmentPopup(BasePopup):
     self.startNAButton = ButtonList(NAFrame,commands=commands, texts=texts)
     self.startNAButton.grid(row=0, column=0, sticky='nsew')
     
-    
-    texts    = ['Proceed']
-    commands = [self.noAction]
-    self.proceedNAButton = ButtonList(NAFrame,commands=commands, texts=texts)
-    self.proceedNAButton.grid(row=0, column=1, sticky='nsew')
-
-
 
     label = Label(NAFrame, text='Amount of attempts per temperature point in the annealling:', grid=(1,0))      
     tipText = 'The amount of attempts to switch the position of two spinsystems in the sequence are performed for each temperature point'
     self.NAStepEntry = IntEntry(NAFrame, grid=(1,1), width=7, text=10000,
-                                      returnCallback=self.noAction,
+                                      returnCallback=self.updateStepEntry,
                                       tipText=tipText)
     self.NAStepEntry.bind('<Leave>', self.updateStepEntry, '+')
     
@@ -543,7 +536,7 @@ class ViewAssignmentPopup(BasePopup):
     label = Label(NAFrame, text='Repeat optimization N times, N:', grid=(2,0))      
     tipText = 'The amount of times the whole optimization procedure is performed, each result is safed'
     self.repeatEntry = IntEntry(NAFrame, grid=(2,1), width=7, text=10,
-                                      returnCallback=self.noAction,
+                                      returnCallback=self.updateRepeatEntry,
                                       tipText=tipText)
     self.repeatEntry.bind('<Leave>', self.updateRepeatEntry, '+')
     
@@ -621,8 +614,7 @@ class ViewAssignmentPopup(BasePopup):
                                          index=selectCcpCodes.index(self.resultsSelectedCcpCode), 
                                          grid=(0,5), tipText=tipText)
                                          
-    self.selectedSolution = 1
-    #self.solutionNumber = 1                                 
+    self.selectedSolution = 1                               
                                          
     texts    = [' < ']
     commands = [self.resultsPrevSolution]
@@ -662,10 +654,6 @@ class ViewAssignmentPopup(BasePopup):
     resultsFirstFrame.grid_columnconfigure(0,  weight=1) 
 
     
-
-   # self.labelA     = Label(resultsFirstFrame, text = 'Res 1', grid=(0,1))
-
-    
     texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
     commands = [self.noAction, self.clickLinkA1, self.noAction, self.clickLinkA2, self.noAction, self.clickLinkA3, self.noAction, self.clickLinkA4, self.noAction]
     self.sequenceButtons = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
@@ -688,12 +676,7 @@ class ViewAssignmentPopup(BasePopup):
         self.sequenceButtons.grid_columnconfigure(n, uniform=2)  
       
 
-      
 
-      
-
-    
-    
     spacer = Spacer(resultsFirstFrame)
     spacer.grid(row=1, column=0, sticky='nsew') 
     
@@ -924,28 +907,15 @@ class ViewAssignmentPopup(BasePopup):
     
     for spectrum in self.spectra :
       
-      print spectrum
-      
       if spectrum.name == spectrumName :
-        
-        print 'same name'
         
         for peakList in spectrum.sortedPeakLists() :
           
-          print 'something'
-          
-          print peakList
-          
           if peakList.serial == myPeakListSerial :
-            
-            print 'found peakListSerial'
             
             for peak in peakList.peaks :
               
-              print 'going through peaks'
-              
               if peak.serial == myPeakSerial :
-                print 'found peak'
                 
                 return peak
                 
