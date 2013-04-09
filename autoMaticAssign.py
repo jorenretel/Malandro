@@ -7,6 +7,21 @@ def open_reference(argServer):
   """
   print 'version...'
   program = connector(argServer.parent)
+  
+def lockUntillResults(function) :
+
+  def wrapperFunction(self,*args, **kwargs) :
+    
+    if self.connector.results :
+  
+      function(self,*args, **kwargs)
+      
+    else :
+      
+      string = 'There are no results to show since the annealing did not run yet.'
+      showWarning('Run Annealing first', string,  parent=self)
+    
+  return wrapperFunction  
 
 import Tkinter
 import re
@@ -941,7 +956,7 @@ class ViewAssignmentPopup(BasePopup):
     
     fileName = self.fileselectionBox.getFile()
     self.connector.loadDataFromPyc(fileName)
-    
+  @lockUntillResults  
   def selectLink(self,number, topRow) :
     
     if topRow :
@@ -996,6 +1011,8 @@ class ViewAssignmentPopup(BasePopup):
         
         self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
         
+
+            
   def updatePeakTables(self, resA,  spinSystemA,  spinSystemB):
     
     link = None
@@ -1130,13 +1147,9 @@ class ViewAssignmentPopup(BasePopup):
       
       self.selectedPeak = obj
       
-  def selectSpinSystemX(self, number, obj):
+  def selectSpinSystemX(self, number, spinSystem):
     
     res = self.connector.results.chain.residues[self.resultsResidueNumber-3 + number]
-    
-    self.selectSpinSystem(res,  obj)
-    
-  def selectSpinSystem(self, res,  spinSystem):
     
     oldSpinSystemForResidue = res.userDefinedSolution
     
@@ -1148,7 +1161,11 @@ class ViewAssignmentPopup(BasePopup):
     
     spinSystem.userDefinedSolutions.append(res)
     
+    self.updateSpinSystemTable(res,  spinSystem)
+    self.updateLink()
     self.updateresultsTab()
+    
+  def updateSpinSystemTable(self, res,  spinSystem):
     
     DataModel = self.connector.results
     
@@ -1156,10 +1173,6 @@ class ViewAssignmentPopup(BasePopup):
     
     data = []
     colorMatrix = []
-    print '###'
-    print spinSystem.solutions
-    print '++'
-    print res.solutions
     
     for residueNumber in spinSystem.allowedResidues :
       
@@ -1170,12 +1183,9 @@ class ViewAssignmentPopup(BasePopup):
       oneRowColor = []
       
       string = str(residue.seqCode) + ' ' + residue.ccpCode
-      
-      
-      
+
       oneRow.append(string)
-      
-      
+          
       if spinSystem.ccpnSeqCode and spinSystem.ccpnSeqCode == residue.seqCode :                          # Assigned in the project to this residue
        
         oneRow.append('x') 
@@ -1199,14 +1209,11 @@ class ViewAssignmentPopup(BasePopup):
       else :
         
         oneRow.append(None)
-        
-       
+              
       oneRow.append(int(spinSystem.solutions.count(residue)/float(len(spinSystem.solutions))*100.0))
       color = self.pickColorByPercentage(spinSystem.solutions.count(residue)/float(len(spinSystem.solutions))*100.0)
       oneRowColor = [color, color, color, color, color]
-      
-      
-      
+         
       data.append(oneRow)    
       colorMatrix.append(oneRowColor)
           
@@ -1214,12 +1221,7 @@ class ViewAssignmentPopup(BasePopup):
 
     
     self.spinSysTable.sortDown = False
-    self.spinSysTable.sortLine(-1,  noUpdate=True)
-    print '####################################################################################################################################'
-    print self.selectedLinkA
-    print res.seqCode
-    
-    self.updateLink()
+    self.spinSysTable.sortLine(-1,  noUpdate=True)    
      
   def adoptSolution(self):
     
@@ -1239,7 +1241,8 @@ class ViewAssignmentPopup(BasePopup):
       self.selectedSolution = self.selectedSolution - 1
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
       self.updateresultsTab()
-       
+      
+  @lockUntillResults     
   def resultsNextSolution(self):
     
     #DataModel = self.DataModel
@@ -1353,6 +1356,7 @@ class ViewAssignmentPopup(BasePopup):
 
       return 
       
+    
     
     resNumber = self.resultsResidueNumber    
     
