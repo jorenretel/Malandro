@@ -1433,19 +1433,6 @@ class ViewAssignmentPopup(BasePopup):
           
         oneRow.append(spinSystemInfo)
           
- 
-        
-        #if res.seqCode == spinsys.ccpnSeqCode :
-        #
-        #  oneRow.append('match')
-        #  
-        #else :
-        #  
-        #  oneRow.append('-')
-          
-          
-        #oneRow.append(spinsys.solutions.count(res))
-        
         assignmentPercentage = int(float(res.solutions.count(spinsys)) / len(res.solutions) * 100.0)
         
         oneRow.append(assignmentPercentage)
