@@ -765,15 +765,13 @@ class ViewAssignmentPopup(BasePopup):
     resultsSecondFrame.grid_columnconfigure(3,  weight=1)    
     resultsSecondFrame.grid_columnconfigure(4,  weight=1) 
 
-    headingList = [ '#','taken by:',  '%']
+    headingList = [ '#',  '%']
 
-    tipTexts = [ 'Indidcating other residues where this spinsystem in selected for',  'percentage of the solutions that connected this spinsystem to this residue']
+    tipTexts = [ 'Spinsystem number {} indicates serial of the spinsystem. If the spinsystem was already assigned to a residue, the residue number is shown aswell',  'percentage of the solutions that connected this spinsystem to this residue']
 
-    editWidgets = [None, None, None]
+    editWidgets = [None, None]
 
-    editGetCallbacks = [lambda x: self.selectSpinSystemX(0,x)]*3
-
-    editSetCallbacks = [None, None, None]
+    editSetCallbacks = [None, None]
     
     self.displayResultsTables = []
     
@@ -1138,7 +1136,6 @@ class ViewAssignmentPopup(BasePopup):
     
     self.selectSpinSystem(res,  obj)
     
-
   def selectSpinSystem(self, res,  spinSystem):
     
     oldSpinSystemForResidue = res.userDefinedSolution
@@ -1356,7 +1353,6 @@ class ViewAssignmentPopup(BasePopup):
 
       return 
       
-      
     
     resNumber = self.resultsResidueNumber    
     
@@ -1374,7 +1370,7 @@ class ViewAssignmentPopup(BasePopup):
     resE = residues[resNumber +1]
     
     resList = [resA, resB, resC, resD, resE]
-    tableList = self.displayResultsTables #[self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
+    tableList = self.displayResultsTables
     
     
     for res,  table in zip(resList, tableList) :
@@ -1405,22 +1401,47 @@ class ViewAssignmentPopup(BasePopup):
         oneRow = []
         oneRowColor = []
         
-         
+        spinSystemInfo = '{' + str(spinsys.spinSystemNumber) + '}'
+        
         if spinsys.ccpnSeqCode :
           
-          oneRow.append( '{' + str(spinsys.spinSystemNumber) + '}' + '-' + str(spinsys.ccpnSeqCode) + ' ' + residues[spinsys.ccpnSeqCode -1].ccpCode )
+          spinSystemInfo += '-' + str(spinsys.ccpnSeqCode) + ' ' + residues[spinsys.ccpnSeqCode -1].ccpCode
           
-        else :  
-        
-          oneRow.append(spinsys.spinSystemNumber)
-        
-        if res.seqCode == spinsys.ccpnSeqCode : #res.ccpnResidue.findFirstResonanceGroup() and spinsys.spinSystemNumber == res.ccpnResidue.findFirstResonanceGroup().serial :
-        
-          oneRow.append('match')
+        elif spinsys.tentativeSeqCodes :
           
-        else :
+          spinSystemInfo += '-'
           
-          oneRow.append('-')
+          for seqCode in spinsys.tentativeSeqCodes :
+          
+            spinSystemInfo += str(seqCode) + ' ' + residues[seqCode -1].ccpCode + '? /'
+            
+          spinSystemInfo = spinSystemInfo[:-1]
+          
+        elif spinsys.ccpCode :
+          
+          spinSystemInfo += '-' + ccpCode
+          
+        elif spinSys.tentativeCcpCodes :
+          
+          spinSystemInfo += '-'
+          
+          for ccpCode in spinSys.tentativeCcpCodes :
+            
+            spinSystemInfo += ' ' + ccpCode + '? /'
+            
+          spinSystemInfo = spinSystemInfo[:-1]
+          
+        oneRow.append(spinSystemInfo)
+          
+ 
+        
+        #if res.seqCode == spinsys.ccpnSeqCode :
+        #
+        #  oneRow.append('match')
+        #  
+        #else :
+        #  
+        #  oneRow.append('-')
           
           
         #oneRow.append(spinsys.solutions.count(res))
@@ -1433,7 +1454,7 @@ class ViewAssignmentPopup(BasePopup):
         
         color = self.pickColorByPercentage(assignmentPercentage)
         
-        oneRowColor = [color,  color,  color]
+        oneRowColor = [color, color]
         
         data.append(oneRow)
         colorMatrix.append(oneRowColor)
@@ -1441,7 +1462,7 @@ class ViewAssignmentPopup(BasePopup):
         
       if jokers :
         
-        oneRow = ['Joker',  '-']
+        oneRow = ['Joker']
         print res.seqCode
         print jokers
         print len(jokers)
@@ -1463,7 +1484,7 @@ class ViewAssignmentPopup(BasePopup):
         
         color = self.pickColorByPercentage(assignmentPercentage)
         
-        oneRowColor = [color,  color,  color]
+        oneRowColor = [color, color]
         
         data.append(oneRow)
         colorMatrix.append(oneRowColor)
@@ -1589,13 +1610,13 @@ class ViewAssignmentPopup(BasePopup):
     
   def sortDisplayResultsTable(self) :
     
-    tableList = self.displayResultsTables #[self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
+    tableList = self.displayResultsTables
     
     for table in tableList :
       print table
       print type(table)
       #table.sortDown = False
-      table.sortLine(2,  noUpdate=True)
+      table.sortLine(1,  noUpdate=True)
       
   def pickColorByPercentage(self, percentage):
 
@@ -1880,24 +1901,19 @@ class ViewAssignmentPopup(BasePopup):
       peakListName = str(spectrum.peakList.serial)
       
 
-      if spectrum.labellingScheme == None :
+      if spectrum.labellingScheme is None :
         schemeName = 'None'
         
-      elif spectrum.labellingScheme == True :
+      elif spectrum.labellingScheme is True :
         
         schemeName = 'Automatic from sample'
       
-      
       else :
+        
         schemeName = spectrum.labellingScheme.name
     
-      
-      datum = [i+1,  
-                      name,
-                      peakListName,  
-                      spectrum.used and 'Yes' or 'No', 
-                      schemeName]
-                      
+      datum = [i+1, name, peakListName, spectrum.used and 'Yes' or 'No', schemeName]
+
       textMatrix.append(datum)
       
       i = i + 1
@@ -1914,11 +1930,7 @@ class ViewAssignmentPopup(BasePopup):
         
         colorMatrix.append([hexColor,  None,  None,  None,  None])
       
-         
-      
-      
-    self.displayTable.update(textMatrix=textMatrix,
-                             objectList=spectra,  colorMatrix=colorMatrix)
+    self.displayTable.update(textMatrix=textMatrix,objectList=spectra,  colorMatrix=colorMatrix)
                       
   def selectAutoSpec(self, obj, row, col):
     
