@@ -771,81 +771,33 @@ class ViewAssignmentPopup(BasePopup):
 
     editWidgets = [None, None, None]
 
-    editGetCallbacks = [self.selectSpinSystemA, self.selectSpinSystemA, self.selectSpinSystemA]
-
-    editSetCallbacks = [None, None, None] 
-
-    self.displayResultsTable1 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
-    self.displayResultsTable1.grid(row=0, column=0, sticky='nsew')
-    self.displayResultsTable1.sortDown = False
-
-
-
-
-
-    editWidgets = [None, None, None]
-
-    editGetCallbacks = [self.selectSpinSystemB, self.selectSpinSystemB, self.selectSpinSystemB]
+    editGetCallbacks = [lambda x: self.selectSpinSystemX(0,x)]*3
 
     editSetCallbacks = [None, None, None]
-
-    self.displayResultsTable2 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
+    
+    self.displayResultsTables = []
+    
+    # Sorry for this one, but it saves a lot of lines of code with arbitrary function names. createCallBackFunction takes one argument 'tableNumber'
+    # and returns a function that also takes one archument 'spinSystem'. This function is called in the end when the user
+    # clicks on the table to select a spinsystem. What this function does is calling self.selectSpinSystemX(tableNumber,spinSystem).
+    # In this way it is possible to create five tables in a loop but still tell self.selectSpinSystemX from who the call came. 
+    createCallbackFunction = lambda tableNumber : (lambda spinSystem :  self.selectSpinSystemX(tableNumber, spinSystem) )
+    
+    for i in range(5) :
+      
+      editGetCallbacks = [createCallbackFunction(i)]*3
+      
+      displayResultsTable = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
                                        editWidgets=editWidgets, multiSelect=False,
                                        editGetCallbacks=editGetCallbacks,
                                        editSetCallbacks=editSetCallbacks,
                                        tipTexts=tipTexts)
-    self.displayResultsTable2.grid(row=0, column=1, sticky='nsew')
-    self.displayResultsTable2.sortDown = False
-    
-    
-    
-    editWidgets = [None, None, None]
-
-    editGetCallbacks = [self.selectSpinSystemC, self.selectSpinSystemC, self.selectSpinSystemC]
-
-    editSetCallbacks = [None, None, None]
-
-    self.displayResultsTable3 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
-    self.displayResultsTable3.grid(row=0, column=2, sticky='nsew')
-    self.displayResultsTable3.sortDown = False
-    
-    
-    editWidgets = [None, None, None]
-
-    editGetCallbacks = [self.selectSpinSystemD, self.selectSpinSystemD, self.selectSpinSystemD]
-
-    editSetCallbacks = [None, None, None]
-
-    self.displayResultsTable4 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
-    self.displayResultsTable4.grid(row=0, column=3, sticky='nsew')
-    self.displayResultsTable4.sortDown = False
-    
-    
-    editWidgets = [None, None, None]
-
-    editGetCallbacks = [self.selectSpinSystemE, self.selectSpinSystemE, self.selectSpinSystemE]
-
-    editSetCallbacks = [None, None, None]
-
-    self.displayResultsTable5 = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
-    self.displayResultsTable5.grid(row=0, column=4, sticky='nsew')
-    self.displayResultsTable5.sortDown = False
+      displayResultsTable.grid(row=0, column=i, sticky='nsew')
+      displayResultsTable.sortDown = False
+      
+      self.displayResultsTables.append(displayResultsTable)
+      
+  
     
     self.sortDisplayResultsTable()
     
@@ -1180,45 +1132,12 @@ class ViewAssignmentPopup(BasePopup):
       
       self.selectedPeak = obj
       
-  def selectSpinSystemA(self, obj) :
+  def selectSpinSystemX(self, number, obj):
     
-    res = self.connector.results.chain.residues[self.resultsResidueNumber-3]
+    res = self.connector.results.chain.residues[self.resultsResidueNumber-3 + number]
     
-    spinsystem = obj
+    self.selectSpinSystem(res,  obj)
     
-    self.selectSpinSystem(res,  spinsystem)
-      
-  def selectSpinSystemB(self, obj) :
-    
-    res = self.connector.results.chain.residues[self.resultsResidueNumber-2]
-    
-    spinsystem = obj
-    
-    self.selectSpinSystem(res,  spinsystem)
-    
-  def selectSpinSystemC(self, obj) :
-    
-    res = self.connector.results.chain.residues[self.resultsResidueNumber-1]
-    
-    spinsystem = obj
-    
-    self.selectSpinSystem(res,  spinsystem)
-    
-  def selectSpinSystemD(self, obj) :
-    
-    res = self.connector.results.chain.residues[self.resultsResidueNumber]
-    
-    spinsystem = obj
-    
-    self.selectSpinSystem(res,  spinsystem)
-    
-  def selectSpinSystemE(self, obj) :
-    
-    res = self.connector.results.chain.residues[self.resultsResidueNumber+1]
-    
-    spinsystem = obj
-    
-    self.selectSpinSystem(res,  spinsystem) 
 
   def selectSpinSystem(self, res,  spinSystem):
     
@@ -1455,7 +1374,7 @@ class ViewAssignmentPopup(BasePopup):
     resE = residues[resNumber +1]
     
     resList = [resA, resB, resC, resD, resE]
-    tableList = [self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
+    tableList = self.displayResultsTables #[self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
     
     
     for res,  table in zip(resList, tableList) :
@@ -1670,7 +1589,7 @@ class ViewAssignmentPopup(BasePopup):
     
   def sortDisplayResultsTable(self) :
     
-    tableList = [self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
+    tableList = self.displayResultsTables #[self.displayResultsTable1, self.displayResultsTable2, self.displayResultsTable3, self.displayResultsTable4, self.displayResultsTable5]
     
     for table in tableList :
       print table
