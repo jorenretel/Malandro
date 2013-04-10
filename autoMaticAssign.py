@@ -9,6 +9,8 @@ def open_reference(argServer):
   program = connector(argServer.parent)
   
 def lockUntillResults(function) :
+  '''Decorator to lock certain functions untill results are present.
+  '''
 
   def wrapperFunction(self,*args, **kwargs) :
     
@@ -18,7 +20,7 @@ def lockUntillResults(function) :
       
     else :
       
-      string = 'There are no results to show since the annealing did not run yet.'
+      string = 'There are no results since the annealing did not run yet.'
       showWarning('Run Annealing first', string,  parent=self)
     
   return wrapperFunction  
@@ -218,8 +220,8 @@ class connector(object):
       
       self.getResults()
         
-      self.GUI.updateresultsTab()
-      self.GUI.sortDisplayResultsTable()
+      self.GUI.updateResultsTab()
+      #self.GUI.sortDisplayResultsTable()
     
   def checkPoint1(self):
     
@@ -408,8 +410,6 @@ class connector(object):
         if str(type(results)) == "<class 'pythonStyleClasses.pyDataModel'>" :
       
           self.results = results
-          self.GUI.updateresultsTab()
-          self.GUI.sortDisplayResultsTable()
           
         else :
           
@@ -529,10 +529,9 @@ class ViewAssignmentPopup(BasePopup):
     self.waiting = False
     self.updateAfter()
     
-    texts = ['Update',]
-    commands = [self.noAction,]
-    self.bottomButtons = UtilityButtonList(tabbedFrame.sideFrame, texts=texts,
-                                           commands=commands, helpUrl=self.help_url)
+    #texts = ['Update',]
+    #commands = [self.noAction,]
+    self.bottomButtons = UtilityButtonList(tabbedFrame.sideFrame, helpUrl='www.google.com')
     self.bottomButtons.grid(row=0, column=0, sticky = 'e')
 
     self.administerNotifiers(self.registerNotify)
@@ -722,15 +721,15 @@ class ViewAssignmentPopup(BasePopup):
     
     resultsFirstFrame.grid_rowconfigure(0, weight=1)
     resultsFirstFrame.grid_rowconfigure(1, weight=1)
-    resultsFirstFrame.grid_columnconfigure(0,  weight=1) 
+    resultsFirstFrame.grid_columnconfigure(0,  weight=1)
+    
+    
 
     
     texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
     commands = [self.noAction, lambda: self.selectLink(1,True), self.noAction, lambda: self.selectLink(2,True), self.noAction, lambda: self.selectLink(3,True), self.noAction, lambda: self.selectLink(4,True), self.noAction]
     self.sequenceButtons = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
     self.sequenceButtons.grid(row=0, column=0, sticky='nsew')   
-    
- 
     
 
     
@@ -792,9 +791,9 @@ class ViewAssignmentPopup(BasePopup):
     
     # Sorry for this one, but it saves a lot of lines of code with arbitrary function names. createCallBackFunction takes one argument 'tableNumber'
     # and returns a function that also takes one archument 'spinSystem'. This function is called in the end when the user
-    # clicks on the table to select a spinsystem. What this function does is calling self.selectSpinSystemX(tableNumber,spinSystem).
-    # In this way it is possible to create five tables in a loop but still tell self.selectSpinSystemX from who the call came. 
-    createCallbackFunction = lambda tableNumber : (lambda spinSystem :  self.selectSpinSystemX(tableNumber, spinSystem) )
+    # clicks on the table to select a spinsystem. What this function does is calling self.selectSpinSystem(tableNumber,spinSystem).
+    # In this way it is possible to create five tables in a loop but still tell self.selectSpinSystem from who the call came. 
+    createCallbackFunction = lambda tableNumber : (lambda spinSystem :  self.selectSpinSystem(tableNumber, spinSystem) )
     
     for i in range(5) :
       
@@ -940,13 +939,13 @@ class ViewAssignmentPopup(BasePopup):
                 return peak
                 
     return None
-                
-  def showResults(self):
-    
-    if self.connector.results :
-      
-      self.updateresultsTab()
   
+  @lockUntillResults              
+  def showResults(self):
+      
+    self.updateResultsTable()
+  
+  @lockUntillResults
   def saveDataToPyc(self) :
     
     fileName = self.fileselectionBox.getFile()
@@ -956,6 +955,9 @@ class ViewAssignmentPopup(BasePopup):
     
     fileName = self.fileselectionBox.getFile()
     self.connector.loadDataFromPyc(fileName)
+    self.updateResultsTable()
+    
+  
   @lockUntillResults  
   def selectLink(self,number, topRow) :
     
@@ -973,6 +975,10 @@ class ViewAssignmentPopup(BasePopup):
     self.updateLink()
     
   def updateLink(self) :
+    '''
+    Checks for any selected link (self.selectedLinkA or self.selectedLinkB) and calls
+    updatePeakTable with the correct residue Object and spinsystem Objects.
+    '''
     
     DataModel = self.connector.results
     resNumber = self.resultsResidueNumber
@@ -997,7 +1003,7 @@ class ViewAssignmentPopup(BasePopup):
       spinSystemA = resA.solutions[solutionNumber]
       spinSystemB = resB.solutions[solutionNumber]
       
-      self.updatePeakTables(resA, spinSystemA, spinSystemB)
+      self.updatePeakTable(resA, spinSystemA, spinSystemB)
       
     else :  
       
@@ -1005,15 +1011,19 @@ class ViewAssignmentPopup(BasePopup):
         spinSystemA = resA.userDefinedSolution
         spinSystemB = resB.userDefinedSolution
         
-        self.updatePeakTables(resA, spinSystemA, spinSystemB)
+        self.updatePeakTable(resA, spinSystemA, spinSystemB)
         
       else :
         
         self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
         
-
-            
-  def updatePeakTables(self, resA,  spinSystemA,  spinSystemB):
+  def updatePeakTable(self, resA,  spinSystemA,  spinSystemB):
+    '''
+    Updates the peak table to show the peaks that are found for a sequencial pair of
+    spinsystems A and B. If there is not a linkobject found for spinsystems A and B the
+    table is emptied. Also sets the selected peak to None.
+    '''
+    
     
     link = None
     
@@ -1027,15 +1037,12 @@ class ViewAssignmentPopup(BasePopup):
       link = resA.linkDict[key] 
     
     
-    
     if not link :
       
       self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
       self.displayNegPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
       
     else :
-      
-      
       
       data = []
       
@@ -1147,7 +1154,7 @@ class ViewAssignmentPopup(BasePopup):
       
       self.selectedPeak = obj
       
-  def selectSpinSystemX(self, number, spinSystem):
+  def selectSpinSystem(self, number, spinSystem):
     
     res = self.connector.results.chain.residues[self.resultsResidueNumber-3 + number]
     
@@ -1163,7 +1170,8 @@ class ViewAssignmentPopup(BasePopup):
     
     self.updateSpinSystemTable(res,  spinSystem)
     self.updateLink()
-    self.updateresultsTab()
+    self.updateResultsBottomRowButtons()
+    #self.updateresultsTab()
     
   def updateSpinSystemTable(self, res,  spinSystem):
     
@@ -1222,7 +1230,8 @@ class ViewAssignmentPopup(BasePopup):
     
     self.spinSysTable.sortDown = False
     self.spinSysTable.sortLine(-1,  noUpdate=True)    
-     
+  
+  @lockUntillResults   
   def adoptSolution(self):
     
     DataModel = self.connector.results
@@ -1232,15 +1241,22 @@ class ViewAssignmentPopup(BasePopup):
     for res in DataModel.chain.residues :
       
       res.userDefinedSolution = res.solutions[selectedSolution]
-      
-    self.updateresultsTab()
-      
+     
+    self.updateLink()
+    self.updateResultsBottomRowButtons()
+    #self.updateresultsTab()
+  
+  @lockUntillResults    
   def resultsPrevSolution(self):
 
     if self.selectedSolution != 1:
       self.selectedSolution = self.selectedSolution - 1
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
-      self.updateresultsTab()
+      
+      self.updateLink()
+      self.updateResultsTopRowButtons()
+      
+      #self.updateresultsTab()
       
   @lockUntillResults     
   def resultsNextSolution(self):
@@ -1253,8 +1269,13 @@ class ViewAssignmentPopup(BasePopup):
     if self.selectedSolution < amountOfRepeats:
       self.selectedSolution = self.selectedSolution + 1
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
-      self.updateresultsTab()
-
+      
+      self.updateLink()
+      self.updateResultsTopRowButtons()
+      
+      #self.updateresultsTab()
+  
+  @lockUntillResults
   def resultsPrevResidue(self):
     new_value = self.resultsResidueNumber
     if self.resultsSelectedCcpCode == 'residue' :
@@ -1272,8 +1293,15 @@ class ViewAssignmentPopup(BasePopup):
       self.resultsResidueNumber = new_value
       
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
-      self.updateresultsTab()
-
+      
+      self.updateLink()
+      self.updateResultsTopRowButtons()
+      self.updateResultsBottomRowButtons()
+      self.updateResultsTable()
+      
+      #self.updateresultsTab()
+      
+  @lockUntillResults
   def resultsNextResidue(self):
     
     print '---------------------------------------------------------------------------------------------'
@@ -1293,12 +1321,19 @@ class ViewAssignmentPopup(BasePopup):
     if self.resultsResidueNumber != new_value :
       self.resultsResidueNumber = new_value
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
-      self.updateresultsTab()
+      
+      self.updateLink()
+      self.updateResultsTopRowButtons()
+      self.updateResultsBottomRowButtons()
+      self.updateResultsTable()
+      
+      #self.updateresultsTab()
   
   def resultsChangeSelectedCcpCode(self, ccpCode):
   
     self.resultsSelectedCcpCode = ccpCode
   
+  @lockUntillResults
   def resultsUpdateAfterEntry(self, event=None):
     '''
     Update for entry of residue number in strip plots
@@ -1314,15 +1349,21 @@ class ViewAssignmentPopup(BasePopup):
     if value < 3:
       self.resultsResidueNumberEntry.set(3)
       self.resultsResidueNumber = 3
-      self.updateresultsTab()
+
     elif value > len(residues)-2:
       self.resultsResidueNumber = len(residues)-2
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
-      self.updateresultsTab()
+
     else :
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
-      self.updateresultsTab()
+      
+    self.updateLink()
+    self.updateResultsTopRowButtons()
+    self.updateResultsBottomRowButtons()
+    self.updateResultsTable()
+    #self.updateresultsTab()
 
+  @lockUntillResults
   def solutionUpdateAfterEntry(self, event=None):
     '''
     Update for entry of residue number in strip plots
@@ -1344,19 +1385,20 @@ class ViewAssignmentPopup(BasePopup):
     else :
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
       
-      self.updateresultsTab()
+    self.updateLink()
+    self.updateResultsTopRowButtons()      
       
-  def updateresultsTab(self):
+    #self.updateresultsTab()
     
-    if not self.connector.results :
-
-      string = 'There are no results to show since the annealing did not run yet.'
-      
-      showWarning('Run Annealing first', string,  parent=self)
-
-      return 
-      
+  def updateResultsTab(self) :
     
+    self.updateLink()
+    self.updateResultsTable()
+    self.updateResultsTopRowButtons()
+    self.updateResultsBottomRowButtons()
+    
+      
+  def updateResultsTable(self):
     
     resNumber = self.resultsResidueNumber    
     
@@ -1366,7 +1408,6 @@ class ViewAssignmentPopup(BasePopup):
     
     residues = chain.residues
   
-    
     resA = residues[resNumber -3]
     resB = residues[resNumber -2]
     resC = residues[resNumber - 1]
@@ -1405,35 +1446,7 @@ class ViewAssignmentPopup(BasePopup):
         oneRow = []
         oneRowColor = []
         
-        spinSystemInfo = '{' + str(spinsys.spinSystemNumber) + '}'
-        
-        if spinsys.ccpnSeqCode :
-          
-          spinSystemInfo += '-' + str(spinsys.ccpnSeqCode) + ' ' + residues[spinsys.ccpnSeqCode -1].ccpCode
-          
-        elif spinsys.tentativeSeqCodes :
-          
-          spinSystemInfo += '-'
-          
-          for seqCode in spinsys.tentativeSeqCodes :
-          
-            spinSystemInfo += str(seqCode) + ' ' + residues[seqCode -1].ccpCode + '? /'
-            
-          spinSystemInfo = spinSystemInfo[:-1]
-          
-        elif spinsys.ccpCode :
-          
-          spinSystemInfo += '-' + ccpCode
-          
-        elif spinSys.tentativeCcpCodes :
-          
-          spinSystemInfo += '-'
-          
-          for ccpCode in spinSys.tentativeCcpCodes :
-            
-            spinSystemInfo += ' ' + ccpCode + '? /'
-            
-          spinSystemInfo = spinSystemInfo[:-1]
+        spinSystemInfo = self.getStringDescriptionOfSpinSystem(spinsys)
           
         oneRow.append(spinSystemInfo)
           
@@ -1454,20 +1467,12 @@ class ViewAssignmentPopup(BasePopup):
       if jokers :
         
         oneRow = ['Joker']
-        print res.seqCode
-        print jokers
-        print len(jokers)
-        print len(res.solutions)
         
         NumberOfAssignmentsToJoker = 0
         
         for spinSys in jokers :
         
           NumberOfAssignmentsToJoker += res.solutions.count(spinSys)
-          
-        print '###'  
-          
-        print NumberOfAssignmentsToJoker  
         
         assignmentPercentage = int(float(NumberOfAssignmentsToJoker) / len(res.solutions) * 100.0)
         
@@ -1482,84 +1487,76 @@ class ViewAssignmentPopup(BasePopup):
         objectList.append(jokers[0])
         
       table.update(objectList=objectList,textMatrix=data,colorMatrix=colorMatrix)
-
-    
-  
-  
       
-    buttons = [self.sequenceButtons.buttons[0], self.sequenceButtons.buttons[2], self.sequenceButtons.buttons[4], self.sequenceButtons.buttons[6], self.sequenceButtons.buttons[8]]
+    self.sortDisplayResultsTable()  
+
+  def updateResultsTopRowButtons(self) :
+    
+    resList = self.getCurrentlyDisplayedResidues()
+    
+    buttons = self.sequenceButtons.buttons[::2]
       
     for button,  res in zip(buttons, resList) :
       
       #text = str(res.seqCode) + ' ' + res.ccpCode + ': ' + '{' + str(res.solutions[self.selectedSolution].spinSystemNumber) + '}'
       
+      spinsys = res.solutions[self.selectedSolution-1]
       
-      text = str(res.seqCode) + ' ' + res.ccpCode + ': '
+      text = str(res.seqCode) + ' ' + res.ccpCode + ': ' + self.getStringDescriptionOfSpinSystem(spinsys)
       
-      if res.solutions[self.selectedSolution-1].isJoker :
-        
-        text += 'Joker'
-        
-      else :
-      
-        text +=  '{' + str(res.solutions[self.selectedSolution-1].spinSystemNumber)  + '}'
-        
-        
-      
-      if res.solutions[self.selectedSolution-1].ccpnSeqCode :
-        
-        seqCode = res.solutions[self.selectedSolution-1].ccpnSeqCode
-      
-        text += '(' + str(seqCode) + ' ' + residues[seqCode - 1].ccpCode + ')'
-        
-      newText = text 
-      
-#      print '.....'
-#      
-#      print len(text)
-#      
-#      print range((100-len(text))/2)
-#        
-#      for iii in range((100-len(text))/2) :
-#      
-#        newText = ' ' + newText + ' '
-#        
-#      if len(newText)%2 :
-#        
-#        newText = newText + ' '
-#        
-#      print len(newText)  
-       
-       
+      #if res.solutions[self.selectedSolution-1].isJoker :
+      #  
+      #  text += 'Joker'
+      #  
+      #else :
+      #
+      #  text +=  '{' + str(res.solutions[self.selectedSolution-1].spinSystemNumber)  + '}'
+      #  
+      #  
+      #
+      #if res.solutions[self.selectedSolution-1].ccpnSeqCode :
+      #  
+      #  seqCode = res.solutions[self.selectedSolution-1].ccpnSeqCode
+      #
+      #  text += '(' + str(seqCode) + ' ' + residues[seqCode - 1].ccpCode + ')'
+      #  
+      #newText = text 
       
       button.config(text=text)
       
+  def updateResultsBottomRowButtons(self) :
+    
+    resList = self.getCurrentlyDisplayedResidues()
       
-    buttons = [self.sequenceButtonsB.buttons[0], self.sequenceButtonsB.buttons[2], self.sequenceButtonsB.buttons[4], self.sequenceButtonsB.buttons[6], self.sequenceButtonsB.buttons[8]]
+    #buttons = [self.sequenceButtonsB.buttons[0], self.sequenceButtonsB.buttons[2], self.sequenceButtonsB.buttons[4], self.sequenceButtonsB.buttons[6], self.sequenceButtonsB.buttons[8]]
+    
+    buttons = self.sequenceButtonsB.buttons[::2]
     
     for button,  res in zip(buttons, resList) :
       
       if res.userDefinedSolution :
         
         selectedSpinSystem = res.userDefinedSolution
+        text = self.getStringDescriptionOfSpinSystem(selectedSpinSystem)
         
-        text = str(res.seqCode) + ' ' + res.ccpCode + ': '
-        
-        if selectedSpinSystem.isJoker :
-          
-          text += 'Joker'
-          
-        else :
-        
-          text +=  '{' + str(selectedSpinSystem.spinSystemNumber)  + '}'
-          
-
-        
-        if selectedSpinSystem.ccpnSeqCode :
-          
-          seqCode = selectedSpinSystem.ccpnSeqCode
-        
-          text += '(' + str(seqCode) + ' ' + residues[seqCode - 1].ccpCode + ')'
+      #  
+      #  text = str(res.seqCode) + ' ' + res.ccpCode + ': '
+      #  
+      #  if selectedSpinSystem.isJoker :
+      #    
+      #    text += 'Joker'
+      #    
+      #  else :
+      #  
+      #    text +=  '{' + str(selectedSpinSystem.spinSystemNumber)  + '}'
+      #    
+      #
+      #  
+      #  if selectedSpinSystem.ccpnSeqCode :
+      #    
+      #    seqCode = selectedSpinSystem.ccpnSeqCode
+      #  
+      #    text += '(' + str(seqCode) + ' ' + residues[seqCode - 1].ccpCode + ')'
         
         if len(selectedSpinSystem.userDefinedSolutions) > 1 :
       
@@ -1574,9 +1571,6 @@ class ViewAssignmentPopup(BasePopup):
         text = str(res.seqCode) + ' ' + res.ccpCode + ': -'
       
         button.config(text=text,  bg='grey83')
-        
-    
-    self.updateLink()    
         
   def updateButtonHighLights(self):
     
@@ -1601,13 +1595,58 @@ class ViewAssignmentPopup(BasePopup):
     
   def sortDisplayResultsTable(self) :
     
-    tableList = self.displayResultsTables
-    
-    for table in tableList :
-      print table
-      print type(table)
-      #table.sortDown = False
+    for table in self.displayResultsTables :
+
       table.sortLine(1,  noUpdate=True)
+      
+  def getCurrentlyDisplayedResidues(self) :
+    
+    resNumber = self.resultsResidueNumber    
+
+    residues = self.connector.results.chain.residues[resNumber - 3 : resNumber + 2]
+  
+    return residues
+  
+  def getStringDescriptionOfSpinSystem(self,spinsys) :
+    
+    if spinsys.isJoker :
+      
+      return 'Joker'
+    
+    residues = self.connector.results.chain.residues
+    
+    spinSystemInfo = '{' + str(spinsys.spinSystemNumber) + '}'
+    
+    if spinsys.ccpnSeqCode :
+      
+      spinSystemInfo += '-' + str(spinsys.ccpnSeqCode) + ' ' + residues[spinsys.ccpnSeqCode -1].ccpCode
+      
+    elif spinsys.tentativeSeqCodes :
+      
+      spinSystemInfo += '-'
+      
+      for seqCode in spinsys.tentativeSeqCodes :
+      
+        spinSystemInfo += str(seqCode) + ' ' + residues[seqCode -1].ccpCode + '? /'
+        
+      spinSystemInfo = spinSystemInfo[:-1]
+      
+    elif spinsys.ccpCode :
+      
+      spinSystemInfo += '-' + spinsys.ccpCode
+      
+    elif spinSys.tentativeCcpCodes :
+      
+      spinSystemInfo += '-'
+      
+      for ccpCode in spinSys.tentativeCcpCodes :
+        
+        spinSystemInfo += ' ' + ccpCode + '? /'
+        
+      spinSystemInfo = spinSystemInfo[:-1]
+      
+    return spinSystemInfo  
+  
       
   def pickColorByPercentage(self, percentage):
 
@@ -1695,8 +1734,8 @@ class ViewAssignmentPopup(BasePopup):
   
     if chain is not self.chain:
       self.chain = chain
-      self.atomNamesList = []
-      self.update()
+      #self.atomNamesList = []
+      #self.update()
        
   def getChainName(self, chain):
   
@@ -1742,7 +1781,7 @@ class ViewAssignmentPopup(BasePopup):
   
     if chain is not self.chain:
       self.chain = chain
-      self.update()
+      #self.update()
   
   def update(self):
     
