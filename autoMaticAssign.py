@@ -1528,7 +1528,7 @@ class ViewAssignmentPopup(BasePopup):
       
       spinSystemInfo += '-' + spinsys.ccpCode
       
-    elif spinSys.tentativeCcpCodes :
+    elif spinsys.tentativeCcpCodes :
       
       spinSystemInfo += '-'
       

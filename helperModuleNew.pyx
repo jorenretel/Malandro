@@ -86,16 +86,13 @@ cdef class autoAssign :
     
     self.hc = 10000
     
-    
   def getResults(self):
     
     return self.getResultsC()
 
-
   cdef object getResultsC(self):
     
     return self.DataModel.pyDataModel
-
 
   def updateSettings(self,  connector):
     
@@ -140,7 +137,6 @@ cdef class autoAssign :
     
     self.useDimenionalAssignments = connector.useDimenionalAssignments
     
-    
   def preCalculateDataModel(self)  :
     
     self.updateInfoText('Setting up model for calculations...')
@@ -174,7 +170,6 @@ cdef class autoAssign :
     self.scoreAllLinks()
     
     self.updateInfoText('Precalculations have finished...')
-    
 
   cdef void doRandomAssignment(self):
     
@@ -359,7 +354,6 @@ cdef class autoAssign :
       if not isAssigned :
           
         print 'something went wrong during random assignment at the start of the procedure, not all residues have an assignment'
-              
 
   def runAnnealling(self):
     
@@ -404,13 +398,7 @@ cdef class autoAssign :
       self.annealingSub(AcceptanceConstant,amountOfStepsPerTemperature,listWithSpinSystems)
       
       self.addEnergyPoint(self.score,x)
-
-
-  def testB(self,string):
-    
-    self.updateInfoText(string)
-    
-    
+ 
   def startMonteCarlo(self):
     
     cdef int repeat
@@ -459,8 +447,7 @@ cdef class autoAssign :
     self.convertToPythonStyleDataModel()
     
     self.updateInfoText('Done')
-    
-      
+
   cdef void cleanAssignments(self) :
     
     cdef myDataModel DataModel
@@ -525,7 +512,6 @@ cdef class autoAssign :
       for peak in spectrum.peaks :
         
         peak.degeneracy = 0
-        
 
   cdef void setupPeakInformationForRandomAssignment(self):
     
@@ -572,7 +558,6 @@ cdef class autoAssign :
         for peak in link.realPeaks :
         
           peak.degeneracy += 1
-        
 
   cdef dict makePrivateCopyOfDictContainingLists(self,  dict dictio):                                                   # Make a copy of the spinsystemDict that can be modified without changing the original dictionary
     
@@ -587,8 +572,7 @@ cdef class autoAssign :
       copiedDict[key] = copyOfList
       
     return copiedDict
-      
-      
+
   cdef dict mergeDictionariesContainingLists(self, list dictionaries):
     
     
@@ -626,8 +610,7 @@ cdef class autoAssign :
       newDict[key] = list(set(newList))
       
     return newDict  
-          
-          
+
   cdef void createJokerSpinSystems(self):
     
     '''
@@ -692,9 +675,9 @@ cdef class autoAssign :
           
   
       
-      if key in DataModel.residueTypeFrequencyDict :
+      if key in DataModel.myChain.residueTypeFrequencyDict :
         
-        amountOfResiduesOfThisType = DataModel.residueTypeFrequencyDict[key]
+        amountOfResiduesOfThisType = DataModel.myChain.residueTypeFrequencyDict[key]
         
       else :
       
@@ -1148,7 +1131,6 @@ cdef class autoAssign :
             
         simulatedPeakMatrix.append(peaks)    
 
-     
   cdef list createPermutations(self, int length):
     
     '''This method creates all permutations of a given length of
@@ -1186,7 +1168,6 @@ cdef class autoAssign :
       
     return lists
   
-    
   cdef void createSpinSytemsAndResonances(self):
     
     
@@ -1333,7 +1314,7 @@ cdef class autoAssign :
               
             for ccpCode, score in scores.items() :
               
-              if score > float(self.DataModel.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.myChain.residues) :
+              if score > float(self.DataModel.myChain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.myChain.residues) :
                 
                 scoreDict[ccpCode] = score
               
@@ -1539,7 +1520,6 @@ cdef class autoAssign :
             else :                                                                                                                          
               
               allSpinSystemsWithoutAssigned[newSpinSystem.ccpCode] = [newSpinSystem]
-              
 
   cdef void scoreAllLinks(self):
     
@@ -1600,7 +1580,6 @@ cdef class autoAssign :
         
         linkObject.score = NfoundPeaks + NatomsUsed                     #- NfoundPeaksThatShouldNotHaveBeenThere
 
-
   cdef void matchSimulatedWithRealSpectra(self):
     
     self.updateInfoText('Matching real to simulated spectra.....')
@@ -1614,7 +1593,6 @@ cdef class autoAssign :
       self.updateInfoText('Match simulated with real spectrum: ' + spectrum.name)
     
       self.matchSpectrum(spectrum)
-
 
   cdef void matchSpectrum(self, aSpectrum spectrum):
     
@@ -1852,8 +1830,7 @@ cdef class autoAssign :
             linkObject.spinSystem2 = spinSys2
             
             resA.linkDict[(spinSys1.spinSystemNumber*hc+spinSys2.spinSystemNumber)] = linkObject  
-              
-     
+
   cdef list commonElementInLists(self, list listOfLists):
     
     cdef int length
@@ -1867,7 +1844,6 @@ cdef class autoAssign :
             
     return intersect
              
-
   cdef void calculateAllPeakContributions(self):
         
     
@@ -1888,7 +1864,6 @@ cdef class autoAssign :
       self.updateInfoText(info)
       
       self.findPossiblePeakContributions(spectrum)
-    
 
   cdef void findPossiblePeakContributions(self,aSpectrum  spectrum) :
     
@@ -2056,7 +2031,6 @@ cdef class autoAssign :
                 newlib[dim.dimNumber] = [peak]
                 
                 resonance.peakDimsLib[spectrum.name] = newlib
-        
 
   cdef void setupSpinSystemExchange(self):
     
@@ -2232,12 +2206,6 @@ cdef class autoAssign :
             for res in residuesByCcpCode[ccpCode] :
               
               spinSys.allowedResidues.add(res.seqCode)
-        
-        
-          
-
-      
-
 
   cdef double getAtomLabellingFraction(self,str molType, str ccpCode, str atomName, object labellingScheme):
     """
@@ -2288,7 +2256,6 @@ cdef class autoAssign :
 
           
     return fraction
-
 
   cdef double getAtomPairLabellingFraction_intra(self,str molType, str ccpCode, str atomNameA, str atomNameB, object labellingScheme):
     """
@@ -2354,14 +2321,12 @@ cdef class autoAssign :
       
     return fraction
 
-
   cdef double getAtomPairLabellingFraction_inter(self,str molType, str ccpCodeA, str ccpCodeB, str atomNameA, str atomNameB, object labellingScheme):
     fractionA = self.getAtomLabellingFraction(molType, ccpCodeA, atomNameA, labellingScheme)
     fractionB = self.getAtomLabellingFraction(molType, ccpCodeB, atomNameB, labellingScheme)
     fraction = fractionA * fractionB
       
     return fraction
-
 
   cdef double getCoLabellingFractionNew(self,aSpectrum spectrum,list atoms):
     
@@ -4289,8 +4254,6 @@ cdef class myDataModel :
   cdef list HXresonances
   
   cdef list NXresonances
-    
-  cdef dict residueTypeFrequencyDict 
 
   cdef autoAssign auto
   
@@ -4303,7 +4266,7 @@ cdef class myDataModel :
 
     self.spectra = []
 
-    self.myChain = myChain()
+    self.myChain = None #myChain()
         
     self.mySpinSystems = {}
       
@@ -4334,64 +4297,23 @@ cdef class myDataModel :
     self.NXresonances = []
     
     self.Hresonances = []
-    
-    self.residueTypeFrequencyDict = {}
 
 
   def setupChain(self):
+    
+    self.myChain = myChain(self.auto.chain)
 
-    #self.myChain.passData(self.auto, self)
-    self.myChain.setupCcpnChain(self.auto.chain)
-    self.myChain.setupResidues()
-    self.countResidueTypeFrequency()
-    self.linkResiduesTogether()
-
-    
-  cdef void countResidueTypeFrequency(self):
-    
-    cdef aResidue res
-    
-    for res in self.myChain.residues :
-      
-      if res.ccpCode in self.residueTypeFrequencyDict:
+    #self.myChain.setupCcpnChain(self.auto.chain)
+    #self.myChain.setupResidues()
+    #self.countResidueTypeFrequency()
+    #self.linkResiduesTogether()
         
-        self.residueTypeFrequencyDict[res.ccpCode] = (self.residueTypeFrequencyDict[res.ccpCode] + 1)
-        
-      else :
-        
-        self.residueTypeFrequencyDict[res.ccpCode] = 1
-        
-  cdef void linkResiduesTogether(self):
     
-    cdef list residues
-    
-    cdef int i
-    
-    cdef aResidue res
-    
-    cdef aResidue nextResidue
-    
-    residues = self.myChain.residues
-    
-    
-    
-    for i,  res in enumerate(residues[:-1])  :
-      
-      nextResidue = residues[i+1]
-      
-      res.nextResidue = nextResidue
-      
-      nextResidue.previousResidue = res
-    
-        
-
   def setupSpectra(self):
 
     for spectrum in self.auto.selectedSpectra :
 
       newspectrum = aSpectrum()
-      
-      #newspectrum.passData(self)
 
       newspectrum.setupCcpnSpectrum(spectrum.ccpnSpectrum)
       
@@ -4400,16 +4322,6 @@ cdef class myDataModel :
       newspectrum.setupPeakList(spectrum.peakList)
 
       self.spectra.append(newspectrum)
-      
-      
-    
-
-
-
-
-
-
-
 
   cdef void createPythonStyleObject(self):
     
@@ -4446,44 +4358,34 @@ cdef class myChain :
 
   cdef list residues 
     
-  cdef dict residuesByCcpCode 
+  cdef dict residuesByCcpCode
+  
+  cdef dict residueTypeFrequencyDict
 
   cdef object ccpnChain 
-
-  #cdef object myDataModel
-  #
-  #cdef autoAssign auto
   
   cdef object pyChain
   
-  def __init__(self):
+  def __init__(self, ccpnChain):
+    
+    self.ccpnChain = ccpnChain
 
     self.residues = []
     
+    self.residueTypeFrequencyDict = {}
+    
     self.residuesByCcpCode = {}
 
-    self.ccpnChain = None
+    self.setupResidues()
+    
+    self.countResidueTypeFrequency()
+    
+    self.linkResiduesTogether()
     
   def __getstate__(self):
     state = dict(self.__dict__)
     if 'ccpnChain' in state :
       del state['ccpnChain']
-    if 'popup' in state :
-      del state['popup']
-    return state
-
-
-    
-    
-  #def passData(self,autoAssign auto, myDataModel):
-  #
-  #  self.auto = auto
-  #  self.myDataModel = myDataModel
-
-
-  def setupCcpnChain(self, ccpnChain) :
-
-    self.ccpnChain = ccpnChain
 
   def setupResidues(self):
     
@@ -4515,11 +4417,39 @@ cdef class myChain :
         
         self.residuesByCcpCode[res.ccpCode] = [newresidue]
         
-
+  cdef void countResidueTypeFrequency(self):
     
+    cdef aResidue res
     
-
-
+    for res in self.residues :
+      
+      if res.ccpCode in self.residueTypeFrequencyDict:
+        
+        self.residueTypeFrequencyDict[res.ccpCode] = (self.residueTypeFrequencyDict[res.ccpCode] + 1)
+        
+      else :
+        
+        self.residueTypeFrequencyDict[res.ccpCode] = 1
+        
+  cdef void linkResiduesTogether(self):
+    
+    cdef list residues
+    
+    cdef int i
+    
+    cdef aResidue res
+    
+    cdef aResidue nextResidue
+    
+    residues = self.residues
+    
+    for i,  res in enumerate(residues[:-1])  :
+      
+      nextResidue = residues[i+1]
+      
+      res.nextResidue = nextResidue
+      
+      nextResidue.previousResidue = res
 
   cdef void createPythonStyleObject(self):
     
