@@ -198,7 +198,6 @@ class connector(object):
     if self.checkPoint1() :
     
       print 'setting up data model'
-      print self.selectedSpectra[0].peakList
       
       self.auto.setupMyDataModel()
       
@@ -375,9 +374,6 @@ class connector(object):
     results = None
     
     fileExists = False
-    
-    print fileName
-    print type(fileName)
         
     if os.path.exists(fileName) :
       
@@ -957,7 +953,6 @@ class ViewAssignmentPopup(BasePopup):
     self.connector.loadDataFromPyc(fileName)
     self.updateResultsTable()
     
-  
   @lockUntillResults  
   def selectLink(self,number, topRow) :
     
@@ -987,8 +982,6 @@ class ViewAssignmentPopup(BasePopup):
     solutionNumber = self.selectedSolution-1
     
     number = self.selectedLinkA or self.selectedLinkB
-    
-    print number
     
     if not number:
       
@@ -1089,9 +1082,6 @@ class ViewAssignmentPopup(BasePopup):
       self.selectedPeak = None  
 
   def findPeak(self):
-    
-    print self.selectedPeak 
-    print self.windowPane
 
     if self.selectedPeak and self.windowPane:
       
@@ -1112,17 +1102,8 @@ class ViewAssignmentPopup(BasePopup):
     windowPane = None #self.windowPane
     windowPanes = []
     names = []
-    
     peakList = None
-   # if self.peakList:
-   #   peakList = self.peakList
-   # elif self.peak:
-    #  peakList = self.peak.peakList
-      
-  #  if peakList:
-   # spectrum   = peakList.dataSource
     tryWindows = WindowBasic.getActiveWindows(self.project)
-    print tryWindows
     windowData = []
     getName = WindowBasic.getWindowPaneName
     
@@ -1304,9 +1285,6 @@ class ViewAssignmentPopup(BasePopup):
   @lockUntillResults
   def resultsNextResidue(self):
     
-    print '---------------------------------------------------------------------------------------------'
-    print self.resultsResidueNumber
-
     new_value = self.resultsResidueNumber
     if self.resultsSelectedCcpCode == 'residue' :
       if self.resultsResidueNumber != len(self.chain.residues)-2:
@@ -1397,7 +1375,6 @@ class ViewAssignmentPopup(BasePopup):
     self.updateResultsTopRowButtons()
     self.updateResultsBottomRowButtons()
     
-      
   def updateResultsTable(self):
     
     resNumber = self.resultsResidueNumber    
@@ -1647,7 +1624,6 @@ class ViewAssignmentPopup(BasePopup):
       
     return spinSystemInfo  
   
-      
   def pickColorByPercentage(self, percentage):
 
     percentage = float(percentage)
@@ -1734,8 +1710,6 @@ class ViewAssignmentPopup(BasePopup):
   
     if chain is not self.chain:
       self.chain = chain
-      #self.atomNamesList = []
-      #self.update()
        
   def getChainName(self, chain):
   
@@ -1840,17 +1814,10 @@ class ViewAssignmentPopup(BasePopup):
   def setAutoLabellingScheme(self, scheme):
     
     self.selectedAutoSpec.setupLabellingScheme(scheme)
-    
-    print scheme
 
     self.updateAutoMatrix()
 
   def getAutoLabellingSchemes(self, notifyScheme=None):
-  
-    print 'gssssssssssssssssssssssssssssssssss'
-  
-    print notifyScheme
-    print self.selectedAutoSpec
   
     names = []
     index = 0
@@ -1868,18 +1835,11 @@ class ViewAssignmentPopup(BasePopup):
       
   def setAutoPeakList(self, peakList):
     
-    print 'snssjss'
-    
     self.selectedAutoSpec.setupPeakList(peakList)
-    
-    print peakList
 
     self.updateAutoMatrix()
        
   def getAutoPeakLists(self,  notifyScheme=None):
-  
-    print self.selectedAutoSpec
-    print 'kkssssssssssssssssssssss'
   
     names = []
     index = 0
