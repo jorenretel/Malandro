@@ -189,6 +189,11 @@ class connector(object):
         
     self.auto.updateSettings(self)
     
+  def runAllCalculations(self):
+    
+    self.preCalculateDataModel()
+    self.startAnnealing()
+    
   def preCalculateDataModel(self):
     
     print 'updating'
@@ -528,22 +533,14 @@ class ViewAssignmentPopup(BasePopup):
     saveFrame.grid_rowconfigure(0, weight=1)
     saveFrame.grid_columnconfigure(0,  weight=1)
     
-    
-    
     autoFrame.grid_rowconfigure(2, weight=1)
     autoFrame.grid_columnconfigure(0,  weight=1)
     
+    #texts    = ['Do all pre-callculations']
+    #commands = [self.connector.preCalculateDataModel]
+    #self.preCalcButton = ButtonList(autoFrame,commands=commands, texts=texts)
+    #self.preCalcButton.grid(row=0, column=0, sticky='nsew')
     
-    
-    texts    = ['Do all pre-callculations']
-    commands = [self.connector.preCalculateDataModel]
-    self.preCalcButton = ButtonList(autoFrame,commands=commands, texts=texts)
-    self.preCalcButton.grid(row=0, column=0, sticky='nsew')
-    
-    label = Label(autoFrame, text='Chain:', grid=(1,0))
-    self.molPulldown = PulldownList(autoFrame, callback=self.changeMolecule, grid=(1,0))
-    self.updateChains()    
-
 
     headingList = ['#','Spectrum', 'Peak List','use?','labelling scheme']
 
@@ -578,8 +575,8 @@ class ViewAssignmentPopup(BasePopup):
 
 
 
-    texts    = ['Start Network Anchoring']
-    commands = [self.connector.startAnnealing]
+    texts    = ['Calculate Assignment Suggestions']
+    commands = [self.connector.runAllCalculations]
     self.startNAButton = ButtonList(NAFrame,commands=commands, texts=texts)
     self.startNAButton.grid(row=0, column=0, sticky='nsew')
     
@@ -624,13 +621,17 @@ class ViewAssignmentPopup(BasePopup):
     self.shiftListLabel    = Label(NAFrame, text ='Shift List:', grid=(9,0), sticky='w')
     self.shiftListPulldown = PulldownList(NAFrame, self.changeShiftList, grid=(9,1), sticky='w')
     
+    label = Label(NAFrame, text='Chain:', grid=(10,0))
+    self.molPulldown = PulldownList(NAFrame, callback=self.changeMolecule, grid=(10,1))
+    self.updateChains()  
+    
     self.updateShiftLists()
     
     
     self.energyPlot = ScrolledGraph(NAFrame,symbolSize=2, width=500,
                                        height=300, title='Annealing',
                                        xLabel='time', yLabel='energy')
-    self.energyPlot.grid(row=10, column=0, columnspan=10, sticky='nsew')
+    self.energyPlot.grid(row=11, column=0, columnspan=10, sticky='nsew')
     
 
     
