@@ -202,9 +202,9 @@ class connector(object):
     
     if self.checkPoint1() :
     
-      print 'setting up data model'
+      #print 'setting up data model'
       
-      self.auto.setupMyDataModel()
+      #self.auto.setupMyDataModel()
       
       print 'precalculate data model'
       
@@ -597,7 +597,6 @@ class ViewAssignmentPopup(BasePopup):
     self.repeatEntry.bind('<Leave>', self.updateRepeatEntry, '+')
     
     
-    
     label = Label(NAFrame, text='Temperature constants: ', grid=(3,0))   
     self.tempEntry = Entry(NAFrame, text=map(str, self.acceptanceConstantList), width=64, grid=(3,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
     
@@ -700,21 +699,12 @@ class ViewAssignmentPopup(BasePopup):
     self.adoptButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
     self.adoptButton.grid(row=0, column=9, sticky='nsew')  
     
-    
-    
-    
     resultsFirstFrame = LabelFrame(resultsFrame, text='Sequence Fragment')
     resultsFirstFrame.grid(row=1, column=0, sticky='ew')
-    
-    
-    
     
     resultsFirstFrame.grid_rowconfigure(0, weight=1)
     resultsFirstFrame.grid_rowconfigure(1, weight=1)
     resultsFirstFrame.grid_columnconfigure(0,  weight=1)
-    
-    
-
     
     texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
     commands = [self.noAction, lambda: self.selectLink(1,True), self.noAction, lambda: self.selectLink(2,True), self.noAction, lambda: self.selectLink(3,True), self.noAction, lambda: self.selectLink(4,True), self.noAction]
@@ -813,29 +803,19 @@ class ViewAssignmentPopup(BasePopup):
     resultsThirdFrame.grid_columnconfigure(0,  weight=1) 
    
     
-    
-    
-    
-    
     tabbedFrameB = TabbedFrame(resultsThirdFrame,options=['Spin System',  'Peaks',  'Peaks also appearing in spectra where they should not'],
                               callback=self.toggleTab, grid=(0,0))
     self.tabbedFrameB = tabbedFrame
 
     SpinSystemFrame,  PeakFrame,  negPeakFrame = tabbedFrameB.frames
     
-    
 
-    
-    
     SpinSystemFrame.grid_rowconfigure(0, weight=1)
     PeakFrame.grid_rowconfigure(1, weight=1)
     negPeakFrame.grid_rowconfigure(0, weight=1)
     SpinSystemFrame.grid_columnconfigure(0,  weight=1)    
     PeakFrame.grid_columnconfigure(0,  weight=1)    
     negPeakFrame.grid_columnconfigure(0,  weight=1)    
-    
-
-    
     
     
     headingList = [ 'residue','assigned to in project','user defined sequence', 'selected annealing result','%']
@@ -855,8 +835,6 @@ class ViewAssignmentPopup(BasePopup):
                                        editSetCallbacks=editSetCallbacks,
                                        tipTexts=tipTexts)
     self.spinSysTable.grid(row=0, column=0, sticky='nsew')
-
-
 
     self.findButton  = Button(PeakFrame, text=' Find Peak ',
                               borderwidth=1, padx=2, pady=1,command=self.findPeak,

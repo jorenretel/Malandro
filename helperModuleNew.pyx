@@ -144,6 +144,14 @@ cdef class autoAssign :
   def preCalculateDataModel(self)  :
     
     self.updateInfoText('Setting up model for calculations...')
+    
+    self.DataModel = myDataModel()
+    
+    self.DataModel.passData(self)
+    
+    self.updateInfoText('Setup-up all spectra...')
+    
+    self.DataModel.setupSpectra()
 
     self.DataModel.setupChain()
 
@@ -170,17 +178,6 @@ cdef class autoAssign :
     self.updateInfoText('Precalculations have finished...')
     
 
-  def setupMyDataModel(self):
-
-    self.updateInfoText('Setting up the model...')
-
-    self.DataModel = myDataModel()
-    
-    self.DataModel.passData(self)
-    
-    self.updateInfoText('Setup-up all spectra...')
-    
-    self.DataModel.setupSpectra()
     
 
   cdef void doRandomAssignment(self):
@@ -1610,7 +1607,6 @@ cdef class autoAssign :
 
   cdef void matchSimulatedWithRealSpectra(self):
     
-    #print 'matching the real spectra with their simulated equivalents to find out how well a pair of spinsystems fit sequentially.....'
     self.updateInfoText('Matching real to simulated spectra.....')
     
     cdef aSpectrum spectrum
