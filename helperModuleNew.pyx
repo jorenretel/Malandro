@@ -4302,11 +4302,6 @@ cdef class myDataModel :
   def setupChain(self):
     
     self.myChain = myChain(self.auto.chain)
-
-    #self.myChain.setupCcpnChain(self.auto.chain)
-    #self.myChain.setupResidues()
-    #self.countResidueTypeFrequency()
-    #self.linkResiduesTogether()
         
     
   def setupSpectra(self):
@@ -4549,21 +4544,11 @@ cdef class aResidue :
       
     for atom in self.ccpnResidue.atoms :
       
-      newatom = anAtom()
-      #newatom.passData(self.auto, self.myDataModel)
-      newatom.setupCcpnAtom(atom)
-      newatom.setupAtomName(atom.chemAtom.name)
-      newatom.setupResidueLink(self)
+      newatom = anAtom(self,atom)
       self.atoms.append(newatom)
       self.atomsByName[atom.chemAtom.name] = newatom
       self.atomsByCcpnChemAtom[atom.chemAtom] = newatom
       
-      
-
-
-
-
-
   cdef void createPythonStyleObject(self):
     
       self.pyResidue = pyResidue()
@@ -4575,10 +4560,6 @@ cdef class aResidue :
 
 cdef class anAtom :
 
-  #cdef object myDataModel
-  #
-  #cdef autoAssign auto
-
   cdef object ccpnAtom
 
   cdef str atomName
@@ -4589,17 +4570,17 @@ cdef class anAtom :
   
   cdef dict labelInfoTemp 
 
-  def __init__(self):
+  def __init__(self, residue, ccpnAtom):
+    
+    self.residue = residue
+    
+    self.ccpnAtom = ccpnAtom
+    
+    self.atomName = ccpnAtom.chemAtom.name
 
     self.assignmentPossibilityDimensions = []
     
     self.labelInfoTemp = {}
-    
-
-  #def passData(self,autoAssign auto, myDataModel):
-  #
-  #  self.auto = auto
-  #  self.myDataModel = myDataModel
 
   def setupCcpnAtom(self, atom):
 
@@ -4609,13 +4590,7 @@ cdef class anAtom :
 
     self.atomName = atomName
 
-  def setupResidueLink(self, residue):
-  
-    self.residue = residue
-
-
 cdef class aSpectrum :
-  
   
   cdef str name
   
@@ -4632,8 +4607,6 @@ cdef class aSpectrum :
   cdef object sequentialPeaksInThisSpectrum
   
   cdef object longRangePeaksInThisSpectrum
-  
-  #cdef myDataModel myDataModel
   
   cdef object peakList
  
@@ -4665,7 +4638,6 @@ cdef class aSpectrum :
     
     self.labellingScheme = None
     
-    
   def __getstate__(self):
     state = dict(self.__dict__)
     if 'ccpnSpectrum' in state :
@@ -4676,37 +4648,10 @@ cdef class aSpectrum :
       del state['popup']
     return state
     
-  #def passData(self,myDataModel):
-  #
-  #  self.myDataModel = myDataModel
-
-
   def setupCcpnSpectrum(self, ccpnSpectrum):
     
     self.ccpnSpectrum = ccpnSpectrum
     self.name = self.ccpnSpectrum.name
-    
-    
-
-    
-    
-  def changeSpectrumUse(self, TrueOrFalse):
-
-    self.thisSpectrumIsUsed = TrueOrFalse
-    
-  def changeIntra(self, TrueOrFalse):
-    
-    self.intraresidualPeaksInThisSpectrum = TrueOrFalse
-    
-  def changeSequential(self, TrueOrFalse):
-    
-    self.sequentialPeaksInThisSpectrum = TrueOrFalse
-    
-  def changeLongRange(self, TrueOrFalse):
-    
-    self.longRangePeaksInThisSpectrum = TrueOrFalse
-
-
 
   def setupLabellingScheme(self, labellingScheme):
 
@@ -4727,23 +4672,6 @@ cdef class aSpectrum :
       newpeak.setupApeak(peak)
       newpeak.setLinktoSpectrum(self)
       self.peaks.append(newpeak)
-
-
-  #def setupSimulatedPeakMatrix(self):
-  #  
-  #  
-  #
-  #  
-  #  i = 0
-  #  
-  #  residues = self.myDataModel.myChain.residues
-  #
-  #
-  #  for residue in residues[:-1] :
-  #    
-  #    self.simulatedPeakMatrix.append([])
-
-      
 
 
   cdef void createPythonStyleObject(self):
