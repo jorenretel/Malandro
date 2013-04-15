@@ -220,7 +220,6 @@ class connector(object):
       self.getResults()
         
       self.GUI.updateResultsTab()
-      #self.GUI.sortDisplayResultsTable()
     
   def checkPoint1(self):
     
@@ -335,8 +334,6 @@ class connector(object):
       
   def updateInfoText(self,string):
     
-    #self.GUI.waiting = True
-    
     print string
     
     self.GUI.updateInfoText(string)
@@ -344,8 +341,6 @@ class connector(object):
   def saveDataToPyc(self, fileName):
     
     if self.results :
-
-      #fileName = self.fileselectionBox.getFile()
       
       if not fileName[-4:] == '.pyc' :
         
@@ -512,7 +507,7 @@ class ViewAssignmentPopup(BasePopup):
     autoFrame,  NAFrame,  resultsFrame,  saveFrame = tabbedFrame.frames
     
     file_types = [ FileType('pyc', ['*.pyc']) ]
-    self.fileselectionBox = FileSelect(saveFrame, multiSelect=False,  file_types=file_types)        #, single_callback=self.chooseFiles)
+    self.fileselectionBox = FileSelect(saveFrame, multiSelect=False,  file_types=file_types)
     self.fileselectionBox.grid(row=0, column=0, columnspan=6, sticky='nsew')
     
     texts    = ['Load',  'Save']
@@ -525,8 +520,6 @@ class ViewAssignmentPopup(BasePopup):
     self.waiting = False
     self.updateAfter()
     
-    #texts = ['Update',]
-    #commands = [self.noAction,]
     self.bottomButtons = UtilityButtonList(tabbedFrame.sideFrame, helpUrl='www.google.com')
     self.bottomButtons.grid(row=0, column=0, sticky = 'e')
 
@@ -566,7 +559,7 @@ class ViewAssignmentPopup(BasePopup):
 
     editGetCallbacks = [None, None, self.getAutoPeakLists,  self.changeUse, self.getAutoLabellingSchemes]
 
-    editSetCallbacks = [None, None, None, None, None] #self.setAutoLabellingScheme]
+    editSetCallbacks = [None, None, None, None, None]
 
     self.displayTable = ScrolledMatrix(autoFrame,headingList=headingList,
                                        callback=self.selectAutoSpec,
@@ -1099,7 +1092,7 @@ class ViewAssignmentPopup(BasePopup):
   def updateWindows(self):
   
     index = 0
-    windowPane = None #self.windowPane
+    windowPane = None
     windowPanes = []
     names = []
     peakList = None
@@ -1152,7 +1145,6 @@ class ViewAssignmentPopup(BasePopup):
     self.updateSpinSystemTable(res,  spinSystem)
     self.updateLink()
     self.updateResultsBottomRowButtons()
-    #self.updateresultsTab()
     
   def updateSpinSystemTable(self, res,  spinSystem):
     
@@ -1225,7 +1217,6 @@ class ViewAssignmentPopup(BasePopup):
      
     self.updateLink()
     self.updateResultsBottomRowButtons()
-    #self.updateresultsTab()
   
   @lockUntillResults    
   def resultsPrevSolution(self):
@@ -1236,13 +1227,9 @@ class ViewAssignmentPopup(BasePopup):
       
       self.updateLink()
       self.updateResultsTopRowButtons()
-      
-      #self.updateresultsTab()
-      
+ 
   @lockUntillResults     
   def resultsNextSolution(self):
-    
-    #DataModel = self.DataModel
     
     amountOfRepeats = self.connector.results.amountOfRepeats
     
@@ -1253,8 +1240,6 @@ class ViewAssignmentPopup(BasePopup):
       
       self.updateLink()
       self.updateResultsTopRowButtons()
-      
-      #self.updateresultsTab()
   
   @lockUntillResults
   def resultsPrevResidue(self):
@@ -1280,8 +1265,6 @@ class ViewAssignmentPopup(BasePopup):
       self.updateResultsBottomRowButtons()
       self.updateResultsTable()
       
-      #self.updateresultsTab()
-      
   @lockUntillResults
   def resultsNextResidue(self):
     
@@ -1304,8 +1287,6 @@ class ViewAssignmentPopup(BasePopup):
       self.updateResultsTopRowButtons()
       self.updateResultsBottomRowButtons()
       self.updateResultsTable()
-      
-      #self.updateresultsTab()
   
   def resultsChangeSelectedCcpCode(self, ccpCode):
   
@@ -1339,7 +1320,6 @@ class ViewAssignmentPopup(BasePopup):
     self.updateResultsTopRowButtons()
     self.updateResultsBottomRowButtons()
     self.updateResultsTable()
-    #self.updateresultsTab()
 
   @lockUntillResults
   def solutionUpdateAfterEntry(self, event=None):
@@ -1365,8 +1345,6 @@ class ViewAssignmentPopup(BasePopup):
       
     self.updateLink()
     self.updateResultsTopRowButtons()      
-      
-    #self.updateresultsTab()
     
   def updateResultsTab(self) :
     
@@ -1475,29 +1453,9 @@ class ViewAssignmentPopup(BasePopup):
       
     for button,  res in zip(buttons, resList) :
       
-      #text = str(res.seqCode) + ' ' + res.ccpCode + ': ' + '{' + str(res.solutions[self.selectedSolution].spinSystemNumber) + '}'
-      
       spinsys = res.solutions[self.selectedSolution-1]
       
       text = str(res.seqCode) + ' ' + res.ccpCode + ': ' + self.getStringDescriptionOfSpinSystem(spinsys)
-      
-      #if res.solutions[self.selectedSolution-1].isJoker :
-      #  
-      #  text += 'Joker'
-      #  
-      #else :
-      #
-      #  text +=  '{' + str(res.solutions[self.selectedSolution-1].spinSystemNumber)  + '}'
-      #  
-      #  
-      #
-      #if res.solutions[self.selectedSolution-1].ccpnSeqCode :
-      #  
-      #  seqCode = res.solutions[self.selectedSolution-1].ccpnSeqCode
-      #
-      #  text += '(' + str(seqCode) + ' ' + residues[seqCode - 1].ccpCode + ')'
-      #  
-      #newText = text 
       
       button.config(text=text)
       
@@ -1505,8 +1463,6 @@ class ViewAssignmentPopup(BasePopup):
     
     resList = self.getCurrentlyDisplayedResidues()
       
-    #buttons = [self.sequenceButtonsB.buttons[0], self.sequenceButtonsB.buttons[2], self.sequenceButtonsB.buttons[4], self.sequenceButtonsB.buttons[6], self.sequenceButtonsB.buttons[8]]
-    
     buttons = self.sequenceButtonsB.buttons[::2]
     
     for button,  res in zip(buttons, resList) :
@@ -1515,25 +1471,6 @@ class ViewAssignmentPopup(BasePopup):
         
         selectedSpinSystem = res.userDefinedSolution
         text = self.getStringDescriptionOfSpinSystem(selectedSpinSystem)
-        
-      #  
-      #  text = str(res.seqCode) + ' ' + res.ccpCode + ': '
-      #  
-      #  if selectedSpinSystem.isJoker :
-      #    
-      #    text += 'Joker'
-      #    
-      #  else :
-      #  
-      #    text +=  '{' + str(selectedSpinSystem.spinSystemNumber)  + '}'
-      #    
-      #
-      #  
-      #  if selectedSpinSystem.ccpnSeqCode :
-      #    
-      #    seqCode = selectedSpinSystem.ccpnSeqCode
-      #  
-      #    text += '(' + str(seqCode) + ' ' + residues[seqCode - 1].ccpCode + ')'
         
         if len(selectedSpinSystem.userDefinedSolutions) > 1 :
       
@@ -1755,7 +1692,6 @@ class ViewAssignmentPopup(BasePopup):
   
     if chain is not self.chain:
       self.chain = chain
-      #self.update()
   
   def update(self):
     
