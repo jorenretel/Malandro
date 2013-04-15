@@ -145,10 +145,8 @@ cdef class autoAssign :
     
     self.updateInfoText('Setting up model for calculations...')
     
-    self.DataModel = myDataModel()
-    
-    self.DataModel.passData(self)
-    
+    self.DataModel = myDataModel(self)
+        
     self.updateInfoText('Setup-up all spectra...')
     
     self.DataModel.setupSpectra()
@@ -176,8 +174,6 @@ cdef class autoAssign :
     self.scoreAllLinks()
     
     self.updateInfoText('Precalculations have finished...')
-    
-
     
 
   cdef void doRandomAssignment(self):
@@ -1886,9 +1882,7 @@ cdef class autoAssign :
     for spectrum in self.DataModel.spectra:                 # Determine for each dimension of every peak in all (used) spectra, which resonances can contribute to the peak
       
       spectrum.setupPeaks()   
-        
-      #print spectrum.name
-      
+              
       info = 'Evaluating dimensional contributions to peaks: ' + spectrum.name
       
       self.updateInfoText(info)
@@ -1987,13 +1981,15 @@ cdef class autoAssign :
         
         for contrib in dim.ccpnDim.peakDimContribs :
           
-          if contrib.resonance.resonanceGroup.serial in ssDict :
+          if contrib.resonance and contrib.resonance.resonanceGroup :
           
-            ssDict[contrib.resonance.resonanceGroup.serial] +=1
+            if contrib.resonance.resonanceGroup.serial in ssDict :
             
-          else :  
-          
-            ssDict[contrib.resonance.resonanceGroup.serial] = 1
+              ssDict[contrib.resonance.resonanceGroup.serial] +=1
+              
+            else :  
+            
+              ssDict[contrib.resonance.resonanceGroup.serial] = 1
             
             
       if ssDict :
@@ -4301,12 +4297,9 @@ cdef class myDataModel :
   cdef object pyDataModel
 
 
-
-
-
-  
-
-  def __init__(self):
+  def __init__(self, autoAssign auto):
+    
+    self.auto = auto
 
     self.spectra = []
 
@@ -4344,17 +4337,10 @@ cdef class myDataModel :
     
     self.residueTypeFrequencyDict = {}
 
-        
-
-    
-
-  def passData(self,autoAssign auto):
-
-    self.auto = auto
 
   def setupChain(self):
 
-    self.myChain.passData(self.auto, self)
+    #self.myChain.passData(self.auto, self)
     self.myChain.setupCcpnChain(self.auto.chain)
     self.myChain.setupResidues()
     self.countResidueTypeFrequency()
@@ -4405,7 +4391,7 @@ cdef class myDataModel :
 
       newspectrum = aSpectrum()
       
-      newspectrum.passData(self)
+      #newspectrum.passData(self)
 
       newspectrum.setupCcpnSpectrum(spectrum.ccpnSpectrum)
       
@@ -4464,9 +4450,9 @@ cdef class myChain :
 
   cdef object ccpnChain 
 
-  cdef object myDataModel
-
-  cdef autoAssign auto
+  #cdef object myDataModel
+  #
+  #cdef autoAssign auto
   
   cdef object pyChain
   
@@ -4489,10 +4475,10 @@ cdef class myChain :
 
     
     
-  def passData(self,autoAssign auto, myDataModel):
-
-    self.auto = auto
-    self.myDataModel = myDataModel
+  #def passData(self,autoAssign auto, myDataModel):
+  #
+  #  self.auto = auto
+  #  self.myDataModel = myDataModel
 
 
   def setupCcpnChain(self, ccpnChain) :
@@ -4507,7 +4493,7 @@ cdef class myChain :
 
       newresidue = aResidue()
       
-      newresidue.passData(self.auto, self.myDataModel)
+      #newresidue.passData(self.auto, self.myDataModel)
 
       newresidue.setupCcpnResidue(res)
       
@@ -4572,9 +4558,9 @@ cdef class aResidue :
   
   cdef dict linkDict
 
-  cdef object myDataModel
-
-  cdef autoAssign auto
+  #cdef object myDataModel
+  #
+  #cdef autoAssign auto
   
   cdef object pyResidue
   
@@ -4612,10 +4598,10 @@ cdef class aResidue :
       del state['popup']
     return state
     
-  def passData(self, autoAssign auto, myDataModel):
-
-    self.auto = auto
-    self.myDataModel = myDataModel
+  #def passData(self, autoAssign auto, myDataModel):
+  #
+  #  self.auto = auto
+  #  self.myDataModel = myDataModel
 
   def setupCcpnResidue(self, ccpnResidue):
 
@@ -4634,7 +4620,7 @@ cdef class aResidue :
     for atom in self.ccpnResidue.atoms :
       
       newatom = anAtom()
-      newatom.passData(self.auto, self.myDataModel)
+      #newatom.passData(self.auto, self.myDataModel)
       newatom.setupCcpnAtom(atom)
       newatom.setupAtomName(atom.chemAtom.name)
       newatom.setupResidueLink(self)
@@ -4659,9 +4645,9 @@ cdef class aResidue :
 
 cdef class anAtom :
 
-  cdef object myDataModel
-
-  cdef autoAssign auto
+  #cdef object myDataModel
+  #
+  #cdef autoAssign auto
 
   cdef object ccpnAtom
 
@@ -4680,10 +4666,10 @@ cdef class anAtom :
     self.labelInfoTemp = {}
     
 
-  def passData(self,autoAssign auto, myDataModel):
-
-    self.auto = auto
-    self.myDataModel = myDataModel
+  #def passData(self,autoAssign auto, myDataModel):
+  #
+  #  self.auto = auto
+  #  self.myDataModel = myDataModel
 
   def setupCcpnAtom(self, atom):
 
@@ -4717,7 +4703,7 @@ cdef class aSpectrum :
   
   cdef object longRangePeaksInThisSpectrum
   
-  cdef myDataModel myDataModel
+  #cdef myDataModel myDataModel
   
   cdef object peakList
  
@@ -4760,9 +4746,9 @@ cdef class aSpectrum :
       del state['popup']
     return state
     
-  def passData(self,myDataModel):
-
-    self.myDataModel = myDataModel
+  #def passData(self,myDataModel):
+  #
+  #  self.myDataModel = myDataModel
 
 
   def setupCcpnSpectrum(self, ccpnSpectrum):
@@ -4803,31 +4789,29 @@ cdef class aSpectrum :
   def setupPeaks(self):
 
     peaks = self.peakList.peaks
-    #print 'jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj'
-    #print peaks
 
     for peak in peaks:
       
       newpeak = aPeak()
-      newpeak.passData(self.myDataModel)
+      #newpeak.passData(self.myDataModel)
       newpeak.setupApeak(peak)
       newpeak.setLinktoSpectrum(self)
       self.peaks.append(newpeak)
 
 
-  def setupSimulatedPeakMatrix(self):
-    
-    
-
-    
-    i = 0
-    
-    residues = self.myDataModel.myChain.residues
-
-
-    for residue in residues[:-1] :
-      
-      self.simulatedPeakMatrix.append([])
+  #def setupSimulatedPeakMatrix(self):
+  #  
+  #  
+  #
+  #  
+  #  i = 0
+  #  
+  #  residues = self.myDataModel.myChain.residues
+  #
+  #
+  #  for residue in residues[:-1] :
+  #    
+  #    self.simulatedPeakMatrix.append([])
 
       
 
@@ -4861,9 +4845,9 @@ cdef class aPeak :
   
   cdef int peakListSerial
   
-  cdef autoAssign auto
-  
-  cdef myDataModel myDataModel
+  #cdef autoAssign auto
+  #
+  #cdef myDataModel myDataModel
 
   cdef object intraResidual
   
@@ -4884,9 +4868,9 @@ cdef class aPeak :
     
 
     
-  def passData(self,myDataModel):
-
-    self.myDataModel = myDataModel
+  #def passData(self,myDataModel):
+  #
+  #  self.myDataModel = myDataModel
     
   
   def setupApeak(self, ccpnPeak):
@@ -4908,7 +4892,7 @@ cdef class aPeak :
     for dim in self.ccpnPeak.peakDims :
 
       dimension = aDimension()
-      dimension.passData(self.myDataModel)
+      #dimension.passData(self.myDataModel)
       dimension.setupCcpnDim(dim)
       dimension.setupPeakLink(self)
       self.dimensions.append(dimension)
@@ -4979,9 +4963,9 @@ cdef class aDimension :
   
   cdef aPeak peak 
   
-  cdef myDataModel myDataModel
-  
-  cdef autoAssign auto
+  #cdef myDataModel myDataModel
+  #
+  #cdef autoAssign auto
   
   cdef pyDimension
   
@@ -5012,9 +4996,9 @@ cdef class aDimension :
     
     return state
     
-  def passData(self,myDataModel):
-
-    self.myDataModel = myDataModel
+  #def passData(self,myDataModel):
+  #
+  #  self.myDataModel = myDataModel
 
 
   def setupCcpnDim(self, dim):
@@ -5066,9 +5050,9 @@ cdef class spinSystemLink :
   
   cdef list peaksThatShouldNotHaveBeenThere
   
-  cdef autoAssign auto
-  
-  cdef myDataModel myDataModel
+  #cdef autoAssign auto
+  #
+  #cdef myDataModel myDataModel
   
   cdef object pySpinSystemLink
   
@@ -5204,9 +5188,9 @@ cdef class mySpinSystem :
   
   cdef dict aminoAcidProbs
   
-  cdef autoAssign auto
-  
-  cdef myDataModel myDataModel
+  #cdef autoAssign auto
+  #
+  #cdef myDataModel myDataModel
   
   cdef object pySpinSystem
   
