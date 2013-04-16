@@ -6,6 +6,7 @@ def open_reference(argServer):
      Output: None
   """
   print 'version...'
+
   program = connector(argServer.parent)
   
 def lockUntillResults(function) :
@@ -93,14 +94,12 @@ from ccpnmr.analysis.core.MarkBasic import createPeakMark
 
 import ccpnmr.analysis.core.WindowBasic as WindowBasic
 
-import helperModuleNew
 
 from helperModuleNew import autoAssign
 
 from pythonStyleClasses import *
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
-
 
 
 

@@ -4266,7 +4266,7 @@ cdef class myDataModel :
 
     self.spectra = []
 
-    self.myChain = None #myChain()
+    self.myChain = None
         
     self.mySpinSystems = {}
       
@@ -4306,15 +4306,9 @@ cdef class myDataModel :
     
   def setupSpectra(self):
 
-    for spectrum in self.auto.selectedSpectra :
+    for temporary_spectrum_object in self.auto.selectedSpectra :
 
-      newspectrum = aSpectrum()
-
-      newspectrum.setupCcpnSpectrum(spectrum.ccpnSpectrum)
-      
-      newspectrum.setupLabellingScheme(spectrum.labellingScheme)
-      
-      newspectrum.setupPeakList(spectrum.peakList)
+      newspectrum = aSpectrum(temporary_spectrum_object)
 
       self.spectra.append(newspectrum)
 
@@ -4388,19 +4382,7 @@ cdef class myChain :
     for res in self.ccpnChain.sortedResidues() :
       
 
-      newresidue = aResidue()
-      
-      #newresidue.passData(self.auto, self.myDataModel)
-
-      newresidue.setupCcpnResidue(res)
-      
-      newresidue.seqCode = res.seqCode
-      
-      newresidue.ccpCode = res.ccpCode
-
-      newresidue.setupChainLink(self)
-      
-      newresidue.setupAtoms()
+      newresidue = aResidue(self, res)
 
       self.residues.append(newresidue)
       
@@ -4482,30 +4464,23 @@ cdef class aResidue :
   cdef int seqCode
   
   cdef dict linkDict
-
-  #cdef object myDataModel
-  #
-  #cdef autoAssign auto
   
   cdef object pyResidue
   
-  #cdef object userDefinedSolution
-  
-  
 
-  def __init__(self):
+  def __init__(self, chain, ccpnResidue):
 
-    self.ccpnResidue = None
+    self.ccpnResidue = ccpnResidue
 
-    self.ccpCode = None
+    self.ccpCode = ccpnResidue.ccpCode
+    
+    self.seqCode = ccpnResidue.seqCode
 
-    self.chain = None    # Parent link
+    self.chain = chain    # Parent link
 
     self.atoms = []
     
     self.solutions = []
-    
-    #self.userDefinedSolution = None
     
     self.linkDict = {}
     
@@ -4513,32 +4488,15 @@ cdef class aResidue :
     
     self.atomsByCcpnChemAtom = {}
     
+    self.setupAtoms()
+    
     
     
   def __getstate__(self):
     state = dict(self.__dict__)
     if 'ccpnResidue' in state :
       del state['ccpnResidue']
-    if 'popup' in state :
-      del state['popup']
     return state
-    
-  #def passData(self, autoAssign auto, myDataModel):
-  #
-  #  self.auto = auto
-  #  self.myDataModel = myDataModel
-
-  def setupCcpnResidue(self, ccpnResidue):
-
-    self.ccpnResidue = ccpnResidue
-
-  def setupCcpCode(self, ccpCode):
-
-    self.ccpCode = ccpCode
-
-  def setupChainLink(self, chain):
-
-    self.chain = chain
 
   def setupAtoms(self):
       
@@ -4556,7 +4514,6 @@ cdef class aResidue :
       self.pyResidue.seqCode = self.seqCode
       
       self.pyResidue.ccpCode = self.ccpCode
-
 
 cdef class anAtom :
 
@@ -4582,13 +4539,6 @@ cdef class anAtom :
     
     self.labelInfoTemp = {}
 
-  def setupCcpnAtom(self, atom):
-
-    self.ccpnAtom = atom
-
-  def setupAtomName(self, atomName):
-
-    self.atomName = atomName
 
 cdef class aSpectrum :
   
@@ -4599,44 +4549,30 @@ cdef class aSpectrum :
   cdef list simulatedPeakMatrix
  
   cdef list peaks
- 
-  cdef object thisSpectrumIsUsed
-
-  cdef object intraresidualPeaksInThisSpectrum
   
-  cdef object sequentialPeaksInThisSpectrum
-  
-  cdef object longRangePeaksInThisSpectrum
-  
-  cdef object peakList
+  cdef object ccpnPeakList
  
   cdef object labellingScheme
   
   cdef object pySpectrum
+  
  
    
 
-  def __init__(self):
+  def __init__(self, temporary_spectrum_object):
     
-    self.name = None
-
-    self.ccpnSpectrum = None
+    self.ccpnSpectrum = temporary_spectrum_object.ccpnSpectrum
+    self.name = temporary_spectrum_object.ccpnSpectrum.name
+    self.labellingScheme = temporary_spectrum_object.labellingScheme
+    self.ccpnPeakList = temporary_spectrum_object.peakList
     
     self.simulatedPeakMatrix = []
 
     self.peaks = []
+    
+    self.setupPeaks()
 
-    self.labellingScheme = True
     
-    self.thisSpectrumIsUsed = False
-    
-    self.intraresidualPeaksInThisSpectrum = False
-    
-    self.sequentialPeaksInThisSpectrum = False
-    
-    self.longRangePeaksInThisSpectrum = False
-    
-    self.labellingScheme = None
     
   def __getstate__(self):
     state = dict(self.__dict__)
@@ -4644,35 +4580,18 @@ cdef class aSpectrum :
       del state['ccpnSpectrum']
     if 'labellingScheme' in state :
       del state['labellingScheme']      
-    if 'popup' in state :
-      del state['popup']
     return state
     
-  def setupCcpnSpectrum(self, ccpnSpectrum):
-    
-    self.ccpnSpectrum = ccpnSpectrum
-    self.name = self.ccpnSpectrum.name
-
-  def setupLabellingScheme(self, labellingScheme):
-
-    self.labellingScheme = labellingScheme
-    
-  def setupPeakList(self,  peakList):
-    
-    self.peakList = peakList
 
   def setupPeaks(self):
 
-    peaks = self.peakList.peaks
+    peaks = self.ccpnPeakList.peaks
 
     for peak in peaks:
       
-      newpeak = aPeak()
-      #newpeak.passData(self.myDataModel)
-      newpeak.setupApeak(peak)
-      newpeak.setLinktoSpectrum(self)
-      self.peaks.append(newpeak)
+      newpeak = aPeak(self,peak)
 
+      self.peaks.append(newpeak)
 
   cdef void createPythonStyleObject(self):
     
@@ -4685,7 +4604,6 @@ cdef class aSpectrum :
     for peak in self.peaks :
       
       self.pySpectrum.peaks.append(peak.pyPeak)
-
 
 cdef class aPeak :
 
@@ -4702,57 +4620,31 @@ cdef class aPeak :
   cdef int serial
   
   cdef int peakListSerial
-  
-  #cdef autoAssign auto
-  #
-  #cdef myDataModel myDataModel
 
   cdef object intraResidual
   
   cdef object pyPeak
   
   
-  def __init__(self):
-    
-    self.ccpnPeak = None
-    
-    self.dimensions = []
-    
-    self.degeneracy = 0
-    
-    self.degeneracyTemp = 0
-    
-    self.intraResidual = False
-    
-
-    
-  #def passData(self,myDataModel):
-  #
-  #  self.myDataModel = myDataModel
-    
-  
-  def setupApeak(self, ccpnPeak):
+  def __init__(self, spectrum, ccpnPeak):
     
     self.ccpnPeak = ccpnPeak
+    self.spectrum = spectrum
+    self.dimensions = []
+    self.degeneracy = 0
+    self.degeneracyTemp = 0
+    self.intraResidual = False
     self.setupDimensions()
     self.checkForIntraResidualAssignment()
     self.serial = ccpnPeak.serial
     self.peakListSerial = ccpnPeak.peakList.serial
-
-    
-    
-  def setLinktoSpectrum(self,  spectrum):
-    
-    self.spectrum = spectrum
     
   def setupDimensions(self):
     
     for dim in self.ccpnPeak.peakDims :
 
-      dimension = aDimension()
-      #dimension.passData(self.myDataModel)
-      dimension.setupCcpnDim(dim)
-      dimension.setupPeakLink(self)
+      dimension = aDimension(self,dim)
+
       self.dimensions.append(dimension)
       
   def checkForIntraResidualAssignment(self):
@@ -4788,10 +4680,6 @@ cdef class aPeak :
         
     self.intraResidual = intra
 
-
-
-
-
   cdef void createPythonStyleObject(self):
     
     cdef aDimension dim
@@ -4805,7 +4693,6 @@ cdef class aPeak :
     for dim in self.dimensions :
       
       self.pyPeak.dimensions.append(dim.pyDimension)
-
  
 cdef class aDimension :
   
@@ -4819,22 +4706,20 @@ cdef class aDimension :
   
   cdef list nonLabelledResonances
   
-  cdef aPeak peak 
+  cdef aPeak peak
   
-  #cdef myDataModel myDataModel
-  #
-  #cdef autoAssign auto
-  
-  cdef pyDimension
+  cdef object pyDimension
   
   
   
-  def __init__(self):
+  def __init__(self, peak, ccpnDim):
 
-    self.ccpnDim = None
+    self.peak = peak
+    self.ccpnDim = ccpnDim
+    self.ppmValue = ccpnDim.value
+    self.dimNumber = ccpnDim.dataDim.expDim.refExpDim.dim
       
     self.possibleContributions = []                         # All resonances in the resonanceList that could potentially contribute to this dimension of the peak 
-    
     self.nonLabelledResonances = []                     # Here all resonances are gathered that can not contribute to the peak because of the labelling scheme. They are collected anywya to search for peaks that explicitely should NOT be there.
 
     self.peak = None
@@ -4854,33 +4739,6 @@ cdef class aDimension :
     
     return state
     
-  #def passData(self,myDataModel):
-  #
-  #  self.myDataModel = myDataModel
-
-
-  def setupCcpnDim(self, dim):
-
-    self.ccpnDim = dim
-    self.ppmValue = self.ccpnDim.value
-    #self.dimNumber = self.ccpnDim.dim
-    self.dimNumber = self.ccpnDim.dataDim.expDim.refExpDim.dim    
-
-
-
-  def setupPeakLink(self, peak):
-
-    self.peak = peak
-    
-
-
-
-
-
-
-
-
-  
   cdef void createPythonStyleObject(self) :
     
     self.pyDimension = pyDimension()
@@ -4907,10 +4765,6 @@ cdef class spinSystemLink :
   cdef list simulatedPeaksThatShouldNotHaveBeenThere
   
   cdef list peaksThatShouldNotHaveBeenThere
-  
-  #cdef autoAssign auto
-  #
-  #cdef myDataModel myDataModel
   
   cdef object pySpinSystemLink
   
@@ -5046,20 +4900,9 @@ cdef class mySpinSystem :
   
   cdef dict aminoAcidProbs
   
-  #cdef autoAssign auto
-  #
-  #cdef myDataModel myDataModel
-  
   cdef object pySpinSystem
   
-  
-  
-  
-  
-  
-  
-  
-  
+
   def __init__(self):
 
     self.ccpCode = None
@@ -5155,15 +4998,6 @@ cdef class myResonance :
     
     self.ccpnResonance = None
     
-
-
-
-
-
-
-
-
-
 
 
   cdef void createPythonStyleObject(self) :
