@@ -854,18 +854,8 @@ cdef class autoAssign :
     cdef double minIsoFrac
     
     cdef simulatedPeakContrib contrib
-    
-    
-    
-    
+     
     minIsoFrac = self.minIsoFrac
-    
-    
-    
-    
-    simpleAtomSites = set(['H', 'HA','HB','N', 'CA', 'CB'])              #TODO: actually H stands for all H's here, not just the backbone amide H. And check HB out, actually not one atom either. Gly actually has two HAs.
-    
-    carbons = set(['C', 'Cali','Cmet', 'Caro'])
     
     DataModel = self.DataModel
     
@@ -926,7 +916,7 @@ cdef class autoAssign :
           
           expDimensions.append(None)
           
-      
+      #---------------------------------------------------------------------------
     
       # Create lists with all combinations of 1 and 2 (1 indicating first residue, 2 indicating second) of a the amount of different atomSites visited. Will check out later which combinations actually work.
       resPathWays = self.createPermutations(len(expGraph.sortedExpTransfers())+1)
@@ -938,7 +928,10 @@ cdef class autoAssign :
           
           resPathWaysTemp.append(resPathWay)
           
-      resPathWays =  resPathWaysTemp   
+      resPathWays =  resPathWaysTemp
+      
+      #----------------------------------------------------------------------------
+      
           
       for i, resA in enumerate(residues[:-1]) :
     
@@ -946,41 +939,26 @@ cdef class autoAssign :
           
         resB = residues[i+1]
         
+      
+        #--------------------------------------------------------------------------
+        # Nested lists with atoms
         atomPathWayResA = []
         atomPathWayResB = []
         
-        possibleAtomPathWays = []
-        
         # Transforming atomSides into atoms for both residues in the sequential pair of resA and resB, thereby filling the lists atomPathWayResA and atomPathWayResB
-     
-        for atomPathWayResX,  res in zip([atomPathWayResA, atomPathWayResB], [resA, resB]) :
-        
-          for atomSite in atomSitePathWay :
             
-            atomsForThisAtomSite = []
+        for atomSite in atomSitePathWay :
           
-            atomSiteName = atomSite.name
-            
-            if atomSiteName in simpleAtomSites and atomSiteName in res.atomsByName :
-              
-              atomsForThisAtomSite.append(res.atomsByName[atomSiteName])
-              
-            elif atomSiteName == 'CO' and 'C' in res.atomsByName :
-              
-              atomsForThisAtomSite.append(res.atomsByName['C'])
-              
-            elif atomSiteName in carbons :                                                      #TODO, make distinction between these
-              
-              for atom in res.atoms :
-                
-                if atom.ccpnAtom.chemAtom.elementSymbol == 'C':
-                  
-                  atomsForThisAtomSite.append(atom)
-                  
-                  
-            atomPathWayResX.append(atomsForThisAtomSite)
+          atomPathWayResA.append(self.getAtomsForAtomSite(atomSite,resA))
+          atomPathWayResB.append(self.getAtomsForAtomSite(atomSite,resB))
           
-          
+                                   
+        #---------------------------------------------------------------------------                           
+
+
+
+
+        possibleAtomPathWays = []  
         
         # Going through all generated possibilities of a sequence of atomSites being located in either resA or resB. For an experiment with three steps (like HNCA), this would be [[1,1,1],[1,1,2]......[2,2,2]]
         for resPathWay in resPathWays :
@@ -1029,26 +1007,31 @@ cdef class autoAssign :
               resIDA = resPathWay[ii]
               resIDB = resPathWay[ii+1]
               
-              
-              if (transfer.transferType == 'onebond' or transfer.transferType == 'Jcoupling')  :
+              if  not self.transferIsPossible(atomA, atomB, transfer.transferType) :
                 
-                
-                # Over the amide bond
-                if (atomA.atomName == 'N' and atomB.atomName == 'C' and resIDA == 2 and resIDB == 1) or (atomA.atomName == 'C' and atomB.atomName == 'N' and resIDA == 1 and resIDB == 2) :
+                isPossible = False
+                break
               
-                  pass
-                  
-                # Within the same residue and directly bonded
-                elif resIDA == resIDB and atomA.ccpnAtom.chemAtom.getChemBonds().intersection(atomB.ccpnAtom.chemAtom.getChemBonds()):
-                  
-                  pass
-                  
-                # In all other cases the transfer pathway is not possible  
-                else :
-                  
-                  isPossible = False
-                  
-                  break
+              
+              #if (transfer.transferType == 'onebond' or transfer.transferType == 'Jcoupling')  :
+              #  
+              #  
+              #  # Over the amide bond
+              #  if (atomA.atomName == 'N' and atomB.atomName == 'C' and resIDA == 2 and resIDB == 1) or (atomA.atomName == 'C' and atomB.atomName == 'N' and resIDA == 1 and resIDB == 2) :
+              #
+              #    pass
+              #    
+              #  # Within the same residue and directly bonded
+              #  elif resIDA == resIDB and atomA.ccpnAtom.chemAtom.getChemBonds().intersection(atomB.ccpnAtom.chemAtom.getChemBonds()):
+              #    
+              #    pass
+              #    
+              #  # In all other cases the transfer pathway is not possible  
+              #  else :
+              #    
+              #    isPossible = False
+              #    
+              #    break
                   
 
 
@@ -1129,8 +1112,62 @@ cdef class autoAssign :
             
             peaks.append(newPeak)
             
-        simulatedPeakMatrix.append(peaks)    
-
+        simulatedPeakMatrix.append(peaks)
+        
+  cdef list getAtomsForAtomSite(self, object atomSite, aResidue res) :
+    
+    cdef anAtom atom
+    
+    simpleAtomSites = set(['H', 'HA','HB','N', 'CA', 'CB'])              #TODO: actually H stands for all H's here, not just the backbone amide H. And check HB out, actually not one atom either. Gly actually has two HAs.
+    
+    carbons = set(['C', 'Cali','Cmet', 'Caro'])
+    
+    atoms = []
+  
+    atomSiteName = atomSite.name
+    
+    if atomSiteName in simpleAtomSites and atomSiteName in res.atomsByName :
+      
+      atoms.append(res.atomsByName[atomSiteName])
+      
+    elif atomSiteName == 'CO' and 'C' in res.atomsByName :
+      
+      atoms.append(res.atomsByName['C'])
+      
+    elif atomSiteName in carbons :                                                      #TODO, make distinction between these
+      
+      for atom in res.atoms :
+        
+        if atom.ccpnAtom.chemAtom.elementSymbol == 'C':
+          
+          atoms.append(atom)
+          
+    return atoms
+  
+  cdef object transferIsPossible(self, anAtom atomA, anAtom atomB, str transferType) :
+    
+    if (transferType == 'onebond' or transferType == 'Jcoupling')  :
+      
+      # Over the amide bond
+      #if (atomA.atomName == 'N' and atomB.atomName == 'C' and resIDA == 2 and resIDB == 1) or (atomA.atomName == 'C' and atomB.atomName == 'N' and resIDA == 1 and resIDB == 2) :
+      if (atomA.atomName == 'N' and atomB.atomName == 'C' and atomA.residue is atomB.residue.nextResidue) or (atomA.atomName == 'C' and atomB.atomName == 'N' and atomB.residue is atomA.residue.nextResidue) :
+    
+        return True
+        
+      # Within the same residue and directly bonded
+      elif atomA.residue is atomB.residue and atomA.ccpnAtom.chemAtom.getChemBonds().intersection(atomB.ccpnAtom.chemAtom.getChemBonds()):
+        
+        return True
+        
+      # In all other cases the transfer pathway is not possible  
+      else :
+        
+        return False
+      
+    else :
+      
+      return True
+    
   cdef list createPermutations(self, int length):
     
     '''This method creates all permutations of a given length of
@@ -1658,13 +1695,6 @@ cdef class autoAssign :
     
     cdef int hc
     
-
-    
-    
-    
-    
-    
-    
     hc = self.hc
 
     DataModel = self.DataModel
@@ -1676,20 +1706,20 @@ cdef class autoAssign :
 
     for i,  simulatedPeakList in enumerate(simulatedPeakMatrix) :
       
-      #print 'pppppppppppppppppppppppppppp'
-      #print i
-      #print simulatedPeakList
       resA = residues[i]
       resB = residues[i+1]
       
       ccpCodeA = resA.ccpCode
       ccpCodeB = resB.ccpCode
       
-
+      print 'ddd'
+      print ccpCodeA
+      print ccpCodeB
       
       spinsystemsaa1 = allSpinSystems[ccpCodeA]
       spinsystemsaa2 = allSpinSystems[ccpCodeB]
       
+      print 'sss'
       
       
       count = 0
