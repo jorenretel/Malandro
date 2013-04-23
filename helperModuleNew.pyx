@@ -762,13 +762,9 @@ cdef class autoAssign :
     
     cdef list simulatedPeakMatrix
     
-    cdef int i
-    
     cdef aResidue resA
     
     cdef aResidue resB
-    
-    cdef set simpleAtomSites
     
     cdef object refExperiment
     
@@ -782,78 +778,24 @@ cdef class autoAssign :
     
     cdef object refExpDim
     
-    cdef list expDimensions
-    
-    cdef list expMeasurementPathWay
-    
     cdef list atomSitePathWay
     
     cdef object expStep
     
-    #cdef int i
-    
-    cdef int ii
-    
-    
-    #cdef aResidue resA
-    
-    #cdef aResidue resB
-    
-    cdef aResidue res
-    
-    cdef list atomPathWayResA
-    
-    cdef list atomPathWayResB
-    
-    cdef list atomPathWayResX
-    
     cdef object atomSite
     
-    cdef list atomsForThisAtomSite
-    
-    cdef str atomSiteName
-    
     cdef anAtom atom
-    
-    cdef list resPathWays
-    
-    cdef list resPathWaysTemp
-    
-    cdef list resPathWay
-    
-    cdef int resID 
-    
-    cdef list atomGroupPathWays
     
     cdef list atomPathWays
     
     cdef list atomPathWay
-    
-    cdef list atomGroup
-    
-    cdef list tempList
-    
-    cdef object isPossible
-    
-    cdef object transfer
-    
-    cdef anAtom atomA
-    
-    cdef anAtom atomB
-    
-    cdef frozenset bondSetA
-    
-    cdef frozenset bondSetB
-    
-    cdef int resIDA
-    
-    cdef int resIDB
     
     cdef list peaks
     
     cdef double minIsoFrac
     
     cdef simulatedPeakContrib contrib
+    
      
     minIsoFrac = self.minIsoFrac
     
@@ -863,14 +805,11 @@ cdef class autoAssign :
     
     for spectrum in DataModel.spectra:                 
       
+      self.updateInfoText('Simulating ' + spectrum.name)
           
       ccpnSpectrum = spectrum.ccpnSpectrum
     
-      refExpName = spectrum.ccpnSpectrum.experiment.refExperiment.name
-      
-      
-      self.updateInfoText('Simulating ' + spectrum.name)
-      
+      #refExpName = spectrum.ccpnSpectrum.experiment.refExperiment.name
       
       scheme = spectrum.labellingScheme
       
@@ -878,206 +817,46 @@ cdef class autoAssign :
     
       refExperiment = ccpnSpectrum.experiment.refExperiment
       
-      molLabelFractions = ccpnSpectrum.experiment.findFirstLabeledMixture().molLabelFractions
+      molLabelFractions = ccpnSpectrum.experiment.findFirstLabeledMixture().getMolLabelFractions()
       
       PT =  refExperiment.nmrExpPrototype
     
       expGraph = PT.findFirstExpGraph()    
       
-      recordedExpMeasuments = {}
-      
       expTransfers = expGraph.sortedExpTransfers()
       
+      expSteps = expGraph.sortedExpSteps()
       
-      # Looking which expMeasurements where actually done
+
+      if self.isOutAndBack(expSteps) :
+
+        expSteps = expSteps[:int(len(expSteps)/2.0+0.5)]
+
+      dimStepDict = self.mapExpStepToDimension(expSteps, refExperiment.sortedRefExpDims())
+
+      # Making a list of atomSites that are visited.
       
-      for refExpDim in refExperiment.sortedRefExpDims() :
+      atomSitePathWay = self.createAtomSitesList(expSteps)
         
-        recordedExpMeasuments[refExpDim.findFirstRefExpDimRef().expMeasurement] = refExpDim.dim
+      # And a list with expTransfers that connect the atomSites
+      
+      transferPathWay = self.createTransferList(atomSitePathWay,expTransfers)
+
+      for resA, resB in zip(residues,residues[1:]) :
         
-        
-      
-      expDimensions = []
-      expMeasurementPathWay = []
-      
-      atomSitePathWay = []
-      
-      # Making a list of atomSites that are visited during the experiment and another list of the same length that marks whether they were recorded and if so, to which dimension
-      
-      for expStep in expGraph.sortedExpSteps() :                                                   # TODO: This is not good with in and out experiments, rather take atomSites from ExpTransfers
-        
-        atomSitePathWay.append(expStep.expMeasurement.findFirstAtomSite())
-        
-        if expStep.expMeasurement in recordedExpMeasuments.keys() :
-          
-          expDimensions.append(recordedExpMeasuments[expStep.expMeasurement])
-          
-        else :
-          
-          expDimensions.append(None)
-          
-      #---------------------------------------------------------------------------
-    
-      # Create lists with all combinations of 1 and 2 (1 indicating first residue, 2 indicating second) of a the amount of different atomSites visited. Will check out later which combinations actually work.
-      resPathWays = self.createPermutations(len(expGraph.sortedExpTransfers())+1)
-      
-      resPathWaysTemp = []
-      for resPathWay in resPathWays :
-        
-        if len(set(resPathWay)) == 2 :                            # We are not interested in peaks that do not connect the two residues in any way.
-          
-          resPathWaysTemp.append(resPathWay)
-          
-      resPathWays =  resPathWaysTemp
-      
-      #----------------------------------------------------------------------------
-      
-          
-      for i, resA in enumerate(residues[:-1]) :
-    
-        peaks = []
-          
-        resB = residues[i+1]
-        
-      
-        #--------------------------------------------------------------------------
-        # Nested lists with atoms
-        atomPathWayResA = []
-        atomPathWayResB = []
-        
-        # Transforming atomSides into atoms for both residues in the sequential pair of resA and resB, thereby filling the lists atomPathWayResA and atomPathWayResB
-            
+        atomGroups = []
+   
         for atomSite in atomSitePathWay :
           
-          atomPathWayResA.append(self.getAtomsForAtomSite(atomSite,resA))
-          atomPathWayResB.append(self.getAtomsForAtomSite(atomSite,resB))
-          
-                                   
-        #---------------------------------------------------------------------------                           
-
-
-
-
-        possibleAtomPathWays = []  
+          atomGroups.append(self.getAtomsForAtomSite(atomSite,resA) + self.getAtomsForAtomSite(atomSite,resB))
+                                                              
+        atomPathWays = self.walkExperimentTree([], atomGroups, transferPathWay,0)
         
-        # Going through all generated possibilities of a sequence of atomSites being located in either resA or resB. For an experiment with three steps (like HNCA), this would be [[1,1,1],[1,1,2]......[2,2,2]]
-        for resPathWay in resPathWays :
-          
-          atomPathWays = [[]]
-          
-          atomGroupPathWays = []
-
-          #Lining up the different atoms that can be visited in a nested list
-          for ii,  resID in enumerate(resPathWay) :               # looping through sequence of 1s and 2s
-          
-            if resID == 1 :
-              
-              atomGroupPathWays.append(atomPathWayResA[ii])
-              
-            elif resID == 2 :
-              
-              atomGroupPathWays.append(atomPathWayResB[ii])
-          
-
-          #Making all possible routes between different atoms that could be there (when not considering the type of transfers yet).    
-          for atomGroup in atomGroupPathWays :
+        self.cacheLabellingInfo(atomPathWays, molLabelFractions)
         
-            tempList = []
+        peaks = []
         
-            for atom in atomGroup :
-          
-              for atomPathWay in atomPathWays :
-                
-                tempList.append(atomPathWay + [atom])
-                
-            atomPathWays = tempList
-            
-
-          # Now we're going to check which of these pathways can actually really happen when we take the type of transfer (for instance 'one bond') into account.  
-          for atomPathWay in atomPathWays :
-            
-            isPossible = True
-
-            # Therefore we'll look whether every transfer is possible
-            for ii, transfer in enumerate(expTransfers):
-              
-              atomA = atomPathWay[ii]
-              atomB = atomPathWay[ii+1]
-              
-              resIDA = resPathWay[ii]
-              resIDB = resPathWay[ii+1]
-              
-              if  not self.transferIsPossible(atomA, atomB, transfer.transferType) :
-                
-                isPossible = False
-                break
-              
-              
-              #if (transfer.transferType == 'onebond' or transfer.transferType == 'Jcoupling')  :
-              #  
-              #  
-              #  # Over the amide bond
-              #  if (atomA.atomName == 'N' and atomB.atomName == 'C' and resIDA == 2 and resIDB == 1) or (atomA.atomName == 'C' and atomB.atomName == 'N' and resIDA == 1 and resIDB == 2) :
-              #
-              #    pass
-              #    
-              #  # Within the same residue and directly bonded
-              #  elif resIDA == resIDB and atomA.ccpnAtom.chemAtom.getChemBonds().intersection(atomB.ccpnAtom.chemAtom.getChemBonds()):
-              #    
-              #    pass
-              #    
-              #  # In all other cases the transfer pathway is not possible  
-              #  else :
-              #    
-              #    isPossible = False
-              #    
-              #    break
-                  
-
-
-            if isPossible :
-           
-              possibleAtomPathWays.append(atomPathWay)
-              
-              
-              
-        importantAtoms = set()
-        for atomPathWay in  possibleAtomPathWays :   
-
-          for atom in atomPathWay :
-            
-            importantAtoms.add(atom)
-            
-        for atom in importantAtoms :    
-          
-          atomName = atom.ccpnAtom.name
-          
-          subType = atom.ccpnAtom.chemAtom.subType
-        
-          molResidue = atom.residue.ccpnResidue.molResidue
-            
-          atom.labelInfoTemp = {}
-              
-          for mlf in molLabelFractions:                                                             
-          
-            molLabel = mlf.molLabel
-            
-            resLabel = molLabel.findFirstResLabel(resId=molResidue.serial)
-            resLabelFractions = resLabel.resLabelFractions
-            
-            for rlf in resLabelFractions :
-              
-              isotopomers = rlf.isotopomers
-              
-              for isotopomer in isotopomers :
-                
-                atomLabels = isotopomer.findAllAtomLabels(name=atomName, subType=subType)
-                
-                atom.labelInfoTemp[isotopomer] = atomLabels
-                
-                    
-                    
-        for atomPathWay in possibleAtomPathWays :
+        for atomPathWay in atomPathWays :
           
           colabelling = self.getCoLabellingFractionNew(spectrum,atomPathWay)   
 
@@ -1088,32 +867,32 @@ cdef class autoAssign :
             newPeak.colabelling = colabelling
             newPeak.spectrum = spectrum
             
-            for dimension,  atom in zip(expDimensions, atomPathWay) :
+            for dimNumber, stepNumber in dimStepDict.items() :
+
+              atom = atomPathWay[stepNumber-1]
               
-              if dimension :                                                              # If None, the dimension was not recorded
-            
-                contrib = simulatedPeakContrib()
-            
-                contrib.ccpCode = atom.residue.ccpCode
+              contrib = simulatedPeakContrib()
+              
+              contrib.ccpCode = atom.residue.ccpCode
+              
+              contrib.atomName = atom.atomName
+              
+              if atom.residue is resA :
+              
+                contrib.firstOrSecondResidue = 1
                 
-                contrib.atomName = atom.atomName
-                
-                if atom.residue == resA :
-                
-                  contrib.firstOrSecondResidue = 1
-                  
-                elif atom.residue == resB :
-                
-                  contrib.firstOrSecondResidue = 2  
+              elif atom.residue is resB :
+              
+                contrib.firstOrSecondResidue = 2  
+          
+              contrib.dimNumber = dimNumber
             
-                contrib.dimNumber = dimension
-            
-                newPeak.simulatedPeakContribs.append(contrib)
+              newPeak.simulatedPeakContribs.append(contrib)
             
             peaks.append(newPeak)
             
         simulatedPeakMatrix.append(peaks)
-        
+
   cdef list getAtomsForAtomSite(self, object atomSite, aResidue res) :
     
     cdef anAtom atom
@@ -1144,7 +923,23 @@ cdef class autoAssign :
           
     return atoms
   
-  cdef object transferIsPossible(self, anAtom atomA, anAtom atomB, str transferType) :
+  cdef object transferIsPossible(self, anAtom atomA, anAtom atomB, object expTransfer) :
+    
+    if not expTransfer :
+      
+      if atomA is atomB :
+        
+        return True
+      
+      else :
+        
+        return False
+    
+    transferType = expTransfer.transferType
+    
+    if not expTransfer.transferToSelf and atomA is atomB :
+      
+      return False
     
     if (transferType == 'onebond' or transferType == 'Jcoupling')  :
       
@@ -1167,43 +962,167 @@ cdef class autoAssign :
     else :
       
       return True
+ 
+  cdef object isOutAndBack(self, list expSteps) :
     
-  cdef list createPermutations(self, int length):
+    cdef list measurements
     
-    '''This method creates all permutations of a given length of
-       ones and twos. Output for length=3, will be a nested list like
-       [ [1,1,1], [2,1,1], [2,2,1] .... etc. ]. Used as a hypothetical
-       series of magnetization transfers between two residues with a
-       certain amount of transfer steps (length). Later it will be
-       checked whether the transfers are actually possible given the
-       experiment.'''
-       
-    cdef list lists
-    cdef list newLists
-    cdef list newList1
-    cdef list newList2
-    cdef list oneList
-    cdef int i
+    measurements = [expStep.expMeasurement for expStep in expSteps]
     
-    lists = [[]]
+    if measurements == measurements[::-1] :                     # Checking whether lists are symetric by turning it around
+      
+      return True
+    
+    else :
+      
+      return False
+    
+  cdef dict mapExpStepToDimension(self, list expSteps, list refExpDims) :
+    
+    dimStepDict = {}
+    
+    for refExpDim in refExpDims :
+      
+      i = 0
+      
+      for expStep in expSteps[::-1] :
+        
+        if expStep.expMeasurement is refExpDim.findFirstRefExpDimRef().expMeasurement :
+          
+          dimStepDict[refExpDim.dim] = expStep.stepNumber
+          
+          break
+    
+    return dimStepDict
+  
+  cdef dict createTransferDict(self, list expTransfers) :
+    
+    transferDict = {}
+    
+    for expTransfer in expTransfers :
+      
+      atomSites = expTransfer.sortedAtomSites()
+      
+      atomSite1, atomSite2 = atomSites[0], atomSites[1]
+      
+      transferDict[(atomSite1,atomSite2)] = expTransfer
+      transferDict[(atomSite2,atomSite1)] = expTransfer
+      
+    return transferDict
+  
+  cdef list createTransferList(self, list atomSites, list expTransfers) :
+    
+    transferDict = self.createTransferDict(expTransfers)
+    
+    transferPathWay = []
+    
+    for atomSiteA, atomSiteB in zip(atomSites,atomSites[1:]) :
+      
+      if (atomSiteA,atomSiteB) in transferDict :
 
-    for i in range(length):
-      
-      newLists = []
-      
-      for oneList in lists :
+        transferPathWay.append( transferDict[(atomSiteA,atomSiteB)] )
         
-        newList1 = oneList[:]
-        newList2 = oneList[:]
-        newList1.append(1)
-        newList2.append(2)
+      else :
         
-        newLists.append(newList1)
-        newLists.append(newList2)
+        transferPathWay.append(None)
         
-      lists = newLists
+    return transferPathWay
+  
+  cdef list createAtomSitesList(self, list expSteps) :
+  
+    atomSitePathWay = []
+  
+    for expStep in expSteps :
+
+      atomSitePathWay.append(expStep.expMeasurement.findFirstAtomSite())
       
-    return lists
+    return atomSitePathWay
+  
+  cdef object atomsBelongToSameResidue(self, list atoms) :
+    
+    cdef anAtom atom
+    
+    cdef aResidue firstResidue
+    
+    atom = atoms[0]
+    
+    firstResidue = atom.residue 
+    
+    for atom in atoms:
+      
+      if not atom.residue is firstResidue :
+        
+        return False
+      
+    return True  
+      
+  cdef list walkExperimentTree(self,list pastAtoms, list atomGroups, list expTransfers, int depth) :
+    
+    if depth == len(atomGroups) :
+      
+      if self.atomsBelongToSameResidue(pastAtoms) :
+        
+        return []
+      
+      return [pastAtoms]
+    
+    listOfLists = []
+    
+    expTransfer = expTransfers[depth-1]
+
+    atomGroup = atomGroups[depth]
+
+    depth = depth+1
+
+    for atomB in atomGroup :
+
+      if not ( pastAtoms and not self.transferIsPossible(pastAtoms[-1], atomB, expTransfer) ):
+
+        extendedPathway = self.walkExperimentTree(pastAtoms + [atomB],atomGroups,expTransfers,depth)
+
+        listOfLists += extendedPathway
+
+    return listOfLists
+      
+  cdef void cacheLabellingInfo(self, list atomPathWays, frozenset molLabelFractions) :
+    
+    cdef anAtom atom
+    cdef set importantAtoms
+    
+    importantAtoms = set()
+    
+    for atomPathWay in atomPathWays :   
+
+      for atom in atomPathWay :
+        
+        importantAtoms.add(atom)
+        
+    for atom in importantAtoms :    
+      
+      atomName = atom.ccpnAtom.name
+      
+      subType = atom.ccpnAtom.chemAtom.subType
+    
+      molResidue = atom.residue.ccpnResidue.molResidue
+        
+      atom.labelInfoTemp = {}
+          
+      for mlf in molLabelFractions:                                                             
+      
+        molLabel = mlf.molLabel
+        
+        resLabel = molLabel.findFirstResLabel(resId=molResidue.serial)
+        resLabelFractions = resLabel.resLabelFractions
+        
+        for rlf in resLabelFractions :
+          
+          isotopomers = rlf.isotopomers
+          
+          for isotopomer in isotopomers :
+            
+            atomLabels = isotopomer.findAllAtomLabels(name=atomName, subType=subType)
+            
+            atom.labelInfoTemp[isotopomer] = atomLabels
   
   cdef void createSpinSytemsAndResonances(self):
     
@@ -2469,8 +2388,7 @@ cdef class autoAssign :
       
       #print colabelling    
       return colabelling    
-               
-      
+                     
   cdef double calculateCoLabellingFromExperimentNew(self, aSpectrum spectrum, list atoms) :
     
     #print '1'
@@ -2669,7 +2587,6 @@ cdef class autoAssign :
     #print TotalCoLabellingFraction
     return TotalCoLabellingFraction 
 
-
   cdef double calculateCoLabellingFromExperiment(self, object ccpnSpectrum, list ccpnResidues, list atomNames) :
     
     #print '1'
@@ -2820,8 +2737,7 @@ cdef class autoAssign :
       #print '22'
  
     return TotalCoLabellingFraction 
-            
-            
+              
   cdef str guessSpinHalfIsotopeFromAtomName(self, str atomName) :
 
     
@@ -2836,7 +2752,6 @@ cdef class autoAssign :
       
     return isotope
           
-
   cdef dict getIsotopomerAtomSetFractions(self,set isotopomers, list atomNames, list subTypes):
     """Descrn: Get the combined isotope proportions for a given set of named
                atoms within a set of isotopomers. Fractions normalised to 1.0
@@ -2947,7 +2862,6 @@ cdef class autoAssign :
 
     return fractionDict
     
-
   cdef dict getIsotopomerSingleAtomFractionsForChemAtom(self,  set isotopomers, anAtom atom) :
     
     cdef dict fractionDict
@@ -2991,7 +2905,6 @@ cdef class autoAssign :
   
     return fractionDict
       
-
   cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems):
      
     cdef int improvements
@@ -4054,9 +3967,7 @@ cdef class autoAssign :
   
     
     self.score = score
-    
-    
-          
+            
   cdef double CcalcDeltaPeakScore(self,  set peakSet,list oldPeaks,list newPeaks):
       
     
@@ -4085,7 +3996,6 @@ cdef class autoAssign :
       
     return peakScoreNew - peakScoreOld
   
-
   cdef void convertToPythonStyleDataModel(self) :
    
     cdef myDataModel DataModel
@@ -4182,9 +4092,7 @@ cdef class autoAssign :
         
     DataModel.createPythonStyleObject()
     DataModel.pyDataModel.amountOfRepeats = self.amountOfRepeats
-        
-        
-      
+         
   cdef void scoreInitialAssignment(self) :
     
     cdef list residues
@@ -4372,7 +4280,6 @@ cdef class myDataModel :
         
       self.pyDataModel.spinSystems[key] = listWithPySpinSystems
 
-
 cdef class myChain :
 
   cdef list residues 
@@ -4467,7 +4374,6 @@ cdef class myChain :
     for res in self.residues :
       
       self.pyChain.residues.append(res.pyResidue)
-
 
 cdef class aResidue :
 
@@ -4568,7 +4474,6 @@ cdef class anAtom :
     self.assignmentPossibilityDimensions = []
     
     self.labelInfoTemp = {}
-
 
 cdef class aSpectrum :
   
@@ -4777,7 +4682,6 @@ cdef class aDimension :
     
     self.pyDimension.dimNumber = self.dimNumber
 
- 
 cdef class spinSystemLink :
 
   cdef public int score
@@ -4833,7 +4737,6 @@ cdef class spinSystemLink :
     for simulatedPeak in self.simulatedPeaks :
       
       self.pySpinSystemLink.simulatedPeaks.append(simulatedPeak.pySimulatedPeak)
-
  
 cdef class simulatedPeak :
   
@@ -4866,8 +4769,7 @@ cdef class simulatedPeak :
     for contrib in self.simulatedPeakContribs :
       
       self.pySimulatedPeak.simulatedPeakContribs.append(contrib.pySimulatedPeakContrib)
- 
-  
+   
 cdef class simulatedPeakContrib:
   
   
@@ -4898,7 +4800,6 @@ cdef class simulatedPeakContrib:
     self.pySimulatedPeakContrib.dimNumber =  self.dimNumber
     
     self.pySimulatedPeakContrib.firstOrSecondResidue = self.firstOrSecondResidue
-
 
 cdef class mySpinSystem :
 
@@ -4992,7 +4893,6 @@ cdef class mySpinSystem :
     for name,  resonance in self.resonanceDict.items() :
     
       self.pySpinSystem.resonanceDict[name] = resonance.pyResonance 
-
 
 cdef class myResonance :
   
