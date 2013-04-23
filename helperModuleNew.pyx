@@ -1631,15 +1631,8 @@ cdef class autoAssign :
       ccpCodeA = resA.ccpCode
       ccpCodeB = resB.ccpCode
       
-      print 'ddd'
-      print ccpCodeA
-      print ccpCodeB
-      
       spinsystemsaa1 = allSpinSystems[ccpCodeA]
       spinsystemsaa2 = allSpinSystems[ccpCodeB]
-      
-      print 'sss'
-      
       
       count = 0
       
@@ -1806,7 +1799,7 @@ cdef class autoAssign :
 
     for spectrum in self.DataModel.spectra:                 # Determine for each dimension of every peak in all (used) spectra, which resonances can contribute to the peak
       
-      spectrum.setupPeaks()   
+      #spectrum.setupPeaks()   
               
       info = 'Evaluating dimensional contributions to peaks: ' + spectrum.name
       
@@ -1815,8 +1808,6 @@ cdef class autoAssign :
       self.findPossiblePeakContributions(spectrum)
 
   cdef void findPossiblePeakContributions(self,aSpectrum  spectrum) :
-    
-  
     
     cdef list resonances
     cdef myResonance resonance
@@ -1839,6 +1830,7 @@ cdef class autoAssign :
     
     cdef int serial
     
+    useDimenionalAssignments = self.useDimenionalAssignments
     
     dimAtomsDict = {}
 
@@ -1851,135 +1843,43 @@ cdef class autoAssign :
         
         atomSite = dim.ccpnDim.dataDim.expDim.refExpDim.findFirstRefExpDimRef().expMeasurement.findFirstAtomSite()
         
-        atomSiteName = atomSite.name
+        dimAtomsDict[dim.dimNumber] = self.DataModel.getResonancesForAtomSite(atomSite)
         
-        isotope = atomSite.isotopeCode
-        
-        if atomSiteName == 'H' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.Hresonances
-        
-        elif atomSiteName == 'N' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.Nresonances
-          
-        elif atomSiteName == 'CA' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.CAresonances
-          
-        elif atomSiteName == 'CB' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.CBresonances
-          
-        elif atomSiteName == 'CO' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.COresonances
-          
-        elif isotope == '1H' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.HXresonances
-          
-        elif isotope == '15N' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.NXresonances
-          
-        elif isotope == '13C' :
-          
-          dimAtomsDict[dim.dimNumber] = self.DataModel.CXresonances
-          
-        else :
-          
-          dimAtomsDict[dim.dimNumber] = 0
-        
-          print 'Isotope not implemented yet'  
-    
-    
     
     for peak in spectrum.peaks :
       
-      onlyIntra = True
-      
-      ssDict = {}
-      
-      for dim in peak.dimensions :                                      # Here I quickly check whether the peak does not have a completely intra-residual assignment (for instance in PDSD's this might be the case), and the peak should therefor be ignored, since it does not contain any sequential information.
+      if peak.intraResidual :
         
-        for contrib in dim.ccpnDim.peakDimContribs :
+        continue
+
+      for dim in peak.dimensions :
+        
+        resonances = dimAtomsDict[dim.dimNumber]
+        
+        ppmValue = dim.ppmValue
+        
+        assignedContributions = dim.ccpnDim.peakDimContribs
+        
+        if assignedContributions and useDimenionalAssignments:
           
-          if contrib.resonance and contrib.resonance.resonanceGroup :
+          assignedResonances = set([contrib.resonance for contrib in assignedContributions])
           
-            if contrib.resonance.resonanceGroup.serial in ssDict :
+          for resonance in resonances :
             
-              ssDict[contrib.resonance.resonanceGroup.serial] +=1
+            if resonance.ccpnResonance in assignedResonances :
               
-            else :  
-            
-              ssDict[contrib.resonance.resonanceGroup.serial] = 1
-            
-            
-      if ssDict :
-        
-        for serial, numberOfDimensions in ssDict.items() :
-          
-          if numberOfDimensions != len(peak.dimensions) :               # A peak is considered a pure auto-peak only if all dimensions are assigned to the same spin system. 
-            
-            onlyIntra = False
-            
-      else :
-        
-        onlyIntra = False
-            
-            
-      if not onlyIntra :                                                # Only proceed when the peak is not an auto-peak.   
-                  
-        for dim in peak.dimensions :
-          
-          resonances = dimAtomsDict[dim.dimNumber]
-          
-          ppmValue = dim.ppmValue
+              dim.possibleContributions.append(resonance)
+              resonance.addPeakToPeakDimsLib(peak,dim)
+              
+        else :
           
           for resonance in resonances :
           
-            possible = False
-            
-            if self.useDimenionalAssignments and len(dim.ccpnDim.peakDimContribs) > 0 :                                         # Here I say that if there are already resonances assigned to this peak dimension, these should be the only resonances taken into account.
+            if abs(resonance.CS - ppmValue) <= getAnalysisDataDim(dim.ccpnDim.dataDim).assignTolerance :
               
-              
-              
-              for contrib in dim.ccpnDim.peakDimContribs :
-                
-                if contrib.resonance == resonance.ccpnResonance :
-                  
-                  possible = True
-            
-            
-          
-            elif abs(resonance.CS - ppmValue) <= getAnalysisDataDim(dim.ccpnDim.dataDim).assignTolerance :                    # If there are no peak resonances assigned to this peak dimension, every resonance within the tolerance qualifies for being a contribution
-              
-              possible = True
-              
-            if possible :
-                              
               dim.possibleContributions.append(resonance)
-              
-              if spectrum.name in resonance.peakDimsLib :
-                
-                entryForSpectrum = resonance.peakDimsLib[spectrum.name]
-                
-                if dim.dimNumber in entryForSpectrum :
-                  
-                  listWithPeaks = entryForSpectrum[dim.dimNumber]
-                  listWithPeaks.append(peak)
-                
-                else :
-                  
-                  entryForSpectrum[dim.dimNumber] = [peak]
-                  
-              else : 
-                
-                newlib = {}
-                newlib[dim.dimNumber] = [peak]
-                
-                resonance.peakDimsLib[spectrum.name] = newlib
+              resonance.addPeakToPeakDimsLib(peak,dim)
+
 
   cdef void setupSpinSystemExchange(self):
     
@@ -4250,6 +4150,52 @@ cdef class myDataModel :
 
       self.spectra.append(newspectrum)
 
+  cdef list getResonancesForAtomSite(self, object atomSite) :
+    
+        atomSiteName = atomSite.name
+        
+        isotope = atomSite.isotopeCode
+        
+        if atomSiteName == 'H' :
+          
+          return self.Hresonances
+        
+        elif atomSiteName == 'N' :
+          
+          return self.Nresonances
+          
+        elif atomSiteName == 'CA' :
+          
+          return self.CAresonances
+          
+        elif atomSiteName == 'CB' :
+          
+          return self.CBresonances
+          
+        elif atomSiteName == 'CO' :
+          
+          return self.COresonances
+          
+        elif isotope == '1H' :
+          
+          return self.HXresonances
+          
+        elif isotope == '15N' :
+          
+          return self.NXresonances
+          
+        elif isotope == '13C' :
+          
+          return self.CXresonances
+          
+        else :
+        
+          print 'Isotope not implemented yet'
+          
+          return []
+    
+    
+
   cdef void createPythonStyleObject(self):
     
     cdef aSpectrum spec
@@ -4582,7 +4528,7 @@ cdef class aPeak :
 
       self.dimensions.append(dimension)
       
-  def checkForIntraResidualAssignment(self):
+  cdef void checkForIntraResidualAssignment(self):
     
     lists = []
     
@@ -4928,7 +4874,31 @@ cdef class myResonance :
     
     self.ccpnResonance = None
     
-
+  cdef void addPeakToPeakDimsLib(self, aPeak peak, aDimension dim) :
+    
+    cdef aSpectrum spectrum
+    
+    spectrum = peak.spectrum
+    
+    if spectrum.name in self.peakDimsLib :
+      
+      entryForSpectrum = self.peakDimsLib[spectrum.name]
+      
+      if dim.dimNumber in entryForSpectrum :
+        
+        listWithPeaks = entryForSpectrum[dim.dimNumber]
+        listWithPeaks.append(peak)
+      
+      else :
+        
+        entryForSpectrum[dim.dimNumber] = [peak]
+        
+    else : 
+      
+      newlib = {}
+      newlib[dim.dimNumber] = [peak]
+      
+      self.peakDimsLib[spectrum.name] = newlib
 
   cdef void createPythonStyleObject(self) :
     
