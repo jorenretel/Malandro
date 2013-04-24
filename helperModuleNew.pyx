@@ -1574,6 +1574,8 @@ cdef class autoAssign :
     
     cdef mySpinSystem spinSys2
     
+    cdef mySpinSystem spinSystem
+    
     cdef int presentPeaks 
     
     cdef list listWithPresentPeaks
@@ -1606,8 +1608,6 @@ cdef class autoAssign :
     
     cdef double x
     
-    cdef int smallestIndex
-    
     cdef myResonance resonance
     
     cdef aPeak peak
@@ -1634,157 +1634,71 @@ cdef class autoAssign :
       spinsystemsaa1 = allSpinSystems[ccpCodeA]
       spinsystemsaa2 = allSpinSystems[ccpCodeB]
       
-      count = 0
-      
       for spinSys1 in spinsystemsaa1 :
-        
-        count = count + 1
         
         for spinSys2 in spinsystemsaa2 :
           
-          presentPeaks = 0
+          spinSystems = [spinSys1,spinSys2]
+          
           listWithPresentPeaks = []
           listWithSimulatedPeaks = []
           listWithNotFoundSimulatedPeaks = []
   
-      
           for simulatedPeak in simulatedPeakList :
             
             contributions = simulatedPeak.simulatedPeakContribs
-            
-
-            
+                        
             resonances = []
             
             for contrib in contributions :
               
+              spinSystem = spinSystems[contrib.firstOrSecondResidue-1]
               
-              if contrib.firstOrSecondResidue == 1 and contrib.atomName in spinSys1.resonanceDict :
-                
-                resonances.append(spinSys1.resonanceDict[contrib.atomName])
-                
-                  
-              elif contrib.firstOrSecondResidue == 2 and contrib.atomName in spinSys2.resonanceDict :
-                
-                resonances.append(spinSys2.resonanceDict[contrib.atomName])
-                  
-
+              resonance = spinSystem.getResonanceForAtomName(contrib.atomName)
               
+              if resonance is None :
+                
+                resonances = []
+                break
+              
+              resonances.append(resonance) 
             
-            
-            
-            
-            if len(resonances) == len(contributions) :                                                      # If the involved spinSystems have all atoms assigned that contribute to the simualated peak
+            if resonances :
               
-              peakLists = []
-              
-              for resonance,  contrib in zip(resonances , contributions) :                          # Gather for each dimension in the spectrum the peaks that are on the right frequency (as determined in 'findPeakContributions')
-                
+              peakLists = [ resonance.getPeaksForSpectrumDim(spectrum,contrib.dimNumber) for resonance, contrib in zip(resonances , contributions) ]
+               
+              peaksInWindow = self.commonElementInLists(peakLists)                                      # And check whether 1 or more peaks that fit in one dimension actually also fit in all other dimensions. In that case the peak is in the multidimensional tolerance window
 
-                if spectrum.name in resonance.peakDimsLib and contrib.dimNumber in resonance.peakDimsLib[spectrum.name] :
-
-                  peakLists.append( resonance.peakDimsLib[spectrum.name][contrib.dimNumber] )
-                  
-              
-              if len(peakLists) == len(resonances) :                                                            # If there are 1 or more peaks for each dimension, we can go on...
-                
-                peaksInWindow = self.commonElementInLists(peakLists)                                      # And check whether 1 or more peaks that fit in one dimension actually also fit in all other dimensions. In that case the peak is in the multidimensional tolerance window
-                
-              else :
-                
-                peaksInWindow = []
-
-              
               if peaksInWindow :
-                
-                presentPeaks = presentPeaks + 1
                 
                 if len(peaksInWindow) == 1 :                                                                            # If there is only one peak that falls within the window, we don't have to choose.
                 
-                  listWithPresentPeaks.append(peaksInWindow[0])
-                  listWithSimulatedPeaks.append(simulatedPeak)
+                  closestPeak = peaksInWindow[0]
                 
                 else :                                                                                                                 # There might be more than on peak within the tolerances in all dimensions. We will choose the closest one 
                   
-                  rootOfSquaresList = []
-                  smallestIndex = 0
-                  
-                  for peak in peaksInWindow :
-                    
-                    deltaCSsquaredList = []
+                  rootOfSquaresList = [sum([(dim.ppmValue - resonance.CS)**2 for dim, resonance in zip(peak.dimensions, resonances) ])**0.5 for peak in peaksInWindow]
 
-                    for dim in peak.dimensions :
-                      
-                      for resonance,  contrib in zip(resonances , contributions) :
-                      
-                        if dim.dimNumber == contrib.dimNumber :
-                        
-                          deltaCSsquaredList.append((dim.ppmValue - resonance.CS)**2)
-                          
-                    if len(deltaCSsquaredList) == len(contributions) :     
-                    
-                      rootOfSquaresList.append((sum(deltaCSsquaredList))**0.5)
-                      
-                    else :
-                      
-                      print 'something went wrong with the peak dimensions'
-                      
-                    #i = 0
-                    smallest = 10000  
-                    
-                    for i, x in enumerate(rootOfSquaresList) :
-                      
-                      if x < smallest :
-                        
-                        smallest = x
-                        smallestIndex = i
-                        
-                      #i += 1
-                      
-                      
+                  closestPeak = sorted(zip(rootOfSquaresList, peaksInWindow))[0][1]
+
+                listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
                   
-                  listWithPresentPeaks.append(peaksInWindow[smallestIndex])                                             # The peak with the smallest deviation is added to the list of found peaks
-                  
-                  listWithSimulatedPeaks.append(simulatedPeak)
+                listWithSimulatedPeaks.append(simulatedPeak)
              
               else :
                
                 listWithNotFoundSimulatedPeaks.append(simulatedPeak)   
-                  
-          if (spinSys1.spinSystemNumber*hc+spinSys2.spinSystemNumber) in resA.linkDict :
-     
-            linkObject = resA.linkDict[(spinSys1.spinSystemNumber*hc+spinSys2.spinSystemNumber)] 
-            
-            linkObject.score = linkObject.score + presentPeaks
-            linkObject.simulatedPeaks = linkObject.simulatedPeaks + listWithSimulatedPeaks
-            linkObject.realPeaks = linkObject.realPeaks + listWithPresentPeaks
-            linkObject.notFoundSimulatedPeaks += listWithNotFoundSimulatedPeaks
-              
-          else :                                                                                                                        # If there is no linkObject yet, make one
-            
-            linkObject = spinSystemLink()
-            
-            linkObject.score = presentPeaks
-            linkObject.simulatedPeaks = listWithSimulatedPeaks
-            linkObject.realPeaks = listWithPresentPeaks
-            linkObject.notFoundSimulatedPeaks += listWithNotFoundSimulatedPeaks
-            linkObject.spinSystem1 = spinSys1
-            linkObject.spinSystem2 = spinSys2
-            
-            resA.linkDict[(spinSys1.spinSystemNumber*hc+spinSys2.spinSystemNumber)] = linkObject  
+          
+          resA.addToLinkDict(spinSys1, spinSys2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks)      
+
 
   cdef list commonElementInLists(self, list listOfLists):
-    
-    cdef int length
-    cdef list intersect
-    
-    length= len(listOfLists)
      
-    if length > 0 :
+    if listOfLists :
       
-      intersect = list(set(listOfLists[0]).intersection(*listOfLists))
+      return list(set(listOfLists[0]).intersection(*listOfLists))
             
-    return intersect
+    return []
              
   cdef void calculateAllPeakContributions(self):
         
@@ -1879,7 +1793,6 @@ cdef class autoAssign :
               
               dim.possibleContributions.append(resonance)
               resonance.addPeakToPeakDimsLib(peak,dim)
-
 
   cdef void setupSpinSystemExchange(self):
     
@@ -4389,6 +4302,28 @@ cdef class aResidue :
       self.atomsByName[atom.chemAtom.name] = newatom
       self.atomsByCcpnChemAtom[atom.chemAtom] = newatom
       
+  cdef void addToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks) :
+  
+    cdef spinSystemLink linkObject
+    
+    if (spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber) in self.linkDict :
+
+      linkObject = self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)]
+      
+    else :
+      
+      linkObject = spinSystemLink()
+      linkObject.spinSystem1 = spinSys1
+      linkObject.spinSystem2 = spinSys2
+      self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)] = linkObject
+
+    linkObject.simulatedPeaks.extend(simulatedPeaks)
+    linkObject.realPeaks.extend(realPeaks)
+    linkObject.notFoundSimulatedPeaks.extend(listWithNotFoundSimulatedPeaks)
+        
+
+     
+      
   cdef void createPythonStyleObject(self):
     
       self.pyResidue = pyResidue()
@@ -4522,7 +4457,7 @@ cdef class aPeak :
     
   def setupDimensions(self):
     
-    for dim in self.ccpnPeak.peakDims :
+    for dim in self.ccpnPeak.sortedPeakDims() :
 
       dimension = aDimension(self,dim)
 
@@ -4804,7 +4739,16 @@ cdef class mySpinSystem :
     
     self.allowedResidues = set()                                      # This is later on going to be a Frozen Set for fast membership testing during the annealing run. If the set is empty that means everything residue is allowed, if has members, only these residues are allowed.
     
- 
+  cdef myResonance getResonanceForAtomName(self,str atomName) :
+    
+    if atomName in self.resonanceDict :
+                
+      return self.resonanceDict[atomName]
+    
+    else :
+      
+      return None
+    
     
   cdef void createPythonStyleObject(self) :
     
@@ -4899,6 +4843,20 @@ cdef class myResonance :
       newlib[dim.dimNumber] = [peak]
       
       self.peakDimsLib[spectrum.name] = newlib
+      
+  cdef list getPeaksForSpectrumDim(self, aSpectrum spectrum, int dimNumber) :
+    
+    if spectrum.name in self.peakDimsLib :
+      
+      entryForSpectrum = self.peakDimsLib[spectrum.name]
+      
+      if dimNumber in entryForSpectrum :
+        
+        return entryForSpectrum[dimNumber]
+      
+    return []
+      
+
 
   cdef void createPythonStyleObject(self) :
     
