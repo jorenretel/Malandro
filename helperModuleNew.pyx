@@ -1120,9 +1120,20 @@ cdef class autoAssign :
           
           for isotopomer in isotopomers :
             
+            atom.labelInfoTemp[isotopomer] = {}
+            
+            isotopeDict = atom.labelInfoTemp[isotopomer]
+            
             atomLabels = isotopomer.findAllAtomLabels(name=atomName, subType=subType)
             
-            atom.labelInfoTemp[isotopomer] = atomLabels
+            atomLabelWeightSum = float(sum([atomLabel.weight for atomLabel in atomLabels]))
+            
+            for atomLabel in atomLabels :
+              
+              isotopeDict[atomLabel.isotopeCode] = atomLabel.weight / atomLabelWeightSum
+              
+            
+            #atom.labelInfoTemp[isotopomer] = atomLabels
   
   cdef void createSpinSytemsAndResonances(self):
     
@@ -2253,8 +2264,6 @@ cdef class autoAssign :
     cdef double addedColabelling
     
     #mixtures = spectrum.ccpnSpectrum.experiment.labeledMixtures
-    
-   # print '2'
   
     mixture = spectrum.ccpnSpectrum.experiment.findFirstLabeledMixture()
       
@@ -2262,18 +2271,19 @@ cdef class autoAssign :
     
     molWeightSum = sum([x.weight for x in molLabelFractions])                                                               # This is the sum of weight of all labelling patterns present in the sample
     
-   # print '4'
+    
+    #if len(zip(atoms) len(zip(atoms,isotopes))
     
     
-    residueDict = {} 
+    residueDict = {}
+    
+    #atoms = set(atoms)
     
     for atom in atoms :                                                             # Group Atoms by residue
-    
-#      print atom.atomName
       
       molResidue = atom.residue.ccpnResidue.molResidue
       
-      ccpnAtom = atom.ccpnAtom
+      #ccpnAtom = atom.ccpnAtom
       
       if molResidue in residueDict :
         
@@ -2286,14 +2296,9 @@ cdef class autoAssign :
       
          
          
-    TotalCoLabellingFraction = 0.0   
-  
-  #  print '8'  
+    TotalCoLabellingFraction = 0.0    
          
     for mlf in molLabelFractions:                                                                                                                       # Now I want to loop over all different labelling patterns that are present in the sample (denoted with capital letter in the analysis GUI)
-      
-      
- #     print '9'
       
       molFactor = mlf.weight / molWeightSum
         
@@ -2301,21 +2306,13 @@ cdef class autoAssign :
       
       colabellingOfAtomsInThismolLabelFraction= 1.0
       
- #     print '10'
-      
       for molResidue, atomList in residueDict.items() :                                                                                         # Loop over involved residues
-        
- #       print '11'
         
         #molResidue = mixture.labeledMolecule.molecule.findFirstMolResidue(serial=resID)
         resLabel = molLabel.findFirstResLabel(resId=molResidue.serial)
         resLabelFractions = resLabel.resLabelFractions
         
- #       print '12'
-        
         rlfWeightSum = sum([x.weight for x in resLabelFractions])
-        
-  #      print '13'
         
         colabellingOfAtomsWithinThisResidue = 0
         
@@ -2323,81 +2320,43 @@ cdef class autoAssign :
           
           resFactor = rlf.weight / rlfWeightSum                                                                                                           # The relative weight of the different isotopomers
           
- #         print '14'
           if len(atomList) == 1 :
             
-            #atomName = atomNameList[0]
-            
-            #chemAtom = molResidue.chemCompVar.findFirstChemAtom(name=atomName)
-            
-            
             atom = atomList[0]
-            #chemAtom = atom.ccpnAtom.chemAtom
-            
-       #     print '15'
-            
-            
-            #subType = chemAtom.subType
             
             atomName = atom.atomName
             
-            #print atomName
+            isotopeCode = self.guessSpinHalfIsotopeFromAtomName(atomName)
             
-            #fracDict = getIsotopomerSingleAtomFractions(rlf.isotopomers, atomName, subType)
-            
-            fracDict = self.getIsotopomerSingleAtomFractionsForChemAtom(rlf.isotopomers,  atom)
-            
-            fraction = fracDict.get(self.guessSpinHalfIsotopeFromAtomName(atomName), 1.0)
-            
-       #     print '16'
-            
+            fraction = self.getIsotopomerSingleAtomFractionsForAtom(rlf.isotopomers, atom, isotopeCode)            
             
           else :                                                    # TODO:UPDATE
-            #print '17'
+            
             subTypes = []
             isotopes = []
             
             for atom in atomList :
               
               atomName = atom.atomName
-              chemAtom = atom.ccpnAtom.chemAtom
-              
-              #print 'atomName....'
-              #print atomName
-              
-              subTypes.append(chemAtom.subType)
+              #chemAtom = atom.ccpnAtom.chemAtom
+              #
+              #subTypes.append(chemAtom.subType)
               isotopes.append(self.guessSpinHalfIsotopeFromAtomName(atomName))
-              
-              #print '19'
 
-            atomNameList = [atom.atomName for atom in atomList]
-            #print '19A'
-            #print rlf.isotopomers
-            #print type(rlf.isotopomers)
-            #print type(atomNameList)
-            #print type(subTypes)
-            fracDict =self.getIsotopomerAtomSetFractions(rlf.isotopomers, atomNameList, subTypes)
-            #print '19B'
-            fraction = fracDict.get(tuple(isotopes), 1.0)
-            #print '19C'
-            
-          #print '19D' 
-          
-          #print fraction
-          #print resFactor
+            #atomNameList = [atom.atomName for atom in atomList]
+
+            fraction =self.getIsotopomerAtomSetFractions(rlf.isotopomers, atomList, isotopes)
+
+            #fraction = fracDict.get(tuple(isotopes), 1.0)
+
           addedColabelling =  fraction * resFactor
-          #print '19D1'
-          colabellingOfAtomsWithinThisResidue = colabellingOfAtomsWithinThisResidue +  addedColabelling #+ (fraction * resFactor)
-          #print '20'  
+
+          colabellingOfAtomsWithinThisResidue += addedColabelling #+ (fraction * resFactor)
       
-        colabellingOfAtomsInThismolLabelFraction = colabellingOfAtomsInThismolLabelFraction * colabellingOfAtomsWithinThisResidue
-        
-        #print '21'
-            
-      TotalCoLabellingFraction = TotalCoLabellingFraction + ( colabellingOfAtomsInThismolLabelFraction * molFactor )
-      
-      #print '22'
-    #print TotalCoLabellingFraction
+        colabellingOfAtomsInThismolLabelFraction *= colabellingOfAtomsWithinThisResidue
+
+      TotalCoLabellingFraction += ( colabellingOfAtomsInThismolLabelFraction * molFactor )
+
     return TotalCoLabellingFraction 
 
   cdef double calculateCoLabellingFromExperiment(self, object ccpnSpectrum, list ccpnResidues, list atomNames) :
@@ -2565,158 +2524,55 @@ cdef class autoAssign :
       
     return isotope
           
-  cdef dict getIsotopomerAtomSetFractions(self,set isotopomers, list atomNames, list subTypes):
-    """Descrn: Get the combined isotope proportions for a given set of named
-               atoms within a set of isotopomers. Fractions normalised to 1.0
-       Inputs: List of ChemCompLabel.Isotopomers, 2-Tuple of Words (ChemAtom.name), 2-Tuple of Words (ChemAtom.subType)
-       Output: Dict of Tuple:Float - (IsotopeCode,IsotopeCode):fraction
-    """
+  cdef double getIsotopomerAtomSetFractions(self,set isotopomers, list atoms, list isotopeCodes):
     
-    #print '30'
-
-    fractionDict = {}
-
-    isoWeightSum = sum([x.weight for x in isotopomers])
-  
-    #atLabels   = []
-    #sumWeights = []
-
-#    atLabels   = [None, None]
-#    sumWeights = [None, None]
-   
-    
-    for isotopomer in isotopomers:
-
-      i = 0
-      atLabels   = []
-      sumWeights = []
-      for atomName in atomNames:
-        atLabels.append(isotopomer.findAllAtomLabels(name=atomName, 
-                                                   subType=subTypes[i]))
-        sumWeights.append(sum([x.weight for x in atLabels[i]]))
-
-
-#        atLabels[i] = isotopomer.findAllAtomLabels(name=atomNames[i], 
-#                                                 subType=subTypes[i])
-#        sumWeights[i] = sum([x.weight for x in atLabels[i]])
-
-
-
-        i = i + 1
-    
-      # Done this way to guard against the divisor becoming zero
-      factor  = isotopomer.weight / isoWeightSum
-    
-      divisor = 1
-
-      for sumWeight in sumWeights :
-        divisor = divisor * sumWeight
-
-
-      if len(atLabels) == 2 :
-    
-        for atl0 in atLabels[0]:
-          for atl1 in atLabels[1]:
-      
-            if atl0 is atl1:
-              contrib = atl0.weight * factor / sumWeights[0]  
-            else:
-              contrib = atl0.weight * atl1.weight * factor / divisor
-          
-            key = (atl0.isotopeCode, atl1.isotopeCode)
-            fractionDict[key] = fractionDict.get(key, 0.0) + contrib
-
-
-
-      if len(atLabels) == 3 :
-    
-        for atl0 in atLabels[0]:
-          for atl1 in atLabels[1]:
-            for atl2 in atLabels[2]:
-      
-              if atl0 == atl1 and atl0 == atl2:
-                contrib = atl0.weight * factor / sumWeights[0]
-
-              elif atl0 is atl1 :
-                contrib = atl0.weight * factor / sumWeights[0] * atl2.weight * factor / divisor
-
-              elif atl0 is atl2 :
-                contrib = atl0.weight * factor / sumWeights[0] * atl1.weight * factor / divisor
-
-              elif atl1 is atl2 :
-                contrib = atl1.weight * factor / sumWeights[0] * atl0.weight * factor / divisor
-
-              else:
-                contrib = atl0.weight * atl1.weight * atl2.weight * factor / divisor
-
-
-              key = (atl0.isotopeCode, atl1.isotopeCode,atl2.isotopeCode)
-              fractionDict[key] = fractionDict.get(key, 0.0) + contrib
-
-
-
-      if len(atLabels) == 4 :
-    
-        for atl0 in atLabels[0]:
-          for atl1 in atLabels[1]:
-            for atl2 in atLabels[2]:
-              for atl3 in atLabels[3]:  
-
-                contrib = atl0.weight * atl1.weight * atl2.weight * atl3.weight * factor / divisor
-
-
-                key = (atl0.isotopeCode, atl1.isotopeCode,atl2.isotopeCode,atl3.isotopeCode)
-                fractionDict[key] = fractionDict.get(key, 0.0) + contrib
-              
-
-
-
-
-
-    return fractionDict
-    
-  cdef dict getIsotopomerSingleAtomFractionsForChemAtom(self,  set isotopomers, anAtom atom) :
-    
-    cdef dict fractionDict
     cdef double isoWeightSum
-    
-    cdef object x
-    
+
     cdef object isotopomer
     
-    cdef set atomLabels
-    cdef frozenset allAtomLabels
-    cdef object atomLabel
-    cdef double atWeightSum
+    cdef double labellingFraction
     
-    cdef double atFactor
+    cdef anAtom atom
     
     cdef str isotopeCode
     
-    cdef double contrib
+    labellingFraction = 0.0
     
+    isoWeightSum =  float(sum([isotopomer.weight for isotopomer in isotopomers]))
     
+    for isotopomer in isotopomers :
+      
+      colabellingInThisIsotopomer = 1.0
+      
+      for atom, isotopeCode in set(zip(atoms, isotopeCodes)) :
+      
+        colabellingInThisIsotopomer *= atom.labelInfoTemp[isotopomer][isotopeCode]
+        
+      labellingFraction += colabellingInThisIsotopomer * isotopomer.weight / isoWeightSum
     
+    return labellingFraction
+  
+  
     
-    fractionDict = {}
-    isoWeightSum =  sum([x.weight for x in isotopomers])
+  cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, anAtom atom, str isotopeCode) :
+    
+    cdef double isoWeightSum
+
+    cdef object isotopomer
+    
+    cdef double labellingFraction
+    
+    labellingFraction = 0.0
+    
+    isoWeightSum =  float(sum([isotopomer.weight for isotopomer in isotopomers]))
 
     for isotopomer in isotopomers :
       
-      atomLabels = atom.labelInfoTemp[isotopomer]
+      labellingFraction += atom.labelInfoTemp[isotopomer][isotopeCode] * isotopomer.weight / isoWeightSum
+    
+    return labellingFraction 
+   
   
-      atWeightSum = sum([x.weight for x in atomLabels])
-      atFactor    = isotopomer.weight  / isoWeightSum
-      
-      for atomLabel in atomLabels:
-        
-        isotopeCode = atomLabel.isotopeCode
-
-        contrib     = atFactor * atomLabel.weight / atWeightSum
-
-        fractionDict[isotopeCode] = fractionDict.get(isotopeCode,0.0) + contrib
-  
-    return fractionDict
       
   cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems):
      
@@ -4319,7 +4175,7 @@ cdef class aResidue :
 
     linkObject.simulatedPeaks.extend(simulatedPeaks)
     linkObject.realPeaks.extend(realPeaks)
-    linkObject.notFoundSimulatedPeaks.extend(listWithNotFoundSimulatedPeaks)
+    linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
         
 
      
