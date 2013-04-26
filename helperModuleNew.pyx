@@ -792,6 +792,8 @@ cdef class autoAssign :
     
     cdef list peaks
     
+    cdef list isotopeCodes
+    
     cdef double minIsoFrac
     
     cdef simulatedPeakContrib contrib
@@ -837,6 +839,8 @@ cdef class autoAssign :
       # Making a list of atomSites that are visited.
       
       atomSitePathWay = self.createAtomSitesList(expSteps)
+      
+      isotopeCodes = [atomSite.isotopeCode for atomSite in atomSitePathWay]        
         
       # And a list with expTransfers that connect the atomSites
       
@@ -858,7 +862,7 @@ cdef class autoAssign :
         
         for atomPathWay in atomPathWays :
           
-          colabelling = self.getCoLabellingFractionNew(spectrum,atomPathWay)   
+          colabelling = self.getCoLabellingFractionNew(spectrum,atomPathWay, isotopeCodes)   
 
 
           if colabelling > minIsoFrac :
@@ -1131,9 +1135,6 @@ cdef class autoAssign :
             for atomLabel in atomLabels :
               
               isotopeDict[atomLabel.isotopeCode] = atomLabel.weight / atomLabelWeightSum
-              
-            
-            #atom.labelInfoTemp[isotopomer] = atomLabels
   
   cdef void createSpinSytemsAndResonances(self):
     
@@ -1702,7 +1703,6 @@ cdef class autoAssign :
           
           resA.addToLinkDict(spinSys1, spinSys2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks)      
 
-
   cdef list commonElementInLists(self, list listOfLists):
      
     if listOfLists :
@@ -2101,7 +2101,7 @@ cdef class autoAssign :
       
     return fraction
 
-  cdef double getCoLabellingFractionNew(self,aSpectrum spectrum,list atoms):
+  cdef double getCoLabellingFractionNew(self,aSpectrum spectrum,list atoms, list isotopeCodes):
     
     cdef object scheme
     cdef object ccpnSpectrum
@@ -2115,7 +2115,7 @@ cdef class autoAssign :
     
     if scheme is True :
       
-      colabelling = self.calculateCoLabellingFromExperimentNew(spectrum, atoms)
+      colabelling = self.calculateCoLabellingFromExperimentNew(spectrum, atoms, isotopeCodes)
       
       return colabelling
     
@@ -2156,66 +2156,7 @@ cdef class autoAssign :
 #      return colabelling    
           
           
-          
-  cdef double getCoLabellingFraction(self,aSpectrum spectrum,list residues, list atomNames):
-    
-    cdef object scheme
-    cdef object ccpnSpectrum
-    cdef aResidue x
-    cdef list ccpnResidues
-    
-    cdef double colabelling
-    
-    
-    scheme = spectrum.labellingScheme
-    
-    if scheme is True :
-      
-      ccpnSpectrum = spectrum.ccpnSpectrum
-      ccpnResidues = [x.ccpnResidue for x in residues]
-      
-      colabelling = self.calculateCoLabellingFromExperiment(ccpnSpectrum, ccpnResidues, atomNames)
-      
-      return colabelling
-    
-    elif scheme :
-      
-      residueDict = {} 
-      
-      for atomName, res in zip(atomNames,  residues) :                                                                  
-        
-        if res in residueDict : 
-          
-          residueDict[res].append(atomName)                                                             # You can seemingly use objects of user-defined types as dictionary keys in python :-)
-          
-        else :
-          
-          residueDict[res] = [atomName]
-           
-      colabelling = 1     
-           
-      for res, atomNameList in residueDict.items() :
-        
-        numberOfAtoms = len(atomNameList)
-        
-        if numberOfAtoms == 1 :
-          
-          colabelling = colabelling * self.getAtomLabellingFraction('protein', res.ccpCode, atomNameList[0], scheme)
-          
-        elif numberOfAtoms == 2 :
-          
-          colabelling = colabelling * self.getAtomPairLabellingFraction_intra('protein', res.ccpCode, atomNameList[0], atomNameList[1], scheme)
-          
-        else :
-          
-          print 'something went wrong'
-      
-      #print colabelling    
-      return colabelling    
-                     
-  cdef double calculateCoLabellingFromExperimentNew(self, aSpectrum spectrum, list atoms) :
-    
-    #print '1'
+  cdef double calculateCoLabellingFromExperimentNew(self, aSpectrum spectrum, list atoms, list isotopeCodes) :
     
     cdef object mixture
     
@@ -2257,13 +2198,9 @@ cdef class autoAssign :
     
     cdef list subTypes
     
-    cdef list isotopes
-    
     cdef list atomNameList
     
     cdef double addedColabelling
-    
-    #mixtures = spectrum.ccpnSpectrum.experiment.labeledMixtures
   
     mixture = spectrum.ccpnSpectrum.experiment.findFirstLabeledMixture()
       
@@ -2271,31 +2208,20 @@ cdef class autoAssign :
     
     molWeightSum = sum([x.weight for x in molLabelFractions])                                                               # This is the sum of weight of all labelling patterns present in the sample
     
-    
-    #if len(zip(atoms) len(zip(atoms,isotopes))
-    
-    
     residueDict = {}
     
-    #atoms = set(atoms)
-    
-    for atom in atoms :                                                             # Group Atoms by residue
+    for atom, isotopeCode in zip(atoms, isotopeCodes) :                                                             # Group Atoms by residue
       
       molResidue = atom.residue.ccpnResidue.molResidue
-      
-      #ccpnAtom = atom.ccpnAtom
-      
+
       if molResidue in residueDict :
         
-        residueDict[molResidue].append(atom)
+        residueDict[molResidue].add((atom,isotopeCode))
         
       else :
       
-        residueDict[molResidue] = [atom]  
+        residueDict[molResidue] = set([(atom,isotopeCode)])
         
-      
-         
-         
     TotalCoLabellingFraction = 0.0    
          
     for mlf in molLabelFractions:                                                                                                                       # Now I want to loop over all different labelling patterns that are present in the sample (denoted with capital letter in the analysis GUI)
@@ -2306,9 +2232,8 @@ cdef class autoAssign :
       
       colabellingOfAtomsInThismolLabelFraction= 1.0
       
-      for molResidue, atomList in residueDict.items() :                                                                                         # Loop over involved residues
+      for molResidue, atomIsotopeTuples in residueDict.items() :                                                                                         # Loop over involved residues
         
-        #molResidue = mixture.labeledMolecule.molecule.findFirstMolResidue(serial=resID)
         resLabel = molLabel.findFirstResLabel(resId=molResidue.serial)
         resLabelFractions = resLabel.resLabelFractions
         
@@ -2319,198 +2244,20 @@ cdef class autoAssign :
         for rlf in resLabelFractions :                                                                                                                         # Loop over the different resLabelFractions, bascically looping over isotopomers of one residue in a specific labelling pattern
           
           resFactor = rlf.weight / rlfWeightSum                                                                                                           # The relative weight of the different isotopomers
-          
-          if len(atomList) == 1 :
-            
-            atom = atomList[0]
-            
-            atomName = atom.atomName
-            
-            isotopeCode = self.guessSpinHalfIsotopeFromAtomName(atomName)
-            
-            fraction = self.getIsotopomerSingleAtomFractionsForAtom(rlf.isotopomers, atom, isotopeCode)            
-            
-          else :                                                    # TODO:UPDATE
-            
-            subTypes = []
-            isotopes = []
-            
-            for atom in atomList :
-              
-              atomName = atom.atomName
-              #chemAtom = atom.ccpnAtom.chemAtom
-              #
-              #subTypes.append(chemAtom.subType)
-              isotopes.append(self.guessSpinHalfIsotopeFromAtomName(atomName))
 
-            #atomNameList = [atom.atomName for atom in atomList]
-
-            fraction =self.getIsotopomerAtomSetFractions(rlf.isotopomers, atomList, isotopes)
-
-            #fraction = fracDict.get(tuple(isotopes), 1.0)
+          fraction =self.getIsotopomerAtomSetFractions(rlf.isotopomers, atomIsotopeTuples)
 
           addedColabelling =  fraction * resFactor
 
-          colabellingOfAtomsWithinThisResidue += addedColabelling #+ (fraction * resFactor)
+          colabellingOfAtomsWithinThisResidue += addedColabelling
       
         colabellingOfAtomsInThismolLabelFraction *= colabellingOfAtomsWithinThisResidue
 
       TotalCoLabellingFraction += ( colabellingOfAtomsInThismolLabelFraction * molFactor )
 
     return TotalCoLabellingFraction 
-
-  cdef double calculateCoLabellingFromExperiment(self, object ccpnSpectrum, list ccpnResidues, list atomNames) :
-    
-    #print '1'
-    
-    cdef object mixture
-    
-    cdef double TotalCoLabellingFraction
-    
-    cdef dict residueDict
-    
-    mixtures = ccpnSpectrum.experiment.labeledMixtures
-    
-    #print '2'
-
-    mixture = ccpnSpectrum.experiment.findFirstLabeledMixture()
-      
-    molLabelFractions = mixture.molLabelFractions
-    
-    molWeightSum = sum([x.weight for x in molLabelFractions])                                                               # This is the sum of weight of all labelling patterns present in the sample
-    
-    #print '4'
-    residueDict = {} 
-    
-    for atomName, res in zip(atomNames,  ccpnResidues) :                                                                       # I want to group the atoms by residue
-      
-      #print '5'
-      
-      if res.molResidue.serial in residueDict : 
-        
-        #print '6'
-        
-        residueDict[res.molResidue.serial].append(atomName)
-        
-      else :
-        
-        #print '7'
-        
-        residueDict[res.molResidue.serial] = [atomName]
          
-         
-         
-    TotalCoLabellingFraction = 0   
-  
-    #print '8'  
-         
-    for mlf in molLabelFractions:                                                                                                                       # Now I want to loop over all different labelling patterns that are present in the sample (denoted with capital letter in the analysis GUI)
-      
-      
-      #print '9'
-      
-      molFactor = mlf.weight / molWeightSum
-        
-      molLabel = mlf.molLabel
-      
-      colabellingOfAtomsInThismolLabelFraction= 1
-      
-      #print '10'
-      
-      for resID, atomNameList in residueDict.items() :                                                                                         # Loop over involved residues
-        
-        #print '11'
-        
-        molResidue = mixture.labeledMolecule.molecule.findFirstMolResidue(serial=resID)
-        resLabel = molLabel.findFirstResLabel(resId=resID)
-        resLabelFractions = resLabel.resLabelFractions
-        
-        #print '12'
-        
-        rlfWeightSum = sum([x.weight for x in resLabelFractions])
-        
-        #print '13'
-        
-        colabellingOfAtomsWithinThisResidue = 0
-        
-        for rlf in resLabelFractions :                                                                                                                         # Loop over the different resLabelFractions, bascically looping over isotopomers of one residue in a specific labelling pattern
-          
-          resFactor = rlf.weight / rlfWeightSum                                                                                                           # The relative weight of the different isotopomers
-          
-          #print '14'
-          if len(atomNameList) == 1 :
-            
-            atomName = atomNameList[0]
-            
-            chemAtom = molResidue.chemCompVar.findFirstChemAtom(name=atomName)
-            
-            #print '15'
-            
-            if not chemAtom :                                                                                                                   # This happens only when you try to calculate colabelling involving an atom that does not exist, like the backbone amide proton in proline
-              
-              return 0
-            
-            
-            subType = chemAtom.subType
-            
-            fracDict = getIsotopomerSingleAtomFractions(rlf.isotopomers, atomName, subType)
-            
-            fraction = fracDict.get(self.guessSpinHalfIsotopeFromAtomName(atomName), 1.0)
-            
-            #print '16'
-            
-            
-          else :
-            print '17'
-            subTypes = []
-            isotopes = []
-            
-            for atomName in atomNameList :
-              
-              
-              chemAtom = molResidue.chemCompVar.findFirstChemAtom(name=atomName)
-              
-              print '18'
-              
-              if not chemAtom :
-                
-                return 0
-              
-              
-              subTypes.append(chemAtom.subType)
-              isotopes.append(self.guessSpinHalfIsotopeFromAtomName(atomName))
-              
-              print '19'
-
-            print '19A'
-            print rlf.isotopomers
-            print type(rlf.isotopomers)
-            print type(atomNameList)
-            print type(subTypes)
-            fracDict =self.getIsotopomerAtomSetFractions(rlf.isotopomers, atomNameList, subTypes)
-            print '19B'
-            fraction = fracDict.get(tuple(isotopes), 1.0)
-            print '19C'
-            
-       #   print '19D' 
-       #   print fraction
-      #    print resFactor
-          addedColabelling =  fraction * resFactor
-       #   print '19D1'
-          colabellingOfAtomsWithinThisResidue = colabellingOfAtomsWithinThisResidue +  addedColabelling #+ (fraction * resFactor)
-        #  print '20'  
-      
-        colabellingOfAtomsInThismolLabelFraction = colabellingOfAtomsInThismolLabelFraction * colabellingOfAtomsWithinThisResidue
-        
-        #print '21'
-            
-      TotalCoLabellingFraction = TotalCoLabellingFraction + ( colabellingOfAtomsInThismolLabelFraction * molFactor )
-      
-      #print '22'
- 
-    return TotalCoLabellingFraction 
-              
-  cdef str guessSpinHalfIsotopeFromAtomName(self, str atomName) :
+  cdef str guessSpinHalfIsotopeFromAtomName(self, str atomName) :             #TODO: remove, not used
 
     
     if atomName[0] == 'H':
@@ -2524,7 +2271,7 @@ cdef class autoAssign :
       
     return isotope
           
-  cdef double getIsotopomerAtomSetFractions(self,set isotopomers, list atoms, list isotopeCodes):
+  cdef double getIsotopomerAtomSetFractions(self,set isotopomers, set atomIsotopeTuples) :
     
     cdef double isoWeightSum
 
@@ -2544,16 +2291,14 @@ cdef class autoAssign :
       
       colabellingInThisIsotopomer = 1.0
       
-      for atom, isotopeCode in set(zip(atoms, isotopeCodes)) :
+      for atom, isotopeCode in atomIsotopeTuples :
       
         colabellingInThisIsotopomer *= atom.labelInfoTemp[isotopomer][isotopeCode]
         
       labellingFraction += colabellingInThisIsotopomer * isotopomer.weight / isoWeightSum
     
     return labellingFraction
-  
-  
-    
+   
   cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, anAtom atom, str isotopeCode) :
     
     cdef double isoWeightSum
@@ -2571,9 +2316,7 @@ cdef class autoAssign :
       labellingFraction += atom.labelInfoTemp[isotopomer][isotopeCode] * isotopomer.weight / isoWeightSum
     
     return labellingFraction 
-   
-  
-      
+    
   cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems):
      
     cdef int improvements
@@ -3702,10 +3445,6 @@ cdef class autoAssign :
       res.createPythonStyleObject()
       
     chain.createPythonStyleObject()  
-      
-
-      
-      
       
     for spec in DataModel.spectra :
         
