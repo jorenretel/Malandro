@@ -852,7 +852,7 @@ cdef class autoAssign :
    
         for atomSite in atomSitePathWay :
           
-          atomGroups.append(self.getAtomsForAtomSite(atomSite,resA) + self.getAtomsForAtomSite(atomSite,resB))
+          atomGroups.append(resA.getAtomsForAtomSite(atomSite) + resB.getAtomsForAtomSite(atomSite))
                                                               
         atomPathWays = self.walkExperimentTree([], atomGroups, transferPathWay,0)
         
@@ -897,7 +897,7 @@ cdef class autoAssign :
             
         simulatedPeakMatrix.append(peaks)
 
-  cdef list getAtomsForAtomSite(self, object atomSite, aResidue res) :
+  cdef list getAtomsForAtomSite(self, object atomSite, aResidue res) :          #TODO: remove, not used any longer
     
     cdef anAtom atom
     
@@ -3845,6 +3845,8 @@ cdef class aResidue :
   
   cdef dict atomsByName
   
+  cdef dict atomsByAtomSiteName
+  
   cdef dict atomsByCcpnChemAtom
   
   cdef list solutions
@@ -3878,9 +3880,9 @@ cdef class aResidue :
     
     self.atomsByCcpnChemAtom = {}
     
+    self.atomsByAtomSiteName = {}
+    
     self.setupAtoms()
-    
-    
     
   def __getstate__(self):
     state = dict(self.__dict__)
@@ -3889,13 +3891,103 @@ cdef class aResidue :
     return state
 
   def setupAtoms(self):
-      
+    
+    print self.ccpCode
+    
     for atom in self.ccpnResidue.atoms :
       
       newatom = anAtom(self,atom)
       self.atoms.append(newatom)
       self.atomsByName[atom.chemAtom.name] = newatom
       self.atomsByCcpnChemAtom[atom.chemAtom] = newatom
+      
+    self.groupAtomsByAtomSite()
+      
+  cdef void groupAtomsByAtomSite(self) :
+    
+    cdef anAtom atom
+    
+    atomsByAtomSiteName = self.atomsByAtomSiteName
+    atomsByName = self.atomsByName
+
+    atomsByAtomSiteName['CA'] = [atomsByName['CA']]
+    atomsByAtomSiteName['CO'] = [atomsByName['C']]
+    
+    HAs = []
+    HBs = []
+    CXs = []
+    Cali = []
+    
+    for atom in self.atoms :
+      
+      elementSymbol = atom.ccpnAtom.chemAtom.elementSymbol
+      
+      atomsByAtomSiteName[elementSymbol] = atomsByAtomSiteName.get(elementSymbol, []) + [atom]
+      
+      if elementSymbol == 'C' :
+        
+        CXs.append(atom)
+    
+    if 'CB' in atomsByName :
+
+      atomsByAtomSiteName['CB'] = [atomsByName['CB']]
+      
+    for name in ['HA','HA1','HA2','HA3'] :
+      
+      if name in atomsByName :
+      
+        HAs.append(atomsByName[name])
+        
+    for name in ['HB','HB1','HB2','HB3'] :
+      
+      if name in atomsByName :
+      
+        HBs.append(atomsByName[name])    
+    
+    if self.ccpCode == 'Phe' or self.ccpCode == 'Tyr' :
+      
+      Calis = [atomsByName[name] for name in ['CA','CB']]
+      atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CD2','CE1','CE2','CZ']]
+      
+    elif self.ccpCode == 'Trp' :
+      
+      Calis = [atomsByName[name] for name in ['CA','CB']]
+      atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CE2','CE3','CZ2', 'CZ3','CH2']]
+      
+    elif self.ccpCode == 'His' :
+      
+      Calis = [atomsByName[name] for name in ['CA','CB']]
+      atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD2','CE1']]
+      
+    elif self.ccpCode == 'Glu' or self.ccpCode == 'Gln' :
+      
+      Calis = [atomsByName[name] for name in ['CA','CB','CG']]
+      atomsByAtomSiteName['CO'].append(atomsByName['CD'])
+      
+    elif self.ccpCode == 'Asp' or self.ccpCode == 'Asn' :
+      
+      Calis = [atomsByName[name] for name in ['CA','CB']]
+      atomsByAtomSiteName['CO'].append(atomsByName['CG'])
+      
+    else :
+      
+      for atom in atomsByAtomSiteName['C'] :
+        
+        if atom.atomName != 'C' :
+          
+          Calis.append(atom)
+          
+    atomsByAtomSiteName['HA'] = HAs
+    atomsByAtomSiteName['HB'] = HBs
+    atomsByAtomSiteName['CX'] = CXs
+    atomsByAtomSiteName['Cali'] = Calis
+          
+  cdef list getAtomsForAtomSite(self, object atomSite) :
+    
+    cdef anAtom atom
+    atomSiteName = atomSite.name
+    
+    return atomsByAtomSiteName.get(atomSiteName, [])
       
   cdef void addToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks) :
   
