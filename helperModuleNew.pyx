@@ -257,7 +257,6 @@ cdef class autoAssign :
     i = 0
     
     for res in DataModel.myChain.residues :
-      #print i + 1
       
       isAssigned = False
       
@@ -798,6 +797,11 @@ cdef class autoAssign :
     
     cdef simulatedPeakContrib contrib
     
+    cdef tuple dimNumbers
+    cdef tuple stepNumbers
+    cdef int dimNumber
+    cdef int stepNumber
+    
      
     minIsoFrac = self.minIsoFrac
     
@@ -835,16 +839,19 @@ cdef class autoAssign :
         expSteps = expSteps[:int(len(expSteps)/2.0+0.5)]
 
       dimStepDict = self.mapExpStepToDimension(expSteps, refExperiment.sortedRefExpDims())
+      dimNumbers, stepNumbers = zip(*dimStepDict.items())
 
       # Making a list of atomSites that are visited.
       
       atomSitePathWay = self.createAtomSitesList(expSteps)
       
-      isotopeCodes = [atomSite.isotopeCode for atomSite in atomSitePathWay]        
+      isotopeCodes = [atomSite.isotopeCode for atomSite in atomSitePathWay]
         
       # And a list with expTransfers that connect the atomSites
       
       transferPathWay = self.createTransferList(atomSitePathWay,expTransfers)
+
+      # Going through each sequential pair in the sequence
 
       for resA, resB in zip(residues,residues[1:]) :
         
@@ -855,31 +862,64 @@ cdef class autoAssign :
           atomGroups.append(resA.getAtomsForAtomSite(atomSite) + resB.getAtomsForAtomSite(atomSite))
                                                               
         atomPathWays = self.walkExperimentTree([], atomGroups, transferPathWay,0)
-        
+
         self.cacheLabellingInfo(atomPathWays, molLabelFractions)
         
         peaks = []
         
+        # In the next few lines the atomPathways are grouped by atomSet. This takes care of two things :
+        # 1. Different pathways that end up having the same atom(sets) in the measured dimensions (i.e give rise to the same peak) are grouped together.
+        # 2. Also multiple pathways that in practice give rise to the same peak because the measured atom is in fast exchange (for instance the three protons attached to the CB of Ala)
+        #    are grouped together, so only one peak is generated. The only time that this could actually cause a underestimation of the amount of peaks is in Phe and Tyr
+        #    if the ring two sides of the ring are not equivalent. This can later on cause some peaks not being picked up in the matching procedure with the real spectra when
+        #    the spin system used for matching has the ring set to 'non-equivalent' and therefor the CD1/CD2 and CE1/CE2 would be assigned to different resonances.
+        
+        atomSetDict = {}
+
         for atomPathWay in atomPathWays :
           
-          colabelling = self.getCoLabellingFractionNew(spectrum,atomPathWay, isotopeCodes)   
+          atomSets = []
+          
+          for stepNumber in stepNumbers :
+            
+            atom = atomPathWay[stepNumber-1]
+            atomSets.append(atom.ccpnAtom.atomSet)
+          
+          atomSetTuple = tuple(atomSets)
 
+          atomSetDict[atomSetTuple] = atomSetDict.get(atomSetTuple,[]) + [atomPathWay]
+   
+        for atomSetTuple, atomPathWayList in atomSetDict.items() :
+
+          colabelling = 0
+          
+          for atomPathWay in atomPathWayList :
+
+            colabelling += self.getCoLabellingFractionNew(spectrum,atomPathWay, isotopeCodes)
+            
+          colabelling = colabelling / len(atomPathWayList)          # Average colabelling over all pathways giving rise to the same peak.
 
           if colabelling > minIsoFrac :
-              
+            
+            firstAtomPathWay = atomPathWayList[0]
+
             newPeak = simulatedPeak()
             newPeak.colabelling = colabelling
             newPeak.spectrum = spectrum
-            
-            for dimNumber, stepNumber in dimStepDict.items() :
 
-              atom = atomPathWay[stepNumber-1]
-              
+            for dimNumber, stepNumber, atomSet in zip(dimNumbers, stepNumbers, atomSetTuple) :
+
               contrib = simulatedPeakContrib()
+
+              atom = firstAtomPathWay[stepNumber-1]
+
+              residue = atom.residue
               
-              contrib.ccpCode = atom.residue.ccpCode
+              contrib.ccpCode = residue.ccpCode
               
-              contrib.atomName = atom.atomName
+              contrib.atomName = atomSet.name
+              
+              contrib.isotopeCode = isotopeCodes[stepNumber-1]
               
               if atom.residue is resA :
               
@@ -890,43 +930,13 @@ cdef class autoAssign :
                 contrib.firstOrSecondResidue = 2  
           
               contrib.dimNumber = dimNumber
-            
+
               newPeak.simulatedPeakContribs.append(contrib)
             
             peaks.append(newPeak)
             
         simulatedPeakMatrix.append(peaks)
 
-  cdef list getAtomsForAtomSite(self, object atomSite, aResidue res) :          #TODO: remove, not used any longer
-    
-    cdef anAtom atom
-    
-    simpleAtomSites = set(['H', 'HA','HB','N', 'CA', 'CB'])              #TODO: actually H stands for all H's here, not just the backbone amide H. And check HB out, actually not one atom either. Gly actually has two HAs.
-    
-    carbons = set(['C', 'Cali','Cmet', 'Caro'])
-    
-    atoms = []
-  
-    atomSiteName = atomSite.name
-    
-    if atomSiteName in simpleAtomSites and atomSiteName in res.atomsByName :
-      
-      atoms.append(res.atomsByName[atomSiteName])
-      
-    elif atomSiteName == 'CO' and 'C' in res.atomsByName :
-      
-      atoms.append(res.atomsByName['C'])
-      
-    elif atomSiteName in carbons :                                                      #TODO, make distinction between these
-      
-      for atom in res.atoms :
-        
-        if atom.ccpnAtom.chemAtom.elementSymbol == 'C':
-          
-          atoms.append(atom)
-          
-    return atoms
-  
   cdef object transferIsPossible(self, anAtom atomA, anAtom atomB, object expTransfer) :
     
     if not expTransfer :
@@ -1176,7 +1186,7 @@ cdef class autoAssign :
     for resonanceGroup in self.nmrProject.resonanceGroups :                                                                     # taking all spinsystems in the project
     
       SpinSysType = None
-          
+      newSpinSystem = mySpinSystem()    
       
       if resonanceGroup.resonances : 
 
@@ -1306,9 +1316,37 @@ cdef class autoAssign :
           
           
 
-        a = 0 
-          
+        a = 0
+        print '------------------------------------------------------'
+        print 'serial:'
+        print resonanceGroup.serial
+        print 'ccpCode:'
+        print resonanceGroup.ccpCode
+        if resonanceGroup.residue :
+          print 'residue'
+          print resonanceGroup.residue.seqCode
+        
         for resonance in resonanceGroup.resonances :
+          
+          
+          print '------'
+          print 'assignNames:'
+          print resonance.assignNames
+          print type(resonance.assignNames)
+          if resonance.assignNames :
+            print resonance.assignNames[0]
+          resonanceSet = resonance.resonanceSet
+  
+          if resonanceSet:
+            print 'resonanceSet'
+            atomSets = tuple(resonanceSet.atomSets)
+            for atomSet in atomSets :
+              print 'atomSet'
+              for atom in atomSet.atoms :
+                print atom.name
+              
+          
+          
           
 
           a = a +1
@@ -1334,7 +1372,7 @@ cdef class autoAssign :
             newResonance.atomName = assignName
             
             
-            newResonance.isotope = resonance.isotopeCode
+            newResonance.isotopeCode = resonance.isotopeCode
             
             newResonance.CS = resonance.findFirstShift().value
             
@@ -1732,7 +1770,7 @@ cdef class autoAssign :
       
       self.findPossiblePeakContributions(spectrum)
 
-  cdef void findPossiblePeakContributions(self,aSpectrum  spectrum) :
+  cdef void findPossiblePeakContributions(self,aSpectrum  spectrum) :         #TODO: move to spectrum class
     
     cdef list resonances
     cdef myResonance resonance
@@ -2403,12 +2441,6 @@ cdef class autoAssign :
     
   
     for aTry in xrange(amountOfStepsPerTemperature) :  
-      
-  
-      #print 'been here'
-      
-      #print listWithSpinSystems
-      #acceptThisOne = False
       
       A = listWithSpinSystems[randint(0, len(listWithSpinSystems))]
       
@@ -3563,8 +3595,6 @@ cdef class autoAssign :
           
     self.score = score
   
-  
-
 cdef class myDataModel :
 
   cdef list spectra
@@ -3892,8 +3922,6 @@ cdef class aResidue :
 
   def setupAtoms(self):
     
-    print self.ccpCode
-    
     for atom in self.ccpnResidue.atoms :
       
       newatom = anAtom(self,atom)
@@ -3916,7 +3944,7 @@ cdef class aResidue :
     HAs = []
     HBs = []
     CXs = []
-    Cali = []
+    Calis = []
     
     for atom in self.atoms :
       
@@ -3987,7 +4015,7 @@ cdef class aResidue :
     cdef anAtom atom
     atomSiteName = atomSite.name
     
-    return atomsByAtomSiteName.get(atomSiteName, [])
+    return self.atomsByAtomSiteName.get(atomSiteName, [])
       
   cdef void addToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks) :
   
@@ -4345,6 +4373,8 @@ cdef class simulatedPeakContrib:
   
   cdef str atomName
   
+  cdef str isotopeCode
+  
   cdef int dimNumber
   
   cdef int firstOrSecondResidue
@@ -4356,6 +4386,8 @@ cdef class simulatedPeakContrib:
     self.ccpCode = None
     
     self.atomName = None
+    
+    self.isotopeCode = None
     
   cdef void createPythonStyleObject(self) :
     
@@ -4401,6 +4433,8 @@ cdef class mySpinSystem :
   
   cdef object pySpinSystem
   
+  cdef dict resonancesByAtomSiteName
+  
 
   def __init__(self):
 
@@ -4408,7 +4442,7 @@ cdef class mySpinSystem :
     
     self.resonanceDict = {}
     
-    self. ccpnResonanceGroup = None
+    self.ccpnResonanceGroup = None
     
     self.currentResidueAssignment = None   
     
@@ -4426,7 +4460,9 @@ cdef class mySpinSystem :
     
     self.allowedResidues = set()                                      # This is later on going to be a Frozen Set for fast membership testing during the annealing run. If the set is empty that means everything residue is allowed, if has members, only these residues are allowed.
     
-  cdef myResonance getResonanceForAtomName(self,str atomName) :
+    self.resonancesByAtomSiteName = {}
+    
+  cdef myResonance getResonanceForAtomName(self,str atomName) :       # Used in matchSpectrum()
     
     if atomName in self.resonanceDict :
                 
@@ -4435,7 +4471,93 @@ cdef class mySpinSystem :
     else :
       
       return None
-    
+  #  
+  #  
+  #cdef void groupResonancesByAtomSite(self) :                                 #TODO: finish
+  #  
+  #  cdef myResonance resonance
+  #  
+  #  resonancesByAtomSiteName = self.resonancesByAtomSiteName
+  #  resonancesByName = self.resonanceDict
+  #  
+  #  if 'CA' in resonancesByName :
+  #
+  #    resonancesByAtomSiteName['CA'] = [resonancesByName['CA']]
+  #    
+  #  if 'C' in resonancesByName :
+  #
+  #    resonancesByAtomSiteName['CO'] = [resonancesByName['C']]  
+  #    
+  #  
+  #  HAs = []
+  #  HBs = []
+  #  CXs = []
+  #  Calis = []
+  #  
+  #  for name, resonance in resonancesByName :
+  #    
+  #    elementSymbol = resonance.ccpnAtom.chemAtom.elementSymbol
+  #    
+  #    resonancesByAtomSiteName[elementSymbol] = resonancesByAtomSiteName.get(elementSymbol, []) + [atom]
+  #    
+  #    if elementSymbol == 'C' :
+  #      
+  #      CXs.append(resonance)
+  #  
+  #  if 'CB' in atomsByName :
+  #
+  #    atomsByAtomSiteName['CB'] = [atomsByName['CB']]
+  #    
+  #  for name in ['HA','HA1','HA2','HA3'] :
+  #    
+  #    if name in atomsByName :
+  #    
+  #      HAs.append(atomsByName[name])
+  #      
+  #  for name in ['HB','HB1','HB2','HB3'] :
+  #    
+  #    if name in atomsByName :
+  #    
+  #      HBs.append(atomsByName[name])    
+  #  
+  #  if self.ccpCode == 'Phe' or self.ccpCode == 'Tyr' :
+  #    
+  #    Calis = [atomsByName[name] for name in ['CA','CB']]
+  #    atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CD2','CE1','CE2','CZ']]
+  #    
+  #  elif self.ccpCode == 'Trp' :
+  #    
+  #    Calis = [atomsByName[name] for name in ['CA','CB']]
+  #    atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CE2','CE3','CZ2', 'CZ3','CH2']]
+  #    
+  #  elif self.ccpCode == 'His' :
+  #    
+  #    Calis = [atomsByName[name] for name in ['CA','CB']]
+  #    atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD2','CE1']]
+  #    
+  #  elif self.ccpCode == 'Glu' or self.ccpCode == 'Gln' :
+  #    
+  #    Calis = [atomsByName[name] for name in ['CA','CB','CG']]
+  #    atomsByAtomSiteName['CO'].append(atomsByName['CD'])
+  #    
+  #  elif self.ccpCode == 'Asp' or self.ccpCode == 'Asn' :
+  #    
+  #    Calis = [atomsByName[name] for name in ['CA','CB']]
+  #    atomsByAtomSiteName['CO'].append(atomsByName['CG'])
+  #    
+  #  else :
+  #    
+  #    for atom in atomsByAtomSiteName['C'] :
+  #      
+  #      if atom.atomName != 'C' :
+  #        
+  #        Calis.append(atom)
+  #        
+  #  atomsByAtomSiteName['HA'] = HAs
+  #  atomsByAtomSiteName['HB'] = HBs
+  #  atomsByAtomSiteName['CX'] = CXs
+  #  atomsByAtomSiteName['Cali'] = Calis    
+  #  
     
   cdef void createPythonStyleObject(self) :
     
@@ -4477,7 +4599,7 @@ cdef class myResonance :
   
   cdef double CS
   
-  cdef object isotope               # String?
+  cdef str isotopeCode               # String?
   
   cdef str atomName 
   
@@ -4495,7 +4617,7 @@ cdef class myResonance :
 
     self.mySpinSystem = None
     
-    self.isotope = None
+    self.isotopeCode = None
     
     self.atomName = None
     
