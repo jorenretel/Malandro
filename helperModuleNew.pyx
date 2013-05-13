@@ -1073,16 +1073,9 @@ cdef class autoAssign :
     return transferPathWay
   
   cdef list createAtomSitesList(self, list expSteps) :
-  
-    #atomSitePathWay = []
     
     return [expStep.expMeasurement.findFirstAtomSite() for expStep in expSteps]
-  
-    #for expStep in expSteps :
-    #
-    #  atomSitePathWay.append(expStep.expMeasurement.findFirstAtomSite())
-    #  
-    #return atomSitePathWay
+
   
   cdef object atomsBelongToSameResidue(self, list atoms) :
     
