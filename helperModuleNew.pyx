@@ -2320,20 +2320,6 @@ cdef class autoAssign :
 
     return TotalCoLabellingFraction 
          
-  cdef str guessSpinHalfIsotopeFromAtomName(self, str atomName) :             #TODO: remove, not used
-
-    
-    if atomName[0] == 'H':
-      isotope = '1H'
-    elif atomName[0] == 'C':
-      isotope = '13C'
-    elif atomName[0] == 'N':
-      isotope = '15N'
-    elif atomName[0] == 'P':
-      isotope = '31P'
-      
-    return isotope
-          
   cdef double getIsotopomerAtomSetFractions(self,set isotopomers, set atomIsotopeTuples) :
     
     cdef double isoWeightSum
