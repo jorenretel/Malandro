@@ -814,8 +814,6 @@ cdef class autoAssign :
       self.updateInfoText('Simulating ' + spectrum.name)
           
       ccpnSpectrum = spectrum.ccpnSpectrum
-    
-      #refExpName = spectrum.ccpnSpectrum.experiment.refExperiment.name
       
       scheme = spectrum.labellingScheme
       
@@ -826,42 +824,72 @@ cdef class autoAssign :
       molLabelFractions = ccpnSpectrum.experiment.findFirstLabeledMixture().getMolLabelFractions()
       
       PT =  refExperiment.nmrExpPrototype
-    
+      
+      # Starting off with walking over the first expGraph to see which steps are recorded in which dimensions and which isotopes are on the magnetization
+      # transfer pathway. I do take projection spectra in account. I also asume experiments here where not two different isotopes are independently recorded
+      # in the same step or where different expGraphs have a different way of mapping dimensions to steps in the pulse sequence (And I think if you were
+      # doing this, you are are most likely processing your data in such a way that you end up with two spectra instead of one.
+      
       expGraph = PT.findFirstExpGraph()    
       
       expTransfers = expGraph.sortedExpTransfers()
       
       expSteps = expGraph.sortedExpSteps()
       
-
-      if self.isOutAndBack(expSteps) :
-
+      outAndBack = self.isOutAndBack(expSteps)
+      
+      if outAndBack :
+  
         expSteps = expSteps[:int(len(expSteps)/2.0+0.5)]
-
+      
+      atomSitePathWay = self.createAtomSitesList(expSteps)  
       dimStepDict = self.mapExpStepToDimension(expSteps, refExperiment.sortedRefExpDims())
-      dimNumbers, stepNumbers = zip(*dimStepDict.items())
-
-      # Making a list of atomSites that are visited.
-      
-      atomSitePathWay = self.createAtomSitesList(expSteps)
-      
+      dimNumbers, stepNumbers = zip(*sorted(dimStepDict.items()))
       isotopeCodes = [atomSite.isotopeCode for atomSite in atomSitePathWay]
-        
-      # And a list with expTransfers that connect the atomSites
       
-      transferPathWay = self.createTransferList(atomSitePathWay,expTransfers)
+      #Now do get the visited atomSites and the transfers between these sites for each expGraph.
+      
+      expGraphs = PT.getExpGraphs()
+      atomSiteAndTransferPathways = []
+        
+      for expGraph in expGraphs :
+        
+        expTransfers = expGraph.sortedExpTransfers()
+      
+        expSteps = expGraph.sortedExpSteps()
+      
+        if outAndBack :
+  
+          expSteps = expSteps[:int(len(expSteps)/2.0+0.5)]
+  
+        # Making a list of atomSites that are visited.
+        
+        atomSitePathWay = self.createAtomSitesList(expSteps)
+          
+        # And a list with expTransfers that connect the atomSites
+        
+        transferPathWay = self.createTransferList(atomSitePathWay,expTransfers)
+        
+        atomSiteAndTransferPathways.append( (atomSitePathWay,transferPathWay) )
+        
+        
 
       # Going through each sequential pair in the sequence
 
       for resA, resB in zip(residues,residues[1:]) :
         
-        atomGroups = []
-   
-        for atomSite in atomSitePathWay :
+        atomPathWays = []
+        
+        for atomSitePathWay, transferPathWay in atomSiteAndTransferPathways :
+        
+          atomGroups = []
+     
+          for atomSite in atomSitePathWay :
+            
+            atomGroups.append(resA.getAtomsForAtomSite(atomSite) + resB.getAtomsForAtomSite(atomSite))
+
+          atomPathWays.extend( self.walkExperimentTree([], atomGroups, transferPathWay,0) )
           
-          atomGroups.append(resA.getAtomsForAtomSite(atomSite) + resB.getAtomsForAtomSite(atomSite))
-                                                              
-        atomPathWays = self.walkExperimentTree([], atomGroups, transferPathWay,0)
 
         self.cacheLabellingInfo(atomPathWays, molLabelFractions)
         
@@ -888,6 +916,8 @@ cdef class autoAssign :
           atomSetTuple = tuple(atomSets)
 
           atomSetDict[atomSetTuple] = atomSetDict.get(atomSetTuple,[]) + [atomPathWay]
+          
+        # Create a new simulatedPeak if the colabelling is sufficient. 
    
         for atomSetTuple, atomPathWayList in atomSetDict.items() :
 
@@ -1044,13 +1074,15 @@ cdef class autoAssign :
   
   cdef list createAtomSitesList(self, list expSteps) :
   
-    atomSitePathWay = []
+    #atomSitePathWay = []
+    
+    return [expStep.expMeasurement.findFirstAtomSite() for expStep in expSteps]
   
-    for expStep in expSteps :
-
-      atomSitePathWay.append(expStep.expMeasurement.findFirstAtomSite())
-      
-    return atomSitePathWay
+    #for expStep in expSteps :
+    #
+    #  atomSitePathWay.append(expStep.expMeasurement.findFirstAtomSite())
+    #  
+    #return atomSitePathWay
   
   cdef object atomsBelongToSameResidue(self, list atoms) :
     
