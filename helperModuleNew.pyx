@@ -745,7 +745,7 @@ cdef class autoAssign :
     
     string = str(i-1) + ' joker spinsystems are used in this calculation.'    
 
-  cdef void simulateSpectra(self) :
+  cdef void simulateSpectra(self) :                                                                               # Move to spectrum object (of course per spectrum)
     
     cdef myDataModel DataModel
     
@@ -818,6 +818,7 @@ cdef class autoAssign :
       scheme = spectrum.labellingScheme
       
       simulatedPeakMatrix = spectrum.simulatedPeakMatrix
+      intraResidualSimulatedPeakMatrix = spectrum.intraResidualSimulatedPeakMatrix
     
       refExperiment = ccpnSpectrum.experiment.refExperiment
       
@@ -846,6 +847,7 @@ cdef class autoAssign :
       dimStepDict = self.mapExpStepToDimension(expSteps, refExperiment.sortedRefExpDims())
       dimNumbers, stepNumbers = zip(*sorted(dimStepDict.items()))
       isotopeCodes = [atomSite.isotopeCode for atomSite in atomSitePathWay]
+      measuredIsotopeCodes = [isotopeCodes[stepNumber-1] for stepNumber in stepNumbers]
       
       #Now do get the visited atomSites and the transfers between these sites for each expGraph.
       
@@ -875,8 +877,14 @@ cdef class autoAssign :
         
 
       # Going through each sequential pair in the sequence
+      
+      intraResidualAtomSetDictB = {}
+      
+      lastResidue = residues[-1]
 
       for resA, resB in zip(residues,residues[1:]) :
+        
+        isLast = resB is lastResidue
         
         atomPathWays = []
         
@@ -892,8 +900,7 @@ cdef class autoAssign :
           
 
         self.cacheLabellingInfo(atomPathWays, molLabelFractions)
-        
-        peaks = []
+
         
         # In the next few lines the atomPathways are grouped by atomSet. This takes care of two things :
         # 1. Different pathways that end up having the same atom(sets) in the measured dimensions (i.e give rise to the same peak) are grouped together.
@@ -901,55 +908,88 @@ cdef class autoAssign :
         #    are grouped together, so only one peak is generated. The only time that this could actually cause a underestimation of the amount of peaks is in Phe and Tyr
         #    if the ring two sides of the ring are not equivalent. This can later on cause some peaks not being picked up in the matching procedure with the real spectra when
         #    the spin system used for matching has the ring set to 'non-equivalent' and therefor the CD1/CD2 and CE1/CE2 would be assigned to different resonances.
-        
-        atomSetDict = {}
+        # At the same time they get sorted into sequential peaks, intra-residual peaks from the first residue and second residue.
+        sequentialAtomSetDict = {}
+        intraResidualAtomSetDictA = intraResidualAtomSetDictB
+        intraResidualAtomSetDictB = {}
 
         for atomPathWay in atomPathWays :
           
           atomSets = []
+          measuredResidues = set()
           
           for stepNumber in stepNumbers :
             
             atom = atomPathWay[stepNumber-1]
+            measuredResidues.add(atom.residue)
             atomSets.append(atom.ccpnAtom.atomSet)
           
           atomSetTuple = tuple(atomSets)
-
-          atomSetDict[atomSetTuple] = atomSetDict.get(atomSetTuple,[]) + [atomPathWay]
           
-        # Create a new simulatedPeak if the colabelling is sufficient. 
-   
-        for atomSetTuple, atomPathWayList in atomSetDict.items() :
+          # Sequential Peak.
+          if len(measuredResidues) > 1 :
 
-          colabelling = 0
+            sequentialAtomSetDict[atomSetTuple] = sequentialAtomSetDict.get(atomSetTuple,[]) + [atomPathWay]
           
-          for atomPathWay in atomPathWayList :
+          # All dimensional contributions to peak are from the first residue.  
+          elif measuredResidues.pop() is resA :
+              
+            intraResidualAtomSetDictA[atomSetTuple] = intraResidualAtomSetDictA.get(atomSetTuple,[]) + [atomPathWay]
+          
+          # All dimensional contributions to peak are from the second residue
+          # but the magnetization transferpathway includes atoms from the first residue.
+          elif len(set([atom.residue for atom in atomPathWay])) > 1 or isLast :
+              
+            intraResidualAtomSetDictB[atomSetTuple] = intraResidualAtomSetDictB.get(atomSetTuple,[]) + [atomPathWay]  
+              
+              
+          
+        # Create a new simulatedPeak if the colabelling is sufficient.
 
-            colabelling += self.getCoLabellingFractionNew(spectrum,atomPathWay, isotopeCodes)
+        intraResidualPeaksA = []
+        sequentialPeaks = []
+        
+        peaksToMake = [(sequentialAtomSetDict,sequentialPeaks),(intraResidualAtomSetDictA,intraResidualPeaksA)]
+        
+        if isLast :
+          intraResidualPeaksB = []
+          peaksToMake = [(sequentialAtomSetDict,sequentialPeaks),(intraResidualAtomSetDictA,intraResidualPeaksA),(intraResidualAtomSetDictB,intraResidualPeaksB)]
+        
+        for atomSetDict, peakList in peaksToMake :
+         
+          for atomSetTuple, atomPathWayList in atomSetDict.items() :
+  
+            colabelling = 0.0
             
-          colabelling = colabelling / len(atomPathWayList)          # Average colabelling over all pathways giving rise to the same peak.
-
-          if colabelling > minIsoFrac :
-            
+            for atomPathWay in atomPathWayList :
+  
+              colabelling += self.getCoLabellingFractionNew(spectrum,atomPathWay, isotopeCodes)
+              
+            colabelling = colabelling / len(atomPathWayList)          # Average colabelling over all pathways giving rise to the same peak.
+  
+            if not colabelling > minIsoFrac :
+              
+              continue
+              
             firstAtomPathWay = atomPathWayList[0]
-
+  
             newPeak = simulatedPeak()
             newPeak.colabelling = colabelling
             newPeak.spectrum = spectrum
-
-            for dimNumber, stepNumber, atomSet in zip(dimNumbers, stepNumbers, atomSetTuple) :
-
+  
+            for dimNumber, stepNumber, atomSet, isotopeCode in zip(dimNumbers, stepNumbers, atomSetTuple, measuredIsotopeCodes) :
+  
               contrib = simulatedPeakContrib()
-
+  
               atom = firstAtomPathWay[stepNumber-1]
-
+  
               residue = atom.residue
               
               contrib.ccpCode = residue.ccpCode
               
               contrib.atomName = atomSet.name
               
-              contrib.isotopeCode = isotopeCodes[stepNumber-1]
+              contrib.isotopeCode = isotopeCode #isotopeCodes[stepNumber-1]
               
               if atom.residue is resA :
               
@@ -960,14 +1000,17 @@ cdef class autoAssign :
                 contrib.firstOrSecondResidue = 2  
           
               contrib.dimNumber = dimNumber
-
+  
               newPeak.simulatedPeakContribs.append(contrib)
-            
-            peaks.append(newPeak)
-            
-        simulatedPeakMatrix.append(peaks)
+              
+            peakList.append(newPeak)
+        
+        simulatedPeakMatrix.append(sequentialPeaks)
+        intraResidualSimulatedPeakMatrix.append(intraResidualPeaksA)
+        if isLast :
+          intraResidualSimulatedPeakMatrix.append(intraResidualPeaksB)
 
-  cdef object transferIsPossible(self, anAtom atomA, anAtom atomB, object expTransfer) :
+  cdef object transferIsPossible(self, anAtom atomA, anAtom atomB, object expTransfer) :                          # Move to spectrum object
     
     if not expTransfer :
       
@@ -1007,7 +1050,7 @@ cdef class autoAssign :
       
       return True
  
-  cdef object isOutAndBack(self, list expSteps) :
+  cdef object isOutAndBack(self, list expSteps) :                                                                 # Move to spectrum object
     
     cdef list measurements
     
@@ -1021,7 +1064,7 @@ cdef class autoAssign :
       
       return False
     
-  cdef dict mapExpStepToDimension(self, list expSteps, list refExpDims) :
+  cdef dict mapExpStepToDimension(self, list expSteps, list refExpDims) :                                         # Move to spectrum object
     
     dimStepDict = {}
     
@@ -1039,7 +1082,7 @@ cdef class autoAssign :
     
     return dimStepDict
   
-  cdef dict createTransferDict(self, list expTransfers) :
+  cdef dict createTransferDict(self, list expTransfers) :                                                         # Move to spectrum object
     
     transferDict = {}
     
@@ -1054,7 +1097,7 @@ cdef class autoAssign :
       
     return transferDict
   
-  cdef list createTransferList(self, list atomSites, list expTransfers) :
+  cdef list createTransferList(self, list atomSites, list expTransfers) :                                         # Move to spectrum object
     
     transferDict = self.createTransferDict(expTransfers)
     
@@ -1072,12 +1115,11 @@ cdef class autoAssign :
         
     return transferPathWay
   
-  cdef list createAtomSitesList(self, list expSteps) :
+  cdef list createAtomSitesList(self, list expSteps) :                                                            # Move to spectrum object
     
     return [expStep.expMeasurement.findFirstAtomSite() for expStep in expSteps]
 
-  
-  cdef object atomsBelongToSameResidue(self, list atoms) :
+  cdef object atomsBelongToSameResidue(self, list atoms) :                                                        # TODO: remove, not used any longer
     
     cdef anAtom atom
     
@@ -1095,13 +1137,13 @@ cdef class autoAssign :
       
     return True  
       
-  cdef list walkExperimentTree(self,list pastAtoms, list atomGroups, list expTransfers, int depth) :
+  cdef list walkExperimentTree(self,list pastAtoms, list atomGroups, list expTransfers, int depth) :              # Move to spectrum object
     
     if depth == len(atomGroups) :
       
-      if self.atomsBelongToSameResidue(pastAtoms) :
+      #if self.atomsBelongToSameResidue(pastAtoms) :
         
-        return []
+      #  return []
       
       return [pastAtoms]
     
@@ -1123,7 +1165,7 @@ cdef class autoAssign :
 
     return listOfLists
       
-  cdef void cacheLabellingInfo(self, list atomPathWays, frozenset molLabelFractions) :
+  cdef void cacheLabellingInfo(self, list atomPathWays, frozenset molLabelFractions) :                            # Move to spectrum object OR atom object, better even to split up
     
     cdef anAtom atom
     cdef set importantAtoms
@@ -1611,7 +1653,7 @@ cdef class autoAssign :
         
         linkObject.score = NfoundPeaks + NatomsUsed                     #- NfoundPeaksThatShouldNotHaveBeenThere
 
-  cdef void matchSimulatedWithRealSpectra(self):
+  cdef void matchSimulatedWithRealSpectra(self):                                                                  # Move to spectrum object
     
     self.updateInfoText('Matching real to simulated spectra.....')
     
@@ -1625,7 +1667,7 @@ cdef class autoAssign :
     
       self.matchSpectrum(spectrum)
 
-  cdef void matchSpectrum(self, aSpectrum spectrum):
+  cdef void matchSpectrum(self, aSpectrum spectrum):                                                              # Move to spectrum object
     
     cdef myDataModel DataModel
     
@@ -1766,7 +1808,7 @@ cdef class autoAssign :
           
           resA.addToLinkDict(spinSys1, spinSys2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks)      
 
-  cdef list commonElementInLists(self, list listOfLists):
+  cdef list commonElementInLists(self, list listOfLists):                                                         # Is only called in matchSpectrum, maybe should be function instead of method
      
     if listOfLists :
       
@@ -1795,7 +1837,7 @@ cdef class autoAssign :
       
       self.findPossiblePeakContributions(spectrum)
 
-  cdef void findPossiblePeakContributions(self,aSpectrum  spectrum) :         #TODO: move to spectrum class
+  cdef void findPossiblePeakContributions(self,aSpectrum  spectrum) :                                             #TODO: move to spectrum class
     
     cdef list resonances
     cdef myResonance resonance
@@ -2164,7 +2206,7 @@ cdef class autoAssign :
       
     return fraction
 
-  cdef double getCoLabellingFractionNew(self,aSpectrum spectrum,list atoms, list isotopeCodes):
+  cdef double getCoLabellingFractionNew(self,aSpectrum spectrum,list atoms, list isotopeCodes):                   # Move to spectrum object
     
     cdef object scheme
     cdef object ccpnSpectrum
@@ -2219,7 +2261,7 @@ cdef class autoAssign :
 #      return colabelling    
           
           
-  cdef double calculateCoLabellingFromExperimentNew(self, aSpectrum spectrum, list atoms, list isotopeCodes) :
+  cdef double calculateCoLabellingFromExperimentNew(self, aSpectrum spectrum, list atoms, list isotopeCodes) :              # Move to spectrum object
     
     cdef object mixture
     
@@ -4089,6 +4131,8 @@ cdef class aSpectrum :
   cdef object ccpnSpectrum
  
   cdef list simulatedPeakMatrix
+  
+  cdef list intraResidualSimulatedPeakMatrix
  
   cdef list peaks
   
@@ -4109,6 +4153,7 @@ cdef class aSpectrum :
     self.ccpnPeakList = temporary_spectrum_object.peakList
     
     self.simulatedPeakMatrix = []
+    self.intraResidualSimulatedPeakMatrix = []
 
     self.peaks = []
     
