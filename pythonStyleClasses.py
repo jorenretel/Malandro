@@ -66,6 +66,8 @@ class pyResidue(object):
     
     self.linkDict = {}                                                      # !!!!
     
+    self.intraDict = {}
+    
     self.userDefinedSolution = None
     
   def __getstate__(self):

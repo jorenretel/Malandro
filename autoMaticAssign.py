@@ -190,6 +190,52 @@ class connector(object):
     
   def runAllCalculations(self):
     
+    #self.update()
+    #
+    #spec = self.selectedSpectra[0]
+    #
+    #ccpnSpectrum = spec.ccpnSpectrum
+    #
+    #refExperiment = ccpnSpectrum.experiment.refExperiment
+    #
+    #PT =  refExperiment.nmrExpPrototype
+    #
+    #expGraph = PT.findFirstExpGraph()
+    #
+    #for refExpDim in refExperiment.sortedRefExpDims() :
+    #  
+    #  print refExpDim
+    #  print refExpDim.refExpDimRefs
+    #  print refExpDim.findFirstRefExpDimRef().expMeasurement
+    #  print refExpDim.findFirstRefExpDimRef().expMeasurement.expSteps
+    #
+    #for expGraph in PT.expGraphs :
+    #  
+    #  print 'entering expGraph'
+    #  
+    #  for expStep in expGraph.sortedExpSteps() :
+    #    
+    #    print '---------'
+    #    print expStep
+    #    print 'atoms:'
+    #    for atomSite in expStep.expMeasurement.atomSites :
+    #      
+    #      print atomSite.name
+    #    
+    #    for refExpDimRef in expStep.refExpDimRefs :
+    #      
+    #      print refExpDimRef
+    #      
+    #      if refExpDimRef.refExpDim in refExperiment.refExpDims :
+    #        
+    #        print 'yes'
+    #      
+    #      else :
+    #        
+    #        print 'no'
+    #
+    #
+    
     self.preCalculateDataModel()
     self.startAnnealing()
     
@@ -324,6 +370,40 @@ class connector(object):
       showWarning('No Residues', string,  parent=self.GUI)
       
       return False
+    
+    #stereoCcp = set()
+    #for res in self.chain.residues :
+    #  
+    #  print res.ccpCode
+    #  
+    #  if res.seqCode == 82 :
+    #    
+    #    for atom in res.atoms :
+    #      print 'Asp 82 hereeeee'
+    #      print atom.name
+    #      print atom.atomSet.name
+    #      print atom.atomSet.atoms
+    #  
+    #  for atom in res.atoms :
+    #    
+    #    if len(atom.atomSet.atoms) > 1 :
+    #      
+    #      stereoCcp.add(res)
+    #    
+    #print 'stereo:'
+    #for res in stereoCcp :
+    #  
+    #  print res.ccpCode
+    #  
+    #  for atom in res.atoms :
+    #    
+    #    if len(atom.atomSet.atoms) > 1 :
+    #    
+    #      print '---'
+    #      print atom.name
+    #      print atom.atomSet.name
+    #      print atom.atomSet.atoms
+      
          
     return True
         
@@ -475,6 +555,8 @@ class ViewAssignmentPopup(BasePopup):
     
     self.selectedLinkA = None
     self.selectedLinkB = None
+    self.selectedResidueA = None
+    self.selectedResidueB = None
     
     self.energyDataSets = [[]]
     
@@ -706,7 +788,7 @@ class ViewAssignmentPopup(BasePopup):
     resultsFirstFrame.grid_columnconfigure(0,  weight=1)
     
     texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
-    commands = [self.noAction, lambda: self.selectLink(1,True), self.noAction, lambda: self.selectLink(2,True), self.noAction, lambda: self.selectLink(3,True), self.noAction, lambda: self.selectLink(4,True), self.noAction]
+    commands = [lambda:self.selectRelativeResidue(1,True), lambda: self.selectLink(1,True), lambda:self.selectRelativeResidue(2,True), lambda: self.selectLink(2,True), lambda:self.selectRelativeResidue(3,True), lambda: self.selectLink(3,True), lambda:self.selectRelativeResidue(4,True), lambda: self.selectLink(4,True), lambda:self.selectRelativeResidue(5,True)]
     self.sequenceButtons = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
     self.sequenceButtons.grid(row=0, column=0, sticky='nsew')   
     
@@ -730,7 +812,7 @@ class ViewAssignmentPopup(BasePopup):
     spacer.grid(row=1, column=0, sticky='nsew') 
     
     texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
-    commands = commands = [self.noAction, lambda: self.selectLink(1,False), self.noAction, lambda: self.selectLink(2,False), self.noAction, lambda: self.selectLink(3,False), self.noAction, lambda: self.selectLink(4,False), self.noAction]
+    commands = commands = [lambda:self.selectRelativeResidue(1,False), lambda: self.selectLink(1,False), lambda:self.selectRelativeResidue(2,False), lambda: self.selectLink(2,False), lambda:self.selectRelativeResidue(3,False), lambda: self.selectLink(3,False), lambda:self.selectRelativeResidue(4,False), lambda: self.selectLink(4,False), lambda:self.selectRelativeResidue(5,False)]
     self.sequenceButtonsB = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
     self.sequenceButtonsB.grid(row=2, column=0, sticky='nsew')    
  
@@ -929,22 +1011,53 @@ class ViewAssignmentPopup(BasePopup):
     
     if topRow :
       
+      self.selectedResidueA = None
+      self.selectedResidueB = None
       self.selectedLinkA = number
       self.selectedLinkB = None
       
     else :
       
+      self.selectedResidueA = None
+      self.selectedResidueB = None
       self.selectedLinkA = None
       self.selectedLinkB = number
       
     self.updateButtonHighLights()
     self.updateLink()
     
+  @lockUntillResults  
+  def selectRelativeResidue(self,number,topRow) :
+    
+    if topRow :
+      
+      self.selectedResidueA = number
+      self.selectedResidueB = None
+      self.selectedLinkA = None
+      self.selectedLinkB = None
+      
+    else :
+      
+      self.selectedResidueA = None
+      self.selectedResidueB = number
+      self.selectedLinkA = None
+      self.selectedLinkB = None
+      
+    self.updateButtonHighLights()
+    self.updateLink()
+
   def updateLink(self) :
     '''
     Checks for any selected link (self.selectedLinkA or self.selectedLinkB) and calls
     updatePeakTable with the correct residue Object and spinsystem Objects.
     '''
+    
+    number = self.selectedLinkA or self.selectedLinkB or self.selectedResidueA or self.selectedResidueB
+    
+    if not number:
+      
+      self.emptyPeakTable()
+      return
     
     DataModel = self.connector.results
     resNumber = self.resultsResidueNumber
@@ -952,35 +1065,105 @@ class ViewAssignmentPopup(BasePopup):
     residues = chain.residues    
     solutionNumber = self.selectedSolution-1
     
-    number = self.selectedLinkA or self.selectedLinkB
     
-    if not number:
+    
+    if self.selectedResidueA:
       
-      return
-    
-    resA = residues[resNumber-4 + number]
-    resB = residues[resNumber-3 + number]
-    
-    
-    if self.selectedLinkA:
+      res = residues[resNumber-4 + number]
+      spinSystem = res.solutions[solutionNumber]
+      self.updatePeakTableIntra(res, spinSystem)
+      
+    elif self.selectedResidueB :
+      
+      res = residues[resNumber-4 + number]
+      spinSystem = res.userDefinedSolution
+      self.updatePeakTableIntra(res, spinSystem)   
+       
+    elif self.selectedLinkA:
+      
+      resA = residues[resNumber-4 + number]
+      resB = residues[resNumber-3 + number]
       
       spinSystemA = resA.solutions[solutionNumber]
       spinSystemB = resB.solutions[solutionNumber]
       
       self.updatePeakTable(resA, spinSystemA, spinSystemB)
       
-    else :  
+    elif self.selectedLinkB : #and resA.userDefinedSolution and resB.userDefinedSolution:  
+        
+      resA = residues[resNumber-4 + number]
+      resB = residues[resNumber-3 + number]
       
-      if resA.userDefinedSolution and resB.userDefinedSolution :
-        spinSystemA = resA.userDefinedSolution
-        spinSystemB = resB.userDefinedSolution
+      spinSystemA = resA.userDefinedSolution
+      spinSystemB = resB.userDefinedSolution
+      
+      self.updatePeakTable(resA, spinSystemA, spinSystemB)
+
+  def emptyPeakTable(self) :
+    
+    self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
         
-        self.updatePeakTable(resA, spinSystemA, spinSystemB)
+  def updatePeakTableIntra(self, res,  spinSystem):
+    '''
+    Updates the peak table to show the peaks that are found for a sequencial pair of
+    spinsystems A and B. If there is not a linkobject found for spinsystems A and B the
+    table is emptied. Also sets the selected peak to None.
+    '''
+    
+    if not res or not spinSystem :
+      
+      self.emptyPeakTable()
+      return
+    
+    link = None
+    
+    spinSystemNumber = spinSystem.spinSystemNumber
+    
+    link = res.intraDict.get(spinSystemNumber)
         
-      else :
+    if not link :
+      
+      self.emptyPeakTable()
+      return
+      
+    else :
+      
+      data = []
+      
+      objectList = []
+      
+      simPeaks = link.simulatedPeaks
+      realPeaks = link.realPeaks
+      
+      for simPeak,  realPeak in zip(simPeaks, realPeaks) :
         
-        self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
+        oneRow = [None, None, None, None, None, None, None, None, None]
         
+        oneRow[1] = realPeak.spectrum.name
+
+        oneRow[8] = simPeak.colabelling
+        
+        for simulatedPeakContrib in simPeak.simulatedPeakContribs :
+          
+          atomName = simulatedPeakContrib.atomName
+          
+          ccpCode = simulatedPeakContrib.ccpCode
+          
+          dimNumber = simulatedPeakContrib.dimNumber
+            
+          oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
+         
+        for dim in realPeak.dimensions :
+            
+          oneRow[dim.dimNumber+4] =  dim.ppmValue
+          
+        data.append(oneRow)
+        objectList.append(realPeak)
+      
+      self.displayPeakTable.update(objectList=objectList,textMatrix=data)
+      
+      self.selectedPeak = None
+
   def updatePeakTable(self, resA,  spinSystemA,  spinSystemB):
     '''
     Updates the peak table to show the peaks that are found for a sequencial pair of
@@ -988,6 +1171,10 @@ class ViewAssignmentPopup(BasePopup):
     table is emptied. Also sets the selected peak to None.
     '''
     
+    if not resA or not spinSystemA or not spinSystemB :
+      
+      self.emptyPeakTable()
+      return
     
     link = None
     
@@ -1120,11 +1307,11 @@ class ViewAssignmentPopup(BasePopup):
     
     spinSystem.userDefinedSolutions.append(res)
     
-    self.updateSpinSystemTable(res,  spinSystem)
+    self.updateSpinSystemTable(spinSystem)
     self.updateLink()
     self.updateResultsBottomRowButtons()
     
-  def updateSpinSystemTable(self, res,  spinSystem):
+  def updateSpinSystemTable(self, spinSystem):
     
     DataModel = self.connector.results
     
@@ -1468,7 +1655,18 @@ class ViewAssignmentPopup(BasePopup):
     
     self.setAllButtonsToGrey()
     
-    if self.selectedLinkA :
+    if self.selectedResidueA :
+      
+      buttons = [self.sequenceButtons.buttons[0], self.sequenceButtons.buttons[2], self.sequenceButtons.buttons[4], self.sequenceButtons.buttons[6],self.sequenceButtons.buttons[8]]
+      buttons[self.selectedResidueA - 1].config(bg='yellow')
+      
+    
+    elif self.selectedResidueB :
+      
+      buttons = [self.sequenceButtonsB.buttons[0], self.sequenceButtonsB.buttons[2], self.sequenceButtonsB.buttons[4], self.sequenceButtonsB.buttons[6],self.sequenceButtonsB.buttons[8]]
+      buttons[self.selectedResidueB - 1].config(bg='yellow')  
+    
+    elif self.selectedLinkA :
       
       buttons = [self.sequenceButtons.buttons[1], self.sequenceButtons.buttons[3], self.sequenceButtons.buttons[5], self.sequenceButtons.buttons[7]]
       buttons[self.selectedLinkA - 1].config(bg='yellow')
@@ -1480,10 +1678,9 @@ class ViewAssignmentPopup(BasePopup):
       
   def setAllButtonsToGrey(self) :
     
-    for i in [1,3,5,7] :
+    for button in self.sequenceButtons.buttons + self.sequenceButtonsB.buttons :
       
-      self.sequenceButtons.buttons[i].config(bg='grey83')
-      self.sequenceButtonsB.buttons[i].config(bg='grey83')
+      button.config(bg='grey83')
     
   def sortDisplayResultsTable(self) :
     
@@ -1605,9 +1802,13 @@ class ViewAssignmentPopup(BasePopup):
  
   def toggleTab(self, index):
   
-    a = 0
+    pass
 
   def getLabellingSchemes(self):
+    
+    
+
+    
   
     return [True, None,] + self.project.sortedLabelingSchemes()
      

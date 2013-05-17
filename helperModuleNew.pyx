@@ -1384,33 +1384,26 @@ cdef class autoAssign :
           
 
         a = 0
-        print '------------------------------------------------------'
-        print 'serial:'
-        print resonanceGroup.serial
-        print 'ccpCode:'
-        print resonanceGroup.ccpCode
-        if resonanceGroup.residue :
-          print 'residue'
-          print resonanceGroup.residue.seqCode
+
         
         for resonance in resonanceGroup.resonances :
           
           
-          print '------'
-          print 'assignNames:'
-          print resonance.assignNames
-          print type(resonance.assignNames)
-          if resonance.assignNames :
-            print resonance.assignNames[0]
-          resonanceSet = resonance.resonanceSet
-  
-          if resonanceSet:
-            print 'resonanceSet'
-            atomSets = tuple(resonanceSet.atomSets)
-            for atomSet in atomSets :
-              print 'atomSet'
-              for atom in atomSet.atoms :
-                print atom.name
+          #print '------'
+          #print 'assignNames:'
+          #print resonance.assignNames
+          #print type(resonance.assignNames)
+          #if resonance.assignNames :
+          #  print resonance.assignNames[0]
+          #resonanceSet = resonance.resonanceSet
+          #
+          #if resonanceSet:
+          #  print 'resonanceSet'
+          #  atomSets = tuple(resonanceSet.atomSets)
+          #  for atomSet in atomSets :
+          #    print 'atomSet'
+          #    for atom in atomSet.atoms :
+          #      print atom.name
               
           
           
@@ -3666,7 +3659,7 @@ cdef class autoAssign :
         
         peak.pyPeak.spectrum = spec.pySpectrum
 
-      for peakList in spec.simulatedPeakMatrix :
+      for peakList in spec.simulatedPeakMatrix + spec.intraResidualSimulatedPeakMatrix:
         
         for simulatedPeak in peakList :
           
