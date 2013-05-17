@@ -1072,12 +1072,14 @@ class ViewAssignmentPopup(BasePopup):
       res = residues[resNumber-4 + number]
       spinSystem = res.solutions[solutionNumber]
       self.updatePeakTableIntra(res, spinSystem)
+      self.updateSpinSystemTable(spinSystem)
       
     elif self.selectedResidueB :
       
       res = residues[resNumber-4 + number]
       spinSystem = res.userDefinedSolution
-      self.updatePeakTableIntra(res, spinSystem)   
+      self.updatePeakTableIntra(res, spinSystem)
+      self.updateSpinSystemTable(spinSystem)
        
     elif self.selectedLinkA:
       
@@ -1307,11 +1309,15 @@ class ViewAssignmentPopup(BasePopup):
     
     spinSystem.userDefinedSolutions.append(res)
     
-    self.updateSpinSystemTable(spinSystem)
+    #self.updateSpinSystemTable(spinSystem)
     self.updateLink()
     self.updateResultsBottomRowButtons()
     
   def updateSpinSystemTable(self, spinSystem):
+    
+    if not spinSystem :
+      
+      self.emptySpinSystemTable()
     
     DataModel = self.connector.results
     
@@ -1367,7 +1373,11 @@ class ViewAssignmentPopup(BasePopup):
 
     
     self.spinSysTable.sortDown = False
-    self.spinSysTable.sortLine(-1,  noUpdate=True)    
+    self.spinSysTable.sortLine(-1,  noUpdate=True)
+    
+  def emptySpinSystemTable(self) :
+    
+    self.spinSysTable.update(objectList=[],textMatrix=[], colorMatrix=[])
   
   @lockUntillResults   
   def adoptSolution(self):
