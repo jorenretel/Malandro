@@ -1318,6 +1318,7 @@ class ViewAssignmentPopup(BasePopup):
     if not spinSystem :
       
       self.emptySpinSystemTable()
+      return
     
     DataModel = self.connector.results
     
@@ -1361,10 +1362,18 @@ class ViewAssignmentPopup(BasePopup):
       else :
         
         oneRow.append(None)
-              
-      oneRow.append(int(spinSystem.solutions.count(residue)/float(len(spinSystem.solutions))*100.0))
-      color = self.pickColorByPercentage(spinSystem.solutions.count(residue)/float(len(spinSystem.solutions))*100.0)
-      oneRowColor = [color, color, color, color, color]
+      
+      if spinSystem.solutions :
+        
+        percentage = spinSystem.solutions.count(residue)/float(len(spinSystem.solutions))*100.0
+        
+      else :
+        
+        percentage = 0
+        
+      oneRow.append(int(percentage))
+      color = self.pickColorByPercentage(percentage)
+      oneRowColor = [color]*5
          
       data.append(oneRow)    
       colorMatrix.append(oneRowColor)
