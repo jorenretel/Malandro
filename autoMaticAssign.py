@@ -654,64 +654,88 @@ class ViewAssignmentPopup(BasePopup):
 ############################################################################################
 
 
-
+    row = 0
 
     texts    = ['Calculate Assignment Suggestions']
     commands = [self.connector.runAllCalculations]
     self.startNAButton = ButtonList(NAFrame,commands=commands, texts=texts)
-    self.startNAButton.grid(row=0, column=0, sticky='nsew')
+    self.startNAButton.grid(row=row, column=0, sticky='nsew')
+    
+    row += 1
     
 
-    label = Label(NAFrame, text='Amount of attempts per temperature point in the annealling:', grid=(1,0))      
+    label = Label(NAFrame, text='Minimal colabelling fraction:', grid=(row,0))      
+    tipText = 'The minimal amount of colabelling the different nuclei should have in order to still give rise to a peak.'
+    self.minLabelEntry = FloatEntry(NAFrame, grid=(row,1), width=7, text=0.1,
+                                      returnCallback=self.updateMinLabelEntry,
+                                      tipText=tipText)
+    self.minLabelEntry.bind('<Leave>', self.updateMinLabelEntry, '+')
+    
+    row += 1
+
+    label = Label(NAFrame, text='Amount of attempts per temperature point in the annealling:', grid=(row,0))      
     tipText = 'The amount of attempts to switch the position of two spinsystems in the sequence are performed for each temperature point'
-    self.NAStepEntry = IntEntry(NAFrame, grid=(1,1), width=7, text=10000,
+    self.NAStepEntry = IntEntry(NAFrame, grid=(row,1), width=7, text=10000,
                                       returnCallback=self.updateStepEntry,
                                       tipText=tipText)
     self.NAStepEntry.bind('<Leave>', self.updateStepEntry, '+')
     
+    row += 1
     
-    label = Label(NAFrame, text='Repeat optimization N times, N:', grid=(2,0))      
+    label = Label(NAFrame, text='Repeat optimization N times, N:', grid=(row,0))      
     tipText = 'The amount of times the whole optimization procedure is performed, each result is safed'
-    self.repeatEntry = IntEntry(NAFrame, grid=(2,1), width=7, text=10,
+    self.repeatEntry = IntEntry(NAFrame, grid=(row,1), width=7, text=10,
                                       returnCallback=self.updateRepeatEntry,
                                       tipText=tipText)
     self.repeatEntry.bind('<Leave>', self.updateRepeatEntry, '+')
     
+    row += 1
     
-    label = Label(NAFrame, text='Temperature constants: ', grid=(3,0))   
-    self.tempEntry = Entry(NAFrame, text=map(str, self.acceptanceConstantList), width=64, grid=(3,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
+    label = Label(NAFrame, text='Temperature constants: ', grid=(row,0))   
+    self.tempEntry = Entry(NAFrame, text=map(str, self.acceptanceConstantList), width=64, grid=(row,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
     
+    row += 1
     
-    label = Label(NAFrame, text='Type untyped spin systems on the fly.', grid=(4,0))      
+    label = Label(NAFrame, text='Type untyped spin systems on the fly.', grid=(row,0))      
     tipText = 'Spin system typing can be carried out so also untyped spin systems can be used. Only amino acid types that have a reasonable score (i.e. higher than the random chance) will be considered'
 
-    self.typeSpinSystemsCheck = CheckButton(NAFrame, selected=False, grid=(4,1))
+    self.typeSpinSystemsCheck = CheckButton(NAFrame, selected=False, grid=(row,1))
 
-    label = Label(NAFrame, text='Only use present dimensional assignments for peaks', grid=(5,0))      
+    row += 1
+
+    label = Label(NAFrame, text='Only use present dimensional assignments for peaks', grid=(row,0))      
     tipText = 'If one or more dimensions of a peak is already assigned, assume that this assignment is the only option. If not the program will assume the peak can have other assignment options as well.'
-    self.useDimenionalAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(5,1))
+    self.useDimenionalAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(row,1))
     
+    row += 1
 
-    label= Label(NAFrame, text = 'Use the assignment of the spin systems in the project:', grid=(7,0))
-    self.useAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(7,1))
+    label= Label(NAFrame, text = 'Use the assignment of the spin systems in the project:', grid=(row,0))
+    self.useAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(row,1))
     
-    label= Label(NAFrame, text = 'Use the tentative assignment(s) for the spin systems in the project:', grid=(8,0))
-    self.useTentativeCheck = CheckButton(NAFrame, selected=True, grid=(8,1))
+    row += 1
+    
+    label= Label(NAFrame, text = 'Use the tentative assignment(s) for the spin systems in the project:', grid=(row,0))
+    self.useTentativeCheck = CheckButton(NAFrame, selected=True, grid=(row,1))
 
-    self.shiftListLabel    = Label(NAFrame, text ='Shift List:', grid=(9,0), sticky='w')
-    self.shiftListPulldown = PulldownList(NAFrame, self.changeShiftList, grid=(9,1), sticky='w')
+    row += 1
+
+    self.shiftListLabel    = Label(NAFrame, text ='Shift List:', grid=(row,0), sticky='w')
+    self.shiftListPulldown = PulldownList(NAFrame, self.changeShiftList, grid=(row,1), sticky='w')
     
-    label = Label(NAFrame, text='Chain:', grid=(10,0))
-    self.molPulldown = PulldownList(NAFrame, callback=self.changeMolecule, grid=(10,1))
+    row += 1
+    
+    label = Label(NAFrame, text='Chain:', grid=(row,0))
+    self.molPulldown = PulldownList(NAFrame, callback=self.changeMolecule, grid=(row,1))
     self.updateChains()  
     
     self.updateShiftLists()
     
+    row += 1
     
     self.energyPlot = ScrolledGraph(NAFrame,symbolSize=2, width=500,
                                        height=300, title='Annealing',
                                        xLabel='time', yLabel='energy')
-    self.energyPlot.grid(row=11, column=0, columnspan=10, sticky='nsew')
+    self.energyPlot.grid(row=row, column=0, columnspan=10, sticky='nsew')
     
 
     
@@ -2084,6 +2108,21 @@ class ViewAssignmentPopup(BasePopup):
     else :
       self.amountOfRepeats = value
       self.repeatEntry.set(value)
+      
+  def updateMinLabelEntry(self, event=None) :
+    
+    value = self.minLabelEntry.get()
+    
+    if value == self.minIsoFrac :
+      return
+    if value < 0 :
+      self.minIsoFrac = 0.0
+      self.minLabelEntry.set(0.0)
+    else :
+      self.minIsoFrac = value
+      self.minLabelEntry.set(value)
+      
+
        
   def updateInfoText(self,string):
     
