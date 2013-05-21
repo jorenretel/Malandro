@@ -1041,7 +1041,12 @@ cdef class autoAssign :
         
         return True
         
-      # In all other cases the transfer pathway is not possible  
+      # In all other cases the transfer pathway is not possible
+      
+      elif transferType == 'Jcoupling' and (atomA.atomName == 'N' and atomB.atomName == 'CA' and atomA.residue is atomB.residue.nextResidue) or (atomA.atomName == 'CA' and atomB.atomName == 'N' and atomB.residue is atomA.residue.nextResidue) :
+      
+        return True
+      
       else :
         
         return False
