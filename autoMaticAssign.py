@@ -896,7 +896,7 @@ class ViewAssignmentPopup(BasePopup):
       
   
     
-    self.sortDisplayResultsTable()
+    #self.sortDisplayResultsTable()
     
     resultsFrame.grid_rowconfigure(3, weight=2)
     
@@ -1648,10 +1648,15 @@ class ViewAssignmentPopup(BasePopup):
         data.append(oneRow)
         colorMatrix.append(oneRowColor)
         objectList.append(jokers[0])
+      
+      
+      percentages = [datapoint[1] for datapoint in data]
+      
+      tableData = sorted(zip(percentages,data,objectList,colorMatrix), reverse=True)
+      
+      percentage, data, objectList, colorMatrix = zip(*tableData)
         
       table.update(objectList=objectList,textMatrix=data,colorMatrix=colorMatrix)
-      
-    self.sortDisplayResultsTable()  
 
   def updateResultsTopRowButtons(self) :
     
@@ -1725,11 +1730,12 @@ class ViewAssignmentPopup(BasePopup):
       
       button.config(bg='grey83')
     
-  def sortDisplayResultsTable(self) :
+  def sortDisplayResultsTable(self) :                                                       # Remove: not used any longer.
     
     for table in self.displayResultsTables :
-
-      table.sortLine(1,  noUpdate=True)
+      
+      #table.sortDown = False
+      table.sortLine(1, noUpdate=True)
       
   def getCurrentlyDisplayedResidues(self) :
     
@@ -2122,8 +2128,6 @@ class ViewAssignmentPopup(BasePopup):
       self.minIsoFrac = value
       self.minLabelEntry.set(value)
       
-
-       
   def updateInfoText(self,string):
     
     self.infoLabel.set(string)
