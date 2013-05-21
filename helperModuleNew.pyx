@@ -208,13 +208,6 @@ cdef class autoAssign :
     cdef list listWithFittingSpinSystems
     
     cdef mySpinSystem randomSpinSystem
-    
-    
-    
-    
-    
-    
-    
 
     useAssignments = self.useAssignments
     useTentative = self.useTentative
@@ -244,15 +237,11 @@ cdef class autoAssign :
                                               
     elif useTentative :
       
-      dictio = self.mergeDictionariesContainingLists([justTypedSpinSystems,jokerSpinSystems])
+      dictio = self.mergeDictionariesContainingLists([assignedSpinSystems,justTypedSpinSystems,jokerSpinSystems])
                                                 
     else :
       
       dictio = self.makePrivateCopyOfDictContainingLists(allSpinSystems)                                                            
-    
-    
-    
-    
     
     i = 0
     
@@ -353,6 +342,8 @@ cdef class autoAssign :
       if not isAssigned :
           
         print 'something went wrong during random assignment at the start of the procedure, not all residues have an assignment'
+        print res.seqCode
+        print res.ccpCode
 
   def runAnnealling(self):
     
@@ -644,7 +635,7 @@ cdef class autoAssign :
     
     i = 1
     
-    for key in DataModel.mySpinSystems.keys() :
+    for key in DataModel.myChain.residueTypeFrequencyDict.keys() : #DataModel.mySpinSystems.keys() :
 
       
       amountOfAssignedSpinsystems = 0
@@ -733,16 +724,7 @@ cdef class autoAssign :
         else :
           
           DataModel.allSpinSystemsWithoutAssigned[key] = [newSpinSystem]
-          
 
-
-
-        
-        
-        
-      
-        
-    
     string = str(i-1) + ' joker spinsystems are used in this calculation.'    
 
   cdef void simulateSpectra(self) :                                                                               # Move to spectrum object (of course per spectrum)
@@ -1219,10 +1201,6 @@ cdef class autoAssign :
               isotopeDict[atomLabel.isotopeCode] = atomLabel.weight / atomLabelWeightSum
   
   cdef void createSpinSytemsAndResonances(self):
-    
-    
-    print 'Creating an initial setup for the calculations......'
-
 
     cdef int cc
     
@@ -1258,11 +1236,10 @@ cdef class autoAssign :
     for resonanceGroup in self.nmrProject.resonanceGroups :                                                                     # taking all spinsystems in the project
     
       SpinSysType = None
-      newSpinSystem = mySpinSystem()    
+      #newSpinSystem = mySpinSystem()    
       
       if resonanceGroup.resonances : 
 
-        
         if resonanceGroup.residue and resonanceGroup.residue.chain == ccpnChain :                                  # SpinSystem is assigned to a residue in the selected chain
         
           newSpinSystem = mySpinSystem()                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
@@ -1279,11 +1256,6 @@ cdef class autoAssign :
 
           cc = cc +1
 
-          
-          
-          
-          
-          
         elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
           
           newSpinSystem = mySpinSystem()                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
@@ -1292,12 +1264,8 @@ cdef class autoAssign :
           
           newSpinSystem.ccpnResonanceGroup = resonanceGroup
           
-          
           SpinSysType = 'tentative'
           
-
-          
-
           cc = cc +1
           for residueProb in resonanceGroup.residueProbs:
             if not residueProb.weight:
@@ -1326,8 +1294,6 @@ cdef class autoAssign :
           cc = cc +1
           
           newSpinSystem.ccpCode = resonanceGroup.ccpCode
-          
-          
           
         elif self.typeSpinSystems :                                                                                                                                                      # For spin systems that are not typed at all, I want to type them to one or more amino acid types here on the fly, later the user can decide whether these are actually used. 
         
@@ -1369,28 +1335,18 @@ cdef class autoAssign :
                 scoreDict[ccpCode] = score
               
         
-          
-          
           print ' ------------------- '
           print 'serial: '
           print resonanceGroup.serial
           
           print scoreDict
+        
+        else :
           
+          continue
           
-
-          
-          
-          
-          
-          
-          
-          
-          
-
         a = 0
 
-        
         for resonance in resonanceGroup.resonances :
           
           
@@ -1410,10 +1366,6 @@ cdef class autoAssign :
           #    for atom in atomSet.atoms :
           #      print atom.name
               
-          
-          
-          
-
           a = a +1
           
           if len(resonance.assignNames) > 0 :
@@ -1475,12 +1427,6 @@ cdef class autoAssign :
             
               self.DataModel.NXresonances.append(newResonance)
               
-            
-            
-            
-            
-            
-            
         if SpinSysType== 'assigned' :
           
           if newSpinSystem.ccpCode in mySpinSystems :       
@@ -1500,8 +1446,6 @@ cdef class autoAssign :
             
             previouslyAssignedSpinSystems[newSpinSystem.ccpCode] = [newSpinSystem]
             
-            
-          
         elif SpinSysType== 'tentative' and len(newSpinSystem.tentativeSeqCodes) > 0 :
           
           for ccpCode in list(set(newSpinSystem.tentativeCcpCodes))  :
@@ -1532,11 +1476,6 @@ cdef class autoAssign :
               
               tentativeSpinSystems[ccpCode] = [newSpinSystem]
               
-              
-              
-
-            
-          
         elif SpinSysType== 'justTyped' :
           
           if newSpinSystem.ccpCode in mySpinSystems :       
@@ -1565,10 +1504,6 @@ cdef class autoAssign :
             
             justTypedSpinSystems[newSpinSystem.ccpCode] = [newSpinSystem]
             
-            
-            
-
-          
         elif SpinSysType== 'unTyped' :
           
           newSpinSystem.aminoAcidProbs = scoreDict
@@ -2507,7 +2442,7 @@ cdef class autoAssign :
     
     return labellingFraction
    
-  cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, anAtom atom, str isotopeCode) :
+  cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, anAtom atom, str isotopeCode) :                # Not used at the moment
     
     cdef double isoWeightSum
 
@@ -4621,7 +4556,7 @@ cdef class mySpinSystem :
   
   cdef list solutions
   
-  cdef list userDefinedSolutions
+  #cdef list userDefinedSolutions
   
   cdef list tentativeCcpCodes
   
@@ -4650,7 +4585,7 @@ cdef class mySpinSystem :
     
     self.solutions = []
     
-    self.userDefinedSolutions = []
+    #self.userDefinedSolutions = []
     
     self.tentativeCcpCodes = []
     
