@@ -1,29 +1,15 @@
 # cython: profile=True
 
 import math
-import random
 from numpy.random import randint,random_sample
-
-
-
-import Tkinter
-import re
-import os
 import random
 import math
-import time
 
-import cProfile
-
-import pickle
-
-
-from memops.gui.MessageReporter import showWarning
+#import cProfile
 
 from ccpnmr.analysis.core.ChemicalShiftBasic import getShiftsChainProbabilities
 
 from ccpnmr.analysis.core.MoleculeBasic import getResidueCode
-from ccpnmr.analysis.core.Util import stringFromExperimentSpectrum, getSpectrumPosContourColor
 
 from ccp.util.LabeledMolecule import getIsotopomerSingleAtomFractions, getIsotopomerAtomPairFractions,  atomPairFrac,  atomPairFractions
 
@@ -1811,44 +1797,6 @@ cdef class autoAssign :
       
     return fraction
 
-#    # TODO: look at this and fix
-#    elif scheme :
-#      
-#      residueDict = {} 
-#      
-#      for atomName, res in zip(atomNames,  residues) :                                                                  
-#        
-#        if res in residueDict : 
-#          
-#          residueDict[res].append(atomName)                                                             # You can seemingly use objects of user-defined types as dictionary keys in python :-)
-#          
-#        else :
-#          
-#          residueDict[res] = [atomName]
-#           
-#      colabelling = 1     
-#           
-#      for res, atomNameList in residueDict.items() :
-#        
-#        numberOfAtoms = len(atomNameList)
-#        
-#        if numberOfAtoms == 1 :
-#          
-#          colabelling = colabelling * self.getAtomLabellingFraction('protein', res.ccpCode, atomNameList[0], scheme)
-#          
-#        elif numberOfAtoms == 2 :
-#          
-#          colabelling = colabelling * self.getAtomPairLabellingFraction_intra('protein', res.ccpCode, atomNameList[0], atomNameList[1], scheme)
-#          
-#        else :
-#          
-#          print 'something went wrong'
-#      
-#      print colabelling    
-#      return colabelling    
-          
-          
-
   cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, anAtom atom, str isotopeCode) :                # Not used at the moment
     
     cdef double isoWeightSum
@@ -3633,12 +3581,23 @@ cdef class aSpectrum :
   
   cdef object pySpectrum
   
+  cdef frozenset molLabelFractions
+  
   def __init__(self, temporary_spectrum_object):
     
     self.DataModel = None
     self.ccpnSpectrum = temporary_spectrum_object.ccpnSpectrum
     self.name = temporary_spectrum_object.ccpnSpectrum.name
     self.labellingScheme = temporary_spectrum_object.labellingScheme
+    
+    if self.labellingScheme is True :
+      
+      self.molLabelFractions = self.ccpnSpectrum.experiment.findFirstLabeledMixture().getMolLabelFractions()
+      
+    else :
+      
+      self.molLabelFractions = None
+    
     self.ccpnPeakList = temporary_spectrum_object.peakList
     
     self.simulatedPeakMatrix = []
@@ -3736,7 +3695,7 @@ cdef class aSpectrum :
   
     refExperiment = ccpnSpectrum.experiment.refExperiment
     
-    molLabelFractions = ccpnSpectrum.experiment.findFirstLabeledMixture().getMolLabelFractions()
+    #molLabelFractions = self.molLabelFractions  #ccpnSpectrum.experiment.findFirstLabeledMixture().getMolLabelFractions()
     
     PT =  refExperiment.nmrExpPrototype
     
@@ -3813,7 +3772,7 @@ cdef class aSpectrum :
         atomPathWays.extend( self.walkExperimentTree([], atomGroups, transferPathWay,0) )
         
 
-      self.cacheLabellingInfo(atomPathWays, molLabelFractions)
+      self.cacheLabellingInfo(atomPathWays)
 
       
       # In the next few lines the atomPathways are grouped by atomSet. This takes care of two things :
@@ -4065,10 +4024,12 @@ cdef class aSpectrum :
 
     return listOfLists
       
-  cdef void cacheLabellingInfo(self, list atomPathWays, frozenset molLabelFractions) :
+  cdef void cacheLabellingInfo(self, list atomPathWays) :
     
     cdef anAtom atom
     cdef set importantAtoms
+    
+    molLabelFractions = self.molLabelFractions
     
     importantAtoms = set()
     
@@ -4180,10 +4141,12 @@ cdef class aSpectrum :
     cdef list atomNameList
     
     cdef double addedColabelling
+    
+    molLabelFractions = self.molLabelFractions
   
-    mixture = self.ccpnSpectrum.experiment.findFirstLabeledMixture()
+    #mixture = self.ccpnSpectrum.experiment.findFirstLabeledMixture()
       
-    molLabelFractions = mixture.molLabelFractions
+    #molLabelFractions = mixture.molLabelFractions
     
     molWeightSum = sum([x.weight for x in molLabelFractions])                                                               # This is the sum of weight of all labelling patterns present in the sample
     
@@ -4213,7 +4176,7 @@ cdef class aSpectrum :
       
       for molResidue, atomIsotopeTuples in residueDict.items() :                                                                                         # Loop over involved residues
         
-        resLabel = molLabel.findFirstResLabel(resId=molResidue.serial)
+        resLabel = molLabel.findFirstResLabel(resId=molResidue.serial)                                                                                  # TODO: do something about this.
         resLabelFractions = resLabel.resLabelFractions
         
         rlfWeightSum = sum([x.weight for x in resLabelFractions])
