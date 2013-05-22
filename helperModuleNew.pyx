@@ -511,8 +511,6 @@ cdef class autoAssign :
     
     cdef list residues
     
-    cdef list resWithoutLast
-    
     cdef aResidue residue
     
     cdef mySpinSystem spinSysI
@@ -533,10 +531,7 @@ cdef class autoAssign :
     
     residues = chain.residues
     
-    
-    resWithoutLast =  residues[0:len(residues)-1]
-    
-    for residue in resWithoutLast :
+    for residue in residues[:-1] :
       
       spinSysI = residue.currentSpinSystemAssigned
       spinSysIplus1 = residue.nextResidue.currentSpinSystemAssigned
@@ -596,7 +591,6 @@ cdef class autoAssign :
           
           newList += dictio[key]
           
-  
       newDict[key] = list(set(newList))
       
     return newDict  
@@ -737,8 +731,6 @@ cdef class autoAssign :
     
     cdef object ccpnSpectrum
     
-    cdef str refExpName
-    
     cdef object scheme
     
     cdef list simulatedPeakMatrix
@@ -757,7 +749,7 @@ cdef class autoAssign :
     
     cdef list expTransfers
     
-    cdef object refExpDim
+    #cdef object refExpDim
     
     cdef list atomSitePathWay
     
@@ -1023,8 +1015,7 @@ cdef class autoAssign :
         
         return True
         
-      # In all other cases the transfer pathway is not possible
-      
+      # N CAi-1 transfer
       elif transferType == 'Jcoupling' and (atomA.atomName == 'N' and atomB.atomName == 'CA' and atomA.residue is atomB.residue.nextResidue) or (atomA.atomName == 'CA' and atomB.atomName == 'N' and atomB.residue is atomA.residue.nextResidue) :
       
         return True
@@ -1330,7 +1321,7 @@ cdef class autoAssign :
               
             for ccpCode, score in scores.items() :
               
-              if score > float(self.DataModel.myChain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.myChain.residues) :
+              if score > 2*(float(self.DataModel.myChain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.myChain.residues)) :
                 
                 scoreDict[ccpCode] = score
               
@@ -3702,8 +3693,7 @@ cdef class autoAssign :
             peakScore = peakScore + 1.0/peak.degeneracy
             
           score += peakScore + link.score
-          
-          
+            
     self.score = score
   
 cdef class myDataModel :
