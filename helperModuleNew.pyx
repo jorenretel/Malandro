@@ -202,32 +202,32 @@ cdef class autoAssign :
     
     sample = random.choice
 
-    assignedSpinSystems = self.makePrivateCopyOfDictContainingLists(DataModel.previouslyAssignedSpinSystems)
+    assignedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.previouslyAssignedSpinSystems)
     
-    tentativeSpinSystems =  self.makePrivateCopyOfDictContainingLists(DataModel.tentativeSpinSystems)
+    tentativeSpinSystems =  makePrivateCopyOfDictContainingLists(DataModel.tentativeSpinSystems)
     
-    justTypedSpinSystems = self.makePrivateCopyOfDictContainingLists(DataModel.justTypedSpinSystems)
+    justTypedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.justTypedSpinSystems)
     
-    allSpinSystems = self.makePrivateCopyOfDictContainingLists(DataModel.mySpinSystems)
+    allSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.mySpinSystems)
     
-    jokerSpinSystems = self.makePrivateCopyOfDictContainingLists(DataModel.jokerSpinSystems)
+    jokerSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.jokerSpinSystems)
     
     
     if useAssignments and useTentative:
       
-      dictio = self.mergeDictionariesContainingLists([justTypedSpinSystems,jokerSpinSystems])  
+      dictio = mergeDictionariesContainingLists([justTypedSpinSystems,jokerSpinSystems])  
       
     elif useAssignments :
     
-      dictio = self.mergeDictionariesContainingLists([justTypedSpinSystems, tentativeSpinSystems,jokerSpinSystems])
+      dictio = mergeDictionariesContainingLists([justTypedSpinSystems, tentativeSpinSystems,jokerSpinSystems])
                                               
     elif useTentative :
       
-      dictio = self.mergeDictionariesContainingLists([assignedSpinSystems,justTypedSpinSystems,jokerSpinSystems])
+      dictio = mergeDictionariesContainingLists([assignedSpinSystems,justTypedSpinSystems,jokerSpinSystems])
                                                 
     else :
       
-      dictio = self.makePrivateCopyOfDictContainingLists(allSpinSystems)                                                            
+      dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)                                                            
     
     i = 0
     
@@ -529,57 +529,6 @@ cdef class autoAssign :
         for peak in link.realPeaks :
         
           peak.degeneracy += 1
-
-  cdef dict makePrivateCopyOfDictContainingLists(self,  dict dictio):                                                   # Make a copy of the spinsystemDict that can be modified without changing the original dictionary
-    
-    cdef dict copiedDict
-    cdef list copyOfList
-    
-    copiedDict = {}
-    
-    for key in dictio :
-      
-      copyOfList = dictio[key][:]                                 #a copy of each list is made by slicing the list, trick
-      copiedDict[key] = copyOfList
-      
-    return copiedDict
-
-  cdef dict mergeDictionariesContainingLists(self, list dictionaries):
-    
-    
-    cdef list dicts
-    cdef dict dictio
-    cdef dict newDict
-    cdef list newList
-    
-    
-    keys = []
-    
-    dicts = []
-      
-    for dictio in dictionaries :
-      
-      dicts.append(self.makePrivateCopyOfDictContainingLists(dictio))
-      
-      keys = keys + dictio.keys()
-      
-    keys = set(keys)
-    
-    newDict = {}
-    
-    for key in keys :
-      
-      newList = []
-      
-      for dictio in dicts :
-        
-        if key in dictio :
-          
-          newList += dictio[key]
-          
-      newDict[key] = list(set(newList))
-      
-    return newDict  
 
   cdef void createJokerSpinSystems(self):
     
@@ -1278,7 +1227,7 @@ cdef class autoAssign :
     
     residues = DataModel.myChain.residues
 
-    residuesByCcpCode = self.makePrivateCopyOfDictContainingLists(DataModel.myChain.residuesByCcpCode)
+    residuesByCcpCode = makePrivateCopyOfDictContainingLists(DataModel.myChain.residuesByCcpCode)
 
     previouslyAssignedSpinSystems = DataModel.previouslyAssignedSpinSystems
     justTypedSpinSystems =DataModel.justTypedSpinSystems
@@ -4778,3 +4727,54 @@ cdef inline list commonElementInLists(list listOfLists):                        
     return list(set(listOfLists[0]).intersection(*listOfLists))
             
   return []
+
+cdef dict makePrivateCopyOfDictContainingLists(dict dictio):                                                   # Make a copy of the spinsystemDict that can be modified without changing the original dictionary
+  
+  cdef dict copiedDict
+  cdef list copyOfList
+  
+  copiedDict = {}
+  
+  for key in dictio :
+    
+    copyOfList = dictio[key][:]                                 #a copy of each list is made by slicing the list, trick
+    copiedDict[key] = copyOfList
+    
+  return copiedDict
+
+cdef dict mergeDictionariesContainingLists(list dictionaries):
+  
+  
+  cdef list dicts
+  cdef dict dictio
+  cdef dict newDict
+  cdef list newList
+  
+  
+  keys = []
+  
+  dicts = []
+    
+  for dictio in dictionaries :
+    
+    dicts.append(makePrivateCopyOfDictContainingLists(dictio))
+    
+    keys = keys + dictio.keys()
+    
+  keys = set(keys)
+  
+  newDict = {}
+  
+  for key in keys :
+    
+    newList = []
+    
+    for dictio in dicts :
+      
+      if key in dictio :
+        
+        newList += dictio[key]
+        
+    newDict[key] = list(set(newList))
+    
+  return newDict  
