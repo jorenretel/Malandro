@@ -1131,6 +1131,7 @@ cdef class autoAssign :
     cdef int numberOfDimensions
     
     cdef int serial
+    cdef double tolerance
     
     useDimenionalAssignments = self.useDimenionalAssignments
     
@@ -1143,9 +1144,15 @@ cdef class autoAssign :
       
       for dim in firstPeak.dimensions :
         
-        atomSite = dim.ccpnDim.dataDim.expDim.refExpDim.findFirstRefExpDimRef().expMeasurement.findFirstAtomSite()
+        dataDim = dim.ccpnDim.dataDim
         
-        dimAtomsDict[dim.dimNumber] = self.DataModel.getResonancesForAtomSite(atomSite)
+        atomSite = dataDim.expDim.refExpDim.findFirstRefExpDimRef().expMeasurement.findFirstAtomSite()
+        
+        resonances = self.DataModel.getResonancesForAtomSite(atomSite)
+        
+        tolerance = getAnalysisDataDim(dataDim).assignTolerance
+        
+        dimAtomsDict[dim.dimNumber] = (resonances, tolerance)
         
     
     for peak in spectrum.peaks :
@@ -1156,7 +1163,7 @@ cdef class autoAssign :
 
       for dim in peak.dimensions :
         
-        resonances = dimAtomsDict[dim.dimNumber]
+        resonances, tolerance = dimAtomsDict[dim.dimNumber]
         
         ppmValue = dim.ppmValue
         
@@ -1177,7 +1184,7 @@ cdef class autoAssign :
           
           for resonance in resonances :
           
-            if abs(resonance.CS - ppmValue) <= getAnalysisDataDim(dim.ccpnDim.dataDim).assignTolerance :
+            if abs(resonance.CS - ppmValue) <= tolerance :
               
               dim.possibleContributions.append(resonance)
               resonance.addPeakToPeakDimsLib(peak,dim)
