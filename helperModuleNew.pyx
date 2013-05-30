@@ -3840,7 +3840,7 @@ cdef class aSpectrum :
     
     return labellingFraction
 
-  cdef void findPossiblePeakContributions(self,useDimenionalAssignments=False) :                                             #TODO: move to aDimensions class
+  cdef void findPossiblePeakContributions(self,useDimenionalAssignments=False) :
     
     cdef list resonances
     cdef myResonance resonance
@@ -3873,9 +3873,9 @@ cdef class aSpectrum :
     
     for peak in self.peaks :
       
-      if peak.intraResidual :
+      #if peak.intraResidual :
         
-        continue
+      #  continue
 
       for dim in peak.dimensions :
         
@@ -3885,7 +3885,7 @@ cdef class aSpectrum :
         
         assignedContributions = dim.ccpnDim.peakDimContribs
         
-        if assignedContributions and useDimenionalAssignments is True:
+        if assignedContributions and ( useDimenionalAssignments is True or peak.intraResidual ) :
           
           assignedResonances = set([contrib.resonance for contrib in assignedContributions])
           
@@ -4137,7 +4137,7 @@ cdef class aSpectrum :
             
             continue
             
-          peakLists = [ resonance.getPeaksForSpectrumDim(self,contrib.dimNumber) for resonance, contrib in zip(resonances , contributions) ]
+          peakLists = [ resonance.getPeaksForSpectrumDim(self,contrib.dimNumber,True) for resonance, contrib in zip(resonances , contributions) ]
            
           peaksInWindow = commonElementInLists(peakLists)                                      # And check whether 1 or more peaks that fit in one dimension actually also fit in all other dimensions. In that case the peak is in the multidimensional tolerance window
 
@@ -4644,7 +4644,9 @@ cdef class myResonance :
   
   cdef dict peakDimsLib
   
-  cdef dict peakDimsLibUnlabelled
+  cdef dict peakDimsLibIntra
+  
+  #cdef dict peakDimsLibUnlabelled
   
   cdef object ccpnResonance
   
@@ -4662,7 +4664,9 @@ cdef class myResonance :
     
     self.peakDimsLib = {}
     
-    self.peakDimsLibUnlabelled = {}                     # This is a dictionary with all dimensions of peaks that are in spectra where this resonance is not labelled. Helps to find peaks that should explicitely NOT be there.
+    self.peakDimsLibIntra = {}
+    
+    #self.peakDimsLibUnlabelled = {}                     # This is a dictionary with all dimensions of peaks that are in spectra where this resonance is not labelled. Helps to find peaks that should explicitely NOT be there.
     
     self.ccpnResonance = None
     
@@ -4670,11 +4674,22 @@ cdef class myResonance :
     
     cdef aSpectrum spectrum
     
+    cdef dict dimsLib
+    cdef dict entryForSpectrum
+    
     spectrum = peak.spectrum
     
-    if spectrum.name in self.peakDimsLib :
+    if peak.intraResidual :
       
-      entryForSpectrum = self.peakDimsLib[spectrum.name]
+      dimsLib = self.peakDimsLibIntra
+    
+    else :
+      
+      dimsLib = self.peakDimsLib
+    
+    if spectrum.name in dimsLib :
+      
+      entryForSpectrum = dimsLib[spectrum.name]
       
       if dim.dimNumber in entryForSpectrum :
         
@@ -4690,9 +4705,13 @@ cdef class myResonance :
       newlib = {}
       newlib[dim.dimNumber] = [peak]
       
-      self.peakDimsLib[spectrum.name] = newlib
+      dimsLib[spectrum.name] = newlib
       
-  cdef list getPeaksForSpectrumDim(self, aSpectrum spectrum, int dimNumber) :
+  cdef list getPeaksForSpectrumDim(self, aSpectrum spectrum, int dimNumber, intraResidual=False) :
+    
+    cdef dict entryForSpectrum
+    
+    peaks = []
     
     if spectrum.name in self.peakDimsLib :
       
@@ -4700,9 +4719,18 @@ cdef class myResonance :
       
       if dimNumber in entryForSpectrum :
         
-        return entryForSpectrum[dimNumber]
+        peaks.extend( entryForSpectrum[dimNumber] )
       
-    return []
+    if intraResidual is True and spectrum.name in self.peakDimsLibIntra :
+      
+      entryForSpectrum = self.peakDimsLibIntra[spectrum.name]
+      
+      if dimNumber in entryForSpectrum :
+        
+        peaks.extend( entryForSpectrum[dimNumber] )
+      
+      
+    return peaks
     
   cdef void createPythonStyleObject(self) :
     
