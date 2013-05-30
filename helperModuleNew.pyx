@@ -1107,87 +1107,7 @@ cdef class autoAssign :
       
       self.updateInfoText(info)
       
-      self.findPossiblePeakContributions(spectrum)
-
-  cdef void findPossiblePeakContributions(self,aSpectrum  spectrum) :                                             #TODO: move to aDimensions class
-    
-    cdef list resonances
-    cdef myResonance resonance
-    cdef aPeak peak
-    cdef aDimension dim
-    cdef dict entryForSpectrum
-    cdef list listWithPeaks
-    cdef dict newlib
-    cdef aPeak firstPeak
-    cdef object atomSite
-    cdef str atomSiteName
-    cdef str isotope
-    cdef dict dimAtomsDict
-    cdef double ppmValue
-    cdef object possible
-    
-    cdef object onlyIntra
-    
-    cdef int numberOfDimensions
-    
-    cdef int serial
-    cdef double tolerance
-    
-    useDimenionalAssignments = self.useDimenionalAssignments
-    
-    dimAtomsDict = {}
-
-    
-    if spectrum.peaks:
-      
-      firstPeak = spectrum.peaks[0]
-      
-      for dim in firstPeak.dimensions :
-        
-        dataDim = dim.ccpnDim.dataDim
-        
-        atomSite = dataDim.expDim.refExpDim.findFirstRefExpDimRef().expMeasurement.findFirstAtomSite()
-        
-        resonances = self.DataModel.getResonancesForAtomSite(atomSite)
-        
-        tolerance = getAnalysisDataDim(dataDim).assignTolerance
-        
-        dimAtomsDict[dim.dimNumber] = (resonances, tolerance)
-        
-    
-    for peak in spectrum.peaks :
-      
-      if peak.intraResidual :
-        
-        continue
-
-      for dim in peak.dimensions :
-        
-        resonances, tolerance = dimAtomsDict[dim.dimNumber]
-        
-        ppmValue = dim.ppmValue
-        
-        assignedContributions = dim.ccpnDim.peakDimContribs
-        
-        if assignedContributions and useDimenionalAssignments:
-          
-          assignedResonances = set([contrib.resonance for contrib in assignedContributions])
-          
-          for resonance in resonances :
-            
-            if resonance.ccpnResonance in assignedResonances :
-              
-              dim.possibleContributions.append(resonance)
-              resonance.addPeakToPeakDimsLib(peak,dim)
-              
-        else :
-          
-          for resonance in resonances :
-          
-            if abs(resonance.CS - ppmValue) <= tolerance :
-              
-              dim.possibleContributions.append(resonance)
-              resonance.addPeakToPeakDimsLib(peak,dim)
+      spectrum.findPossiblePeakContributions(self.useDimenionalAssignments)
 
   cdef void setupSpinSystemExchange(self):
     
@@ -3919,6 +3839,71 @@ cdef class aSpectrum :
       labellingFraction += colabellingInThisIsotopomer * isotopomer.weight / isoWeightSum
     
     return labellingFraction
+
+  cdef void findPossiblePeakContributions(self,useDimenionalAssignments=False) :                                             #TODO: move to aDimensions class
+    
+    cdef list resonances
+    cdef myResonance resonance
+    cdef aPeak peak
+    cdef aDimension dim
+    cdef aPeak firstPeak
+    cdef object atomSite
+    cdef dict dimAtomsDict
+    cdef double ppmValue
+    cdef double tolerance
+    
+    dimAtomsDict = {}
+
+    if self.peaks:
+      
+      firstPeak = self.peaks[0]
+      
+      for dim in firstPeak.dimensions :
+        
+        dataDim = dim.ccpnDim.dataDim
+        
+        atomSite = dataDim.expDim.refExpDim.findFirstRefExpDimRef().expMeasurement.findFirstAtomSite()
+        
+        resonances = self.DataModel.getResonancesForAtomSite(atomSite)
+        
+        tolerance = getAnalysisDataDim(dataDim).assignTolerance
+        
+        dimAtomsDict[dim.dimNumber] = (resonances, tolerance)
+        
+    
+    for peak in self.peaks :
+      
+      if peak.intraResidual :
+        
+        continue
+
+      for dim in peak.dimensions :
+        
+        resonances, tolerance = dimAtomsDict[dim.dimNumber]
+        
+        ppmValue = dim.ppmValue
+        
+        assignedContributions = dim.ccpnDim.peakDimContribs
+        
+        if assignedContributions and useDimenionalAssignments is True:
+          
+          assignedResonances = set([contrib.resonance for contrib in assignedContributions])
+          
+          for resonance in resonances :
+            
+            if resonance.ccpnResonance in assignedResonances :
+              
+              dim.possibleContributions.append(resonance)
+              resonance.addPeakToPeakDimsLib(peak,dim)
+              
+        else :
+          
+          for resonance in resonances :
+          
+            if abs(resonance.CS - ppmValue) <= tolerance :
+              
+              dim.possibleContributions.append(resonance)
+              resonance.addPeakToPeakDimsLib(peak,dim)
 
   cdef void matchSequential(self):
     
