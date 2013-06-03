@@ -1539,11 +1539,8 @@ cdef class autoAssign :
       
       if currentResidueA and currentResidueB:             # Both spin systems are assigned to a residue
         
-  
-        
         if currentResidueA.seqCode in B.allowedResidues and currentResidueB.seqCode in A.allowedResidues :          # The switch is possible because aa types of residues fits with possible aa types of spinsystems
   
-                     
           previousResA = currentResidueA.previousResidue
           previousResB = currentResidueB.previousResidue
           
@@ -1612,9 +1609,6 @@ cdef class autoAssign :
                   newPeaks += (linkABp1.realPeaks)
                   newLinkScore += linkABp1.score
               
-  
-  
-            
             elif AisJoker :
               
               spinSystemNumberB = B.spinSystemNumber
@@ -1671,16 +1665,6 @@ cdef class autoAssign :
                   linkABp1 = currentResidueB.linkDict[(spinSystemNumberA*hc+spinSystemNumberBp1)] 
                   newPeaks += (linkABp1.realPeaks)
                   newLinkScore += linkABp1.score
-              
-  
-  
-  
-              
-              
-              
-              
-              
-              
               
           elif previousResA and currentResidueB.seqCode == previousResA.seqCode :                                                                                    # sequential pair BA
             
@@ -1800,8 +1784,6 @@ cdef class autoAssign :
                   oldPeaks += (linkAAp1.realPeaks)
                   oldLinkScore += linkAAp1.score
   
-                  
-              
           else :                                                                                                            # A and B are not sequential
           
             AisJoker = A.isJoker
@@ -1849,7 +1831,6 @@ cdef class autoAssign :
                   newPeaks += (linkBAp1.realPeaks)
                   newLinkScore += linkBAp1.score
                   
-                  
               if previousResB : 
               
                 spinSystemBm1 = previousResB.currentSpinSystemAssigned
@@ -1887,11 +1868,6 @@ cdef class autoAssign :
                   newPeaks += (linkABp1.realPeaks)
                   newLinkScore += linkABp1.score
                   
-                  
-  
-                  
-  
-            
             elif AisJoker :
               
               spinSystemNumberB = B.spinSystemNumber
@@ -1946,10 +1922,6 @@ cdef class autoAssign :
                   oldPeaks += (linkBBp1.realPeaks)
                   oldLinkScore += linkBBp1.score
                   
-                  
-                  
-                  
-                  
             elif BisJoker :
         
               spinSystemNumberA = A.spinSystemNumber
@@ -2003,29 +1975,10 @@ cdef class autoAssign :
                   linkABp1 = currentResidueB.linkDict[(spinSystemNumberA*hc+spinSystemNumberBp1)] 
                   newPeaks += (linkABp1.realPeaks)
                   newLinkScore += linkABp1.score
-                  
-                  
-  
-            
-            
-          
-         
-  
-            
-  
-  
+
           peakSet = set(oldPeaks+newPeaks)
           DeltaScore = self.CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
           
-          
-  
-            
-            
-        
-  
-  
-  
-  
           if  DeltaScore == 0 :
           
             equals += 1
@@ -2046,9 +1999,6 @@ cdef class autoAssign :
               
               peak.degeneracy = peak.degeneracyTemp
               
-  
-  
-  
           elif DeltaScore > 0 :
             
             improvements += 1
@@ -2066,10 +2016,7 @@ cdef class autoAssign :
             for peak in peakSet :
               
               peak.degeneracy = peak.degeneracyTemp
-              
-  
-            
-  
+
           elif exp(AcceptanceConstant*DeltaScore) > cutoff() :     
             
             worse += 1
@@ -2087,16 +2034,7 @@ cdef class autoAssign :
             for peak in peakSet :
               
               peak.degeneracy = peak.degeneracyTemp
-              
-  
-            
-            
-  
-          
-          
-          
-  
-      
+
       elif currentResidueA :                                                                      # spin system B is not assigned to any residue
         
         if currentResidueA.seqCode in B.allowedResidues :
@@ -2112,7 +2050,6 @@ cdef class autoAssign :
           
           AisJoker = A.isJoker
           BisJoker = B.isJoker
-          
           
           if not AisJoker and not BisJoker :
             
@@ -2184,8 +2121,6 @@ cdef class autoAssign :
                 newPeaks += (linkBAp1.realPeaks)
                 newLinkScore += linkBAp1.score
             
-            
-            
           elif BisJoker :
             
             spinSystemNumberA = A.spinSystemNumber
@@ -2213,21 +2148,9 @@ cdef class autoAssign :
                 linkAAp1 = currentResidueA.linkDict[(spinSystemNumberA*hc+spinSystemNumberAp1)] 
                 oldPeaks += (linkAAp1.realPeaks)
                 oldLinkScore += linkAAp1.score
-          
-  
-  
-  
-          
-  
-            
-  
+
           peakSet = set(oldPeaks+newPeaks)
           DeltaScore = self.CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
-  
-  
-  
-  
-  
   
           if  DeltaScore == 0 :
             
@@ -2245,10 +2168,7 @@ cdef class autoAssign :
             for peak in peakSet :
               
               peak.degeneracy = peak.degeneracyTemp
-              
-  
-  
-  
+
           elif DeltaScore > 0 :
             
             improvements = improvements + 1
@@ -2265,9 +2185,7 @@ cdef class autoAssign :
             for peak in peakSet :
               
               peak.degeneracy = peak.degeneracyTemp
-              
-              
-  
+
           elif exp(AcceptanceConstant*DeltaScore) > cutoff() :     
             
             worse = worse + 1
@@ -2278,21 +2196,11 @@ cdef class autoAssign :
             currentResidueA.currentSpinSystemAssigned = B
             
             score += DeltaScore
-            
-  
-  
-            
+
             for peak in peakSet :
               
               peak.degeneracy = peak.degeneracyTemp
-              
-            
-            
-  
-          
-  
-      
-              
+
       elif currentResidueB :                                                                      # spin system A is not assigned to any residue
         
         if currentResidueB.seqCode in A.allowedResidues :
@@ -2309,7 +2217,6 @@ cdef class autoAssign :
           
           AisJoker = A.isJoker
           BisJoker = B.isJoker
-          
           
           if not AisJoker and not BisJoker :
             
@@ -2368,7 +2275,6 @@ cdef class autoAssign :
                 linkBBm1 = previousResB.linkDict[(spinSystemNumberBm1*hc+spinSystemNumberB)]
                 oldPeaks += (linkBBm1.realPeaks)
                 oldLinkScore += linkBBm1.score
-                
                 
             if  nextResB :
             
@@ -2869,17 +2775,17 @@ cdef class myChain :
     
     self.linkResiduesTogether()
     
+    self.addDummyResiduesAtEnds()
+    
   def __getstate__(self):
     state = dict(self.__dict__)
     if 'ccpnChain' in state :
       del state['ccpnChain']
 
-  def setupResidues(self):
-    
-
+  cdef void setupResidues(self):
+  
     for res in self.ccpnChain.sortedResidues() :
       
-
       newresidue = aResidue(self, res)
 
       self.residues.append(newresidue)
@@ -2892,6 +2798,35 @@ cdef class myChain :
         
         self.residuesByCcpCode[res.ccpCode] = [newresidue]
         
+  cdef void addDummyResiduesAtEnds(self) :
+    '''
+    Put a residue before the beginning and after the end. Why do this:
+    this saves a lot of checks during the annealing procedure for not getting
+    a None-type object for .previousResidue or .nextResidue. It is not added to
+    self.residues, so normally you don't even notice those dummy residues are
+    there at all.
+    '''
+    cdef aResidue res
+    cdef mySpinSystem spinSystem
+    cdef aResidue firstResidue
+    cdef aResidue lastResidue
+    
+    firstResidue = self.residues[0]
+    lastResidue = self.residues[-1]
+    
+    res = aResidue(self,None)
+    spinSystem = mySpinSystem()
+    spinSystem.isJoker = True
+    
+    res.currentSpinSystemAssigned = spinSystem
+    
+    firstResidue.previousResidue = res
+    lastResidue.nextResidue = res
+    
+    
+    
+
+
   cdef void countResidueTypeFrequency(self):
     
     cdef aResidue res
@@ -2971,11 +2906,6 @@ cdef class aResidue :
 
   def __init__(self, chain, ccpnResidue):
 
-    self.ccpnResidue = ccpnResidue
-
-    self.ccpCode = ccpnResidue.ccpCode
-    
-    self.seqCode = ccpnResidue.seqCode
 
     self.chain = chain    # Parent link
 
@@ -2993,7 +2923,15 @@ cdef class aResidue :
     
     self.atomsByAtomSiteName = {}
     
-    self.setupAtoms()
+    if ccpnResidue :
+    
+      self.ccpnResidue = ccpnResidue
+  
+      self.ccpCode = ccpnResidue.ccpCode
+      
+      self.seqCode = ccpnResidue.seqCode
+      
+      self.setupAtoms()
     
   def __getstate__(self):
     state = dict(self.__dict__)
