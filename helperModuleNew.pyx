@@ -1,11 +1,17 @@
-# cython: profile=True
 
 import math
 from numpy.random import randint,random_sample
 import random
 import math
+import cython
+
+from cython.view cimport array as cvarray
 
 #import cProfile
+
+#from cpython cimport bool
+
+#from libcpp cimport bool
 
 from ccpnmr.analysis.core.ChemicalShiftBasic import getShiftsChainProbabilities
 
@@ -21,7 +27,64 @@ cdef extern from "math.h":
 
   double exp(double x)
   
-  
+#from libc.stdlib cimport rand
+#cdef extern from "limits.h":
+#    int RAND_MAX
+#    
+#cdef double randMax = float(RAND_MAX)
+#
+#cdef inline double getCuttOff() :
+#  
+#  cdef int randomInt = rand()
+#  
+#  return randomInt / randMax
+
+
+from libc.stdlib cimport rand, RAND_MAX
+
+cdef double randMax = float(RAND_MAX) 
+
+#cdef int randomInt(int minVal, double maxVal) :
+#  
+#  cdef int ra = rand()
+#  
+#  cdef int r =  minVal + int(ra/(randMax*maxVal))
+#  
+#  return r
+    
+#cdef double random_sample = rand() / randMax
+#cdef int rantint = rand
+
+
+#cdef mySpinSystem [:] convertListOfUniqueTypeToCythonArray(list L) :
+#  
+#  
+#  
+#  cdef mySpinSystem spinSys
+#  
+#  cdef int length = len(L)
+#  
+#  cdef int i
+#  
+#  #cdef mySpinSystem [:]
+#  print '0'
+#  #cyarr = cvarray(shape=(length,), itemsize=sizeof(mySpinSystem), format="i")
+#  cdef mySpinSystem carr[length]
+#  
+#  print '0.5'
+#  cdef mySpinSystem [:] cyarr_view
+#  
+#  print '1'
+#  
+#  for i in range(length) :
+#    print '2'
+#    carr[i] = L[i]
+#  print '3'  
+#  cyarr_view = carr
+#  print '4'
+#  return cyarr_view
+    
+    
 
   
 
@@ -352,6 +415,16 @@ cdef class autoAssign :
     allSpinSystems = DataModel.mySpinSystems
     tentativeSpinSystems = DataModel.tentativeSpinSystems
     allSpinSystemsWithoutAssigned = DataModel.allSpinSystemsWithoutAssigned
+    
+    print 'kk'
+    
+    cdef mySpinSystem spinSys
+    
+    for key, spinSysList in allSpinSystems.items():
+      
+      for spinSys in spinSysList :
+        
+        spinSys.setupAllowedResidueView(DataModel.myChain)
 
     
     if useAssignments :                                                 # If the already made assignments are used, the dictionary will just include unassigned spinsystems and Joker spinsystems
@@ -1283,6 +1356,8 @@ cdef class autoAssign :
             for res in residuesByCcpCode[ccpCode] :
               
               spinSys.allowedResidues.add(res.seqCode)
+              
+
 
   cdef double getAtomLabellingFraction(self,str molType, str ccpCode, str atomName, object labellingScheme):
     """
@@ -1422,8 +1497,11 @@ cdef class autoAssign :
       labellingFraction += atom.labelInfoTemp[isotopomer][isotopeCode] * isotopomer.weight / isoWeightSum
     
     return labellingFraction 
-    
-  cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems):
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.cdivision(True)  
+  cdef void annealingSub_old(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems):
      
     cdef int improvements
     cdef int equals
@@ -1441,9 +1519,11 @@ cdef class autoAssign :
     cdef aResidue nextResA
     cdef aResidue nextResB
     
+    cdef int seqCodeA
+    cdef int seqCodeB
+    
     cdef list exchangeSpinSystems
     
-  
     cdef list oldPeaks
     cdef list newPeaks
     cdef set PeakSet
@@ -1479,13 +1559,17 @@ cdef class autoAssign :
     
     cdef aPeak peak
     
-    cdef set peakSet
+    cdef list peakSet
     
     cdef int hc
     
     cdef double score
     
     cdef double DeltaScore
+    
+    cdef int r
+    
+    cdef double randomDouble
     
     #cdef dict linkDict
     
@@ -1505,18 +1589,24 @@ cdef class autoAssign :
     #randint = random.randint
     
     #calcDeltaPeakScore = self.CcalcDeltaPeakScore
-    
-    
+
+    cdef int lengthOfListWithSpinSystems = len(listWithSpinSystems)    
   
     for aTry in xrange(amountOfStepsPerTemperature) :  
-      
-      A = listWithSpinSystems[randint(0, len(listWithSpinSystems))]
+ 
+      r = int(rand()/randMax*lengthOfListWithSpinSystems)
+
+      A = listWithSpinSystems[r]
+
       
       exchangeSpinSystems = A.exchangeSpinSystems
       
       if exchangeSpinSystems :
         
-        B = exchangeSpinSystems[randint(0, len(exchangeSpinSystems))]
+        r = int(rand()/randMax*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
+        
+        B = exchangeSpinSystems[r]
+        
         
       else :
       
@@ -1537,9 +1627,13 @@ cdef class autoAssign :
       currentResidueB = B.currentResidueAssignment
       
       
-      if currentResidueA and currentResidueB:             # Both spin systems are assigned to a residue
+      if not currentResidueA is None and not currentResidueB is None:             # Both spin systems are assigned to a residue
         
-        if currentResidueA.seqCode in B.allowedResidues and currentResidueB.seqCode in A.allowedResidues :          # The switch is possible because aa types of residues fits with possible aa types of spinsystems
+        seqCodeA = currentResidueA.seqCode
+        seqCodeB = currentResidueB.seqCode
+        
+        if A.allowedResidueView[seqCodeB] and B.allowedResidueView[seqCodeA] :
+        #currentResidueA.seqCode in B.allowedResidues and currentResidueB.seqCode in A.allowedResidues :          # The switch is possible because aa types of residues fits with possible aa types of spinsystems
   
           previousResA = currentResidueA.previousResidue
           previousResB = currentResidueB.previousResidue
@@ -1976,8 +2070,8 @@ cdef class autoAssign :
                   newPeaks += (linkABp1.realPeaks)
                   newLinkScore += linkABp1.score
 
-          peakSet = set(oldPeaks+newPeaks)
-          DeltaScore = self.CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
+          peakSet = oldPeaks+newPeaks #set(oldPeaks+newPeaks)
+          DeltaScore = CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
           
           if  DeltaScore == 0 :
           
@@ -2017,7 +2111,7 @@ cdef class autoAssign :
               
               peak.degeneracy = peak.degeneracyTemp
 
-          elif exp(AcceptanceConstant*DeltaScore) > cutoff() :     
+          elif exp(AcceptanceConstant*DeltaScore) > rand()/randMax : #cutoff() :     
             
             worse += 1
   
@@ -2037,7 +2131,12 @@ cdef class autoAssign :
 
       elif currentResidueA :                                                                      # spin system B is not assigned to any residue
         
-        if currentResidueA.seqCode in B.allowedResidues :
+        seqCodeA = currentResidueA.seqCode
+        seqCodeB = currentResidueB.seqCode
+        
+        if B.allowedResidueView[seqCodeA] :
+        
+        #if currentResidueA.seqCode in B.allowedResidues :
           
           previousResA = currentResidueA.previousResidue
           nextResA = currentResidueA.nextResidue
@@ -2149,8 +2248,8 @@ cdef class autoAssign :
                 oldPeaks += (linkAAp1.realPeaks)
                 oldLinkScore += linkAAp1.score
 
-          peakSet = set(oldPeaks+newPeaks)
-          DeltaScore = self.CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
+          peakSet = oldPeaks+newPeaks #set(oldPeaks+newPeaks)
+          DeltaScore = CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
   
           if  DeltaScore == 0 :
             
@@ -2186,7 +2285,7 @@ cdef class autoAssign :
               
               peak.degeneracy = peak.degeneracyTemp
 
-          elif exp(AcceptanceConstant*DeltaScore) > cutoff() :     
+          elif exp(AcceptanceConstant*DeltaScore) > rand()/randMax : #cutoff() :     
             
             worse = worse + 1
   
@@ -2202,8 +2301,12 @@ cdef class autoAssign :
               peak.degeneracy = peak.degeneracyTemp
 
       elif currentResidueB :                                                                      # spin system A is not assigned to any residue
+
+        seqCodeB = currentResidueB.seqCode
         
-        if currentResidueB.seqCode in A.allowedResidues :
+        if A.allowedResidueView[seqCodeB] :
+        
+        #if currentResidueB.seqCode in A.allowedResidues :
   
           previousResB = currentResidueB.previousResidue
           nextResB = currentResidueB.nextResidue
@@ -2319,8 +2422,8 @@ cdef class autoAssign :
             
   
   
-          peakSet = set(oldPeaks+newPeaks)  
-          DeltaScore = self.CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
+          peakSet = oldPeaks+newPeaks #set(oldPeaks+newPeaks)  
+          DeltaScore = CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + newLinkScore - oldLinkScore
   
   
   
@@ -2366,7 +2469,7 @@ cdef class autoAssign :
   
               
   
-          elif exp(AcceptanceConstant*DeltaScore) > cutoff() :     
+          elif exp(AcceptanceConstant*DeltaScore) >  rand()/randMax : #cutoff() :     
             
             worse = worse + 1
   
@@ -2385,34 +2488,224 @@ cdef class autoAssign :
   
     
     self.score = score
-            
-  cdef double CcalcDeltaPeakScore(self,  set peakSet,list oldPeaks,list newPeaks):
-      
     
-    cdef double peakScoreNew = 0
-    cdef double peakScoreOld = 0
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  @cython.cdivision(True)
+  @cython.nonecheck(False)
+  cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems):
+     
+    cdef int improvements, equals, worse, r, seqCodeA, seqCodeB, deltaLinkScore, lengthOfListWithSpinSystems
     
-    cdef aPeak peak 
+    cdef double score, DeltaScore
+    
+    cdef list exchangeSpinSystems, oldPeaks, newPeaks, peakSet
+    
+    cdef mySpinSystem A, B, Am1, Ap1, Bm1, Bp1
   
-    for peak in peakSet :
-      
-      peak.degeneracyTemp = peak.degeneracy
+    cdef aResidue currentResidueA, currentResidueB, previousResA, previousResB, nextResA, nextResB
+        
+    cdef spinSystemLink l1, l2, l3, l4, l5, l6, l7, l8
     
-    for peak in oldPeaks :
+    cdef aPeak peak
+    
+    cdef int path
+
+    lengthOfListWithSpinSystems = len(listWithSpinSystems)
+    score = self.score
+    improvements = 0
+    equals = 0
+    worse = 0
+    
+    for aTry in xrange(amountOfStepsPerTemperature) :
       
-      deg = peak.degeneracy
-      peakScoreOld = peakScoreOld + 1.0/peak.degeneracy
-      peak.degeneracyTemp -= 1
+      r = int(rand()/randMax*lengthOfListWithSpinSystems)
+      A = <mySpinSystem>listWithSpinSystems[r]
+
+      exchangeSpinSystems = A.exchangeSpinSystems
+      
+      if exchangeSpinSystems :
+        
+        r = int(rand()/randMax*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
+        
+        B = <mySpinSystem>exchangeSpinSystems[r]
+        
+        
+      else :
+      
+        continue
+      
+      currentResidueA = A.currentResidueAssignment
+      currentResidueB = B.currentResidueAssignment
+      
+      if not currentResidueA is None and not currentResidueB is None :             # Both spin systems are assigned to a residue
+        
+        path = 0
+        
+        seqCodeA = currentResidueA.seqCode
+        seqCodeB = currentResidueB.seqCode
+        
+        if not ( A.allowedResidueView[seqCodeB] and B.allowedResidueView[seqCodeA] ) :
+                    
+          continue
+        
+        previousResA = currentResidueA.previousResidue
+        previousResB = currentResidueB.previousResidue
+        
+        nextResA = currentResidueA.nextResidue
+        nextResB = currentResidueB.nextResidue
+        
+        oldLinkScore = 0
+        newLinkScore = 0
+       
+        if currentResidueA is previousResB :                                                                            # A and B happen to be a sequential pair AB
   
-    for peak in newPeaks :
+          Am1 = previousResA.currentSpinSystemAssigned
+          Bp1 = nextResB.currentSpinSystemAssigned
+          
+          l1 = currentResidueA.getFromLinkDict(A,B)
+          l2 = previousResA.getFromLinkDict(Am1,A)
+          l3 = currentResidueB.getFromLinkDict(B,Bp1)
+          l4 = currentResidueA.getFromLinkDict(B,A)
+          l5 = previousResA.getFromLinkDict(Am1,B)
+          l6 = currentResidueB.getFromLinkDict(A,Bp1)
+          
+          deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
+          oldPeaks = l1.realPeaks + l2.realPeaks + l3.realPeaks
+          newPeaks = l4.realPeaks + l5.realPeaks + l6.realPeaks
+          peakSet = oldPeaks + newPeaks
+          
+        elif currentResidueB is previousResA :                                                                                    # sequential pair BA
+  
+          Bm1 = previousResB.currentSpinSystemAssigned
+          Ap1 = nextResA.currentSpinSystemAssigned
+          
+          l1 = currentResidueB.getFromLinkDict(B,A)
+          l2 = previousResB.getFromLinkDict(Bm1,B)
+          l3 = currentResidueA.getFromLinkDict(A,Ap1)
+          l4 = currentResidueB.getFromLinkDict(A,B)
+          l5 = previousResB.getFromLinkDict(Bm1,A)
+          l6 = currentResidueA.getFromLinkDict(B,Ap1)
+          
+          deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
+          oldPeaks = l1.realPeaks + l2.realPeaks + l3.realPeaks
+          newPeaks = l4.realPeaks + l5.realPeaks + l6.realPeaks
+          peakSet = oldPeaks + newPeaks
+
+        else :                                                                                                            # A and B are not sequential
+        
+          Am1 = previousResA.currentSpinSystemAssigned
+          Ap1 = nextResA.currentSpinSystemAssigned
+          Bm1 = previousResB.currentSpinSystemAssigned
+          Bp1 = nextResB.currentSpinSystemAssigned
+          
+          l1 = previousResA.getFromLinkDict(Am1,A)
+          l2 = currentResidueA.getFromLinkDict(A,Ap1)
+          l3 = previousResB.getFromLinkDict(Bm1,B)
+          l4 = currentResidueB.getFromLinkDict(B,Bp1)
+          l5 = previousResA.getFromLinkDict(Am1,B)
+          l6 = currentResidueA.getFromLinkDict(B,Ap1)
+          l7 = previousResB.getFromLinkDict(Bm1,A)
+          l8 = currentResidueB.getFromLinkDict(A,Bp1)
+          
+          deltaLinkScore = l5.score + l6.score + l7.score + l8.score - (l1.score + l2.score + l3.score + l4.score)
+          oldPeaks = l1.realPeaks + l2.realPeaks + l3.realPeaks + l4.realPeaks
+          newPeaks = l5.realPeaks + l6.realPeaks + l7.realPeaks + l8.realPeaks
+          peakSet = oldPeaks + newPeaks
+          
+      elif not currentResidueA is None :                                                                      # spin system B is not assigned to any residue
+        
+        path = 1
+        
+        seqCodeA = currentResidueA.seqCode
+        
+        if not B.allowedResidueView[seqCodeA] :
+          
+          continue
+          
+        previousResA = currentResidueA.previousResidue
+        nextResA = currentResidueA.nextResidue
+  
+        Am1 = previousResA.currentSpinSystemAssigned
+        Ap1 = nextResA.currentSpinSystemAssigned
+        
+        l1  = previousResA.getFromLinkDict(Am1,A)
+        l2  = currentResidueA.getFromLinkDict(A,Ap1)
+        l3  = previousResA.getFromLinkDict(Am1,B)
+        l4  = currentResidueA.getFromLinkDict(B,Ap1)
+        
+        deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
+        oldPeaks = l1.realPeaks + l2.realPeaks
+        newPeaks = l3.realPeaks + l4.realPeaks
+        peakSet = oldPeaks+newPeaks
+  
+      elif not currentResidueB is None :                                                                      # spin system A is not assigned to any residue
+        
+        path = 2
+        
+        seqCodeB = currentResidueB.seqCode
+        
+        if not B.allowedResidueView[seqCodeB] :          
+          continue
+          
+        previousResB = currentResidueB.previousResidue
+        nextResB = currentResidueB.nextResidue
+  
+        Bm1 = previousResB.currentSpinSystemAssigned
+        Bp1 = nextResB.currentSpinSystemAssigned
+        
+        l1  = previousResB.getFromLinkDict(Bm1,B)
+        l2  = currentResidueB.getFromLinkDict(B,Bp1)
+        l3  = previousResB.getFromLinkDict(Bm1,A)
+        l4  = currentResidueB.getFromLinkDict(A,Bp1)
+
+        deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
+        oldPeaks = l1.realPeaks + l2.realPeaks
+        newPeaks = l3.realPeaks + l4.realPeaks
+        peakSet = oldPeaks+newPeaks
+
+      else :
+        
+        continue
       
-      peak.degeneracyTemp += 1
+      DeltaScore = CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + deltaLinkScore
       
-    for peak in newPeaks : 
+      if DeltaScore >= 0 or exp(AcceptanceConstant*DeltaScore) > rand()/randMax :
+        
+        score += DeltaScore
+        
+        for peak in peakSet :
+          
+          peak.degeneracy = peak.degeneracyTemp
+          
+        B.currentResidueAssignment = currentResidueA
+        A.currentResidueAssignment = currentResidueB
+          
+        if path == 0 :
+
+          currentResidueA.currentSpinSystemAssigned = B
+          currentResidueB.currentSpinSystemAssigned = A
+          
+        elif path == 1 :
+
+          currentResidueA.currentSpinSystemAssigned = B
+          
+        else :
+
+          currentResidueB.currentSpinSystemAssigned = A
+          
+          
+          
+          
+          
+        
+        
       
-      peakScoreNew += 1.0/peak.degeneracyTemp
       
-    return peakScoreNew - peakScoreOld
+    self.score = score
+
+
+
   
   cdef void convertToPythonStyleDataModel(self) :
    
@@ -3074,6 +3367,28 @@ cdef class aResidue :
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
      
+  cdef spinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
+    
+    #cdef bool joker1
+    #cdef bool joker2
+    
+    #joker1 = spinSystem1.isJoker
+    #joker2 = spinSystem2.isJoker
+    
+    if spinSystem1.isJoker or spinSystem2.isJoker:
+      
+      return emptyLink
+
+    cdef spinSystemLink link
+    
+    cdef int hashCode
+    
+    hashCode = spinSystem1.spinSystemNumber*10000+spinSystem2.spinSystemNumber
+    
+    link = <spinSystemLink>self.linkDict[hashCode]
+    
+    return link #link.realPeaks, link.score
+    
       
   cdef void createPythonStyleObject(self):
     
@@ -4290,6 +4605,8 @@ cdef class spinSystemLink :
     self.simulatedPeaksThatShouldNotHaveBeenThere = []
     self.peaksThatShouldNotHaveBeenThere = []
     
+    
+    
   
   cdef void createPythonStyleObject(self) :
     
@@ -4394,7 +4711,7 @@ cdef class mySpinSystem :
   
   cdef int ccpnSeqCode
   
-  cdef object isJoker
+  cdef bint isJoker
   
   cdef list solutions
   
@@ -4411,6 +4728,8 @@ cdef class mySpinSystem :
   cdef object pySpinSystem
   
   cdef dict resonancesByAtomSiteName
+  
+  cdef bint [:] allowedResidueView
   
 
   def __init__(self):
@@ -4438,6 +4757,26 @@ cdef class mySpinSystem :
     self.allowedResidues = set()                                      # This is later on going to be a Frozen Set for fast membership testing during the annealing run. If the set is empty that means everything residue is allowed, if has members, only these residues are allowed.
     
     self.resonancesByAtomSiteName = {}
+    
+  cdef void setupAllowedResidueView(self, myChain chain) :
+    
+    cdef int resNumber
+    
+    #cdef aResidue res
+    
+    cythonArray = cvarray(shape=(len(chain.residues) + 1,), itemsize=sizeof(bint), format="i")
+    
+    self.allowedResidueView = cythonArray
+    
+    self.allowedResidueView[:] = False
+    
+    for resNumber in self.allowedResidues :
+      
+      #i = res.seqCode
+      
+      self.allowedResidueView[resNumber] = True
+      
+      
     
   cdef myResonance getResonanceForAtomName(self,str atomName) :       # Used in matchSpectrum()
     
@@ -4735,4 +5074,37 @@ cdef dict mergeDictionariesContainingLists(list dictionaries):
         
     newDict[key] = list(set(newList))
     
-  return newDict  
+  return newDict
+
+cdef spinSystemLink emptyLink = spinSystemLink()
+
+@cython.nonecheck(False)
+@cython.wraparound(False)
+@cython.boundscheck(False)
+@cython.cdivision(True)  
+cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks):
+    
+  cdef double peakScoreNew = 0
+  cdef double peakScoreOld = 0
+  
+  cdef aPeak peak 
+
+  for peak in peakSet :
+    
+    peak.degeneracyTemp = peak.degeneracy
+  
+  for peak in oldPeaks :
+    
+    deg = peak.degeneracy
+    peakScoreOld = peakScoreOld + 1.0/peak.degeneracy
+    peak.degeneracyTemp -= 1
+
+  for peak in newPeaks :
+    
+    peak.degeneracyTemp += 1
+    
+  for peak in newPeaks : 
+    
+    peakScoreNew += 1.0/peak.degeneracyTemp
+    
+  return peakScoreNew - peakScoreOld
