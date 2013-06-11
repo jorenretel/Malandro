@@ -27,66 +27,12 @@ cdef extern from "math.h":
 
   double exp(double x)
   
-#from libc.stdlib cimport rand
-#cdef extern from "limits.h":
-#    int RAND_MAX
-#    
-#cdef double randMax = float(RAND_MAX)
-#
-#cdef inline double getCuttOff() :
-#  
-#  cdef int randomInt = rand()
-#  
-#  return randomInt / randMax
-
 
 from libc.stdlib cimport rand, RAND_MAX
 
 cdef double randMax = float(RAND_MAX) 
 
-#cdef int randomInt(int minVal, double maxVal) :
-#  
-#  cdef int ra = rand()
-#  
-#  cdef int r =  minVal + int(ra/(randMax*maxVal))
-#  
-#  return r
-    
-#cdef double random_sample = rand() / randMax
-#cdef int rantint = rand
 
-
-#cdef mySpinSystem [:] convertListOfUniqueTypeToCythonArray(list L) :
-#  
-#  
-#  
-#  cdef mySpinSystem spinSys
-#  
-#  cdef int length = len(L)
-#  
-#  cdef int i
-#  
-#  #cdef mySpinSystem [:]
-#  print '0'
-#  #cyarr = cvarray(shape=(length,), itemsize=sizeof(mySpinSystem), format="i")
-#  cdef mySpinSystem carr[length]
-#  
-#  print '0.5'
-#  cdef mySpinSystem [:] cyarr_view
-#  
-#  print '1'
-#  
-#  for i in range(length) :
-#    print '2'
-#    carr[i] = L[i]
-#  print '3'  
-#  cyarr_view = carr
-#  print '4'
-#  return cyarr_view
-    
-    
-
-  
 
 cdef class autoAssign :
   
@@ -743,24 +689,6 @@ cdef class autoAssign :
       
       spectrum.simulate()
 
-  cdef object atomsBelongToSameResidue(self, list atoms) :                                                        # TODO: remove, not used any longer
-    
-    cdef anAtom atom
-    
-    cdef aResidue firstResidue
-    
-    atom = atoms[0]
-    
-    firstResidue = atom.residue 
-    
-    for atom in atoms:
-      
-      if not atom.residue is firstResidue :
-        
-        return False
-      
-    return True  
-      
   cdef void createSpinSytemsAndResonances(self):
 
     cdef int cc
@@ -1163,18 +1091,11 @@ cdef class autoAssign :
 
   cdef void calculateAllPeakContributions(self):
         
-    
     cdef aSpectrum spectrum
-    
-    cdef object ccpnSpectrum
-    
-    cdef str refExpName
     
     cdef str info
 
     for spectrum in self.DataModel.spectra:                 # Determine for each dimension of every peak in all (used) spectra, which resonances can contribute to the peak
-      
-      #spectrum.setupPeaks()   
               
       info = 'Evaluating dimensional contributions to peaks: ' + spectrum.name
       
@@ -1357,8 +1278,6 @@ cdef class autoAssign :
               
               spinSys.allowedResidues.add(res.seqCode)
               
-
-
   cdef double getAtomLabellingFraction(self,str molType, str ccpCode, str atomName, object labellingScheme):
     """
     Get the fraction of labelling for a given atom in a given amino acid.
@@ -2694,19 +2613,8 @@ cdef class autoAssign :
 
           currentResidueB.currentSpinSystemAssigned = A
           
-          
-          
-          
-          
-        
-        
-      
-      
     self.score = score
 
-
-
-  
   cdef void convertToPythonStyleDataModel(self) :
    
     cdef myDataModel DataModel
@@ -2950,12 +2858,10 @@ cdef class myDataModel :
     
     self.minIsoFrac = auto.minIsoFrac
 
-
   def setupChain(self):
     
     self.myChain = myChain(self.auto.chain)
         
-    
   def setupSpectra(self):
 
     for temporary_spectrum_object in self.auto.selectedSpectra :
@@ -3196,7 +3102,6 @@ cdef class aResidue :
   
   cdef object pyResidue
   
-
   def __init__(self, chain, ccpnResidue):
 
 
@@ -3329,7 +3234,7 @@ cdef class aResidue :
     
     return self.atomsByAtomSiteName.get(atomSiteName, [])
       
-  cdef void addToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks) :
+  cdef void addToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
   
     cdef spinSystemLink linkObject
     
@@ -3343,12 +3248,17 @@ cdef class aResidue :
       linkObject.spinSystem1 = spinSys1
       linkObject.spinSystem2 = spinSys2
       self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)] = linkObject
+      
+    for realPeak, simPeak, score in zip(realPeaks,simulatedPeaks,scores) :
+      
+      newPeakLink = peakLink(realPeak,simPeak,score)
+      linkObject.peakLinks.append(newPeakLink)
 
     linkObject.simulatedPeaks.extend(simulatedPeaks)
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
         
-  cdef void addToIntraDict(self,mySpinSystem spinSys, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks) :
+  cdef void addToIntraDict(self,mySpinSystem spinSys, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
   
     cdef spinSystemLink linkObject
     
@@ -3363,6 +3273,11 @@ cdef class aResidue :
       linkObject.spinSystem2 = spinSys
       self.intraDict[spinSys.spinSystemNumber] = linkObject
 
+    for realPeak, simPeak, score in zip(realPeaks,simulatedPeaks,scores) :
+      
+      newPeakLink = peakLink(realPeak,simPeak,score)
+      linkObject.peakLinks.append(newPeakLink)
+      
     linkObject.simulatedPeaks.extend(simulatedPeaks)
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
@@ -3389,7 +3304,6 @@ cdef class aResidue :
     
     return link #link.realPeaks, link.score
     
-      
   cdef void createPythonStyleObject(self):
     
       self.pyResidue = pyResidue()
@@ -3450,6 +3364,7 @@ cdef class aSpectrum :
     self.ccpnSpectrum = temporary_spectrum_object.ccpnSpectrum
     self.name = temporary_spectrum_object.ccpnSpectrum.name
     self.labellingScheme = temporary_spectrum_object.labellingScheme
+    
     
     if self.labellingScheme is True :
       
@@ -4189,6 +4104,7 @@ cdef class aSpectrum :
     cdef list listWithPresentPeaks
     cdef list listWithSimulatedPeaks
     cdef list listWithNotFoundSimulatedPeaks
+    cdef list listWithScores
     
     cdef simulatedPeak simulatedPeak
     
@@ -4251,6 +4167,7 @@ cdef class aSpectrum :
           listWithPresentPeaks = []
           listWithSimulatedPeaks = []
           listWithNotFoundSimulatedPeaks = []
+          listWithScores = []
   
           for simulatedPeak in simulatedPeakList :
             
@@ -4279,15 +4196,24 @@ cdef class aSpectrum :
 
               if peaksInWindow :
                 
-                if len(peaksInWindow) == 1 :                                                                            # If there is only one peak that falls within the window, we don't have to choose.
+                peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
                 
-                  closestPeak = peaksInWindow[0]
+                bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
                 
-                else :                                                                                                                 # There might be more than on peak within the tolerances in all dimensions. We will choose the closest one 
+                
+                #if len(peaksInWindow) == 1 :                                                                            # If there is only one peak that falls within the window, we don't have to choose.
+                
+                #  closestPeak = peaksInWindow[0]
+                
+                #else :                                                                                                                 # There might be more than on peak within the tolerances in all dimensions. We will choose the closest one 
                   
-                  rootOfSquaresList = [sum([(dim.ppmValue - resonance.CS)**2 for dim, resonance in zip(peak.dimensions, resonances) ])**0.5 for peak in peaksInWindow]
+                #  rootOfSquaresList = [sum([(dim.ppmValue - resonance.CS)**2 for dim, resonance in zip(peak.dimensions, resonances) ])**0.5 for peak in peaksInWindow]
 
-                  closestPeak = sorted(zip(rootOfSquaresList, peaksInWindow))[0][1]
+                  #closestPeak = sorted(zip(rootOfSquaresList, peaksInWindow))[0][1]
+            
+                #peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
+                #print peakScores
+                listWithScores.append(bestScore)
 
                 listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
                   
@@ -4297,7 +4223,7 @@ cdef class aSpectrum :
                
                 listWithNotFoundSimulatedPeaks.append(simulatedPeak)   
           
-          resA.addToLinkDict(spinSys1, spinSys2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks)  
+          resA.addToLinkDict(spinSys1, spinSys2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores)  
    
   cdef void matchIntraResidual(self):
     
@@ -4324,6 +4250,7 @@ cdef class aSpectrum :
     cdef list listWithPresentPeaks
     cdef list listWithSimulatedPeaks
     cdef list listWithNotFoundSimulatedPeaks
+    cdef list listWithScores
     
     cdef simulatedPeak simulatedPeak
     
@@ -4377,11 +4304,12 @@ cdef class aSpectrum :
         listWithPresentPeaks = []
         listWithSimulatedPeaks = []
         listWithNotFoundSimulatedPeaks = []
+        listWithScores = []
 
         for simulatedPeak in simulatedPeakList :
           
           contributions = simulatedPeak.simulatedPeakContribs
-                      
+          
           resonances = []
           
           resonances = [spinSys.getResonanceForAtomName(contrib.atomName) for contrib in contributions]
@@ -4396,16 +4324,22 @@ cdef class aSpectrum :
 
           if peaksInWindow :
             
-            if len(peaksInWindow) == 1 :                                                                            # If there is only one peak that falls within the window, we don't have to choose.
+            peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
+                
+            bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
             
-              closestPeak = peaksInWindow[0]
+            #if len(peaksInWindow) == 1 :                                                                            # If there is only one peak that falls within the window, we don't have to choose.
+            #
+            #  closestPeak = peaksInWindow[0]
+            #
+            #else :                                                                                                                 # There might be more than on peak within the tolerances in all dimensions. We will choose the closest one 
+            #  
+            #  rootOfSquaresList = [sum([(dim.ppmValue - resonance.CS)**2 for dim, resonance in zip(peak.dimensions, resonances) ])**0.5 for peak in peaksInWindow]
+            #
+            #  closestPeak = sorted(zip(rootOfSquaresList, peaksInWindow))[0][1]
+
+            listWithScores.append(bestScore)
             
-            else :                                                                                                                 # There might be more than on peak within the tolerances in all dimensions. We will choose the closest one 
-              
-              rootOfSquaresList = [sum([(dim.ppmValue - resonance.CS)**2 for dim, resonance in zip(peak.dimensions, resonances) ])**0.5 for peak in peaksInWindow]
-
-              closestPeak = sorted(zip(rootOfSquaresList, peaksInWindow))[0][1]
-
             listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
               
             listWithSimulatedPeaks.append(simulatedPeak)
@@ -4414,7 +4348,7 @@ cdef class aSpectrum :
            
             listWithNotFoundSimulatedPeaks.append(simulatedPeak)   
         
-        res.addToIntraDict(spinSys, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks)
+        res.addToIntraDict(spinSys, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores)
    
   cdef void createPythonStyleObject(self):
     
@@ -4469,6 +4403,7 @@ cdef class aPeak :
       dimension = aDimension(self,dim)
 
       self.dimensions.append(dimension)
+      
       
   cdef void checkForIntraResidualAssignment(self):
     
@@ -4533,6 +4468,7 @@ cdef class aDimension :
   
   cdef object pyDimension
   
+  cdef double tolerance
   
   
   def __init__(self, peak, ccpnDim):
@@ -4541,6 +4477,8 @@ cdef class aDimension :
     self.ccpnDim = ccpnDim
     self.ppmValue = ccpnDim.value
     self.dimNumber = ccpnDim.dataDim.expDim.refExpDim.dim
+    self.tolerance = getAnalysisDataDim(ccpnDim.dataDim).assignTolerance
+    print self.tolerance
       
     self.possibleContributions = []                         # All resonances in the resonanceList that could potentially contribute to this dimension of the peak 
     self.nonLabelledResonances = []                     # Here all resonances are gathered that can not contribute to the peak because of the labelling scheme. They are collected anywya to search for peaks that explicitely should NOT be there.
@@ -4572,9 +4510,9 @@ cdef class aDimension :
 
 cdef class spinSystemLink :
 
-  cdef public int score
+  cdef int score
   
-  cdef public list realPeaks
+  cdef list realPeaks
   
   cdef mySpinSystem spinSystem1
   
@@ -4584,30 +4522,20 @@ cdef class spinSystemLink :
   
   cdef list notFoundSimulatedPeaks
   
-  cdef list simulatedPeaksThatShouldNotHaveBeenThere
-  
-  cdef list peaksThatShouldNotHaveBeenThere
-  
   cdef object pySpinSystemLink
+  
+  cdef list peakLinks
   
   def __init__(self):
     
-
     self.score = 0
-    
     self.spinSystem1 = None
     self.spinSystem2 = None
-    
     self.simulatedPeaks = []
     self.realPeaks = []
     self.notFoundSimulatedPeaks = []
+    self.peakLinks = []
     
-    self.simulatedPeaksThatShouldNotHaveBeenThere = []
-    self.peaksThatShouldNotHaveBeenThere = []
-    
-    
-    
-  
   cdef void createPythonStyleObject(self) :
     
     cdef aPeak peak
@@ -4627,7 +4555,21 @@ cdef class spinSystemLink :
     for simulatedPeak in self.simulatedPeaks :
       
       self.pySpinSystemLink.simulatedPeaks.append(simulatedPeak.pySimulatedPeak)
- 
+    
+cdef class peakLink :
+  
+  cdef aPeak peak
+  
+  cdef simulatedPeak simPeak
+  
+  cdef double score
+  
+  def __init__(self, aPeak peak, simulatedPeak simPeak, double score):
+    
+    self.peak = peak
+    self.simPeak = simPeak
+    self.score = 0.0
+
 cdef class simulatedPeak :
   
   cdef double colabelling
@@ -5108,3 +5050,24 @@ cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks)
     peakScoreNew += 1.0/peak.degeneracyTemp
     
   return peakScoreNew - peakScoreOld
+
+cdef inline double scorePeak(list peakDimensions,list resonances) :
+  
+  cdef aDimension dim
+  cdef myResonance resonance
+  cdef double k, z, top, summation, delta, tolerance
+  
+  k = 0.4
+  top = -1.0/(k**2-1)
+
+  summation = 0.0
+  
+  for dim, resonance in zip(peakDimensions, resonances) :
+
+    delta = dim.ppmValue - resonance.CS
+    tolerance = dim.tolerance
+    summation += ((delta/tolerance)**2-1)*top
+    
+  z = max(-1, summation/len(peakDimensions)) * -1.0
+  
+  return z
