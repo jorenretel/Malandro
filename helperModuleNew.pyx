@@ -2428,6 +2428,8 @@ cdef class autoAssign :
     
     cdef aPeak peak
     
+    cdef peakLink pl
+    
     cdef int path
 
     lengthOfListWithSpinSystems = len(listWithSpinSystems)
@@ -2490,8 +2492,8 @@ cdef class autoAssign :
           l6 = currentResidueB.getFromLinkDict(A,Bp1)
           
           deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
-          oldPeaks = l1.realPeaks + l2.realPeaks + l3.realPeaks
-          newPeaks = l4.realPeaks + l5.realPeaks + l6.realPeaks
+          oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks
+          newPeaks = l4.peakLinks + l5.peakLinks + l6.peakLinks
           peakSet = oldPeaks + newPeaks
           
         elif currentResidueB is previousResA :                                                                                    # sequential pair BA
@@ -2507,8 +2509,8 @@ cdef class autoAssign :
           l6 = currentResidueA.getFromLinkDict(B,Ap1)
           
           deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
-          oldPeaks = l1.realPeaks + l2.realPeaks + l3.realPeaks
-          newPeaks = l4.realPeaks + l5.realPeaks + l6.realPeaks
+          oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks
+          newPeaks = l4.peakLinks + l5.peakLinks + l6.peakLinks
           peakSet = oldPeaks + newPeaks
 
         else :                                                                                                            # A and B are not sequential
@@ -2528,8 +2530,8 @@ cdef class autoAssign :
           l8 = currentResidueB.getFromLinkDict(A,Bp1)
           
           deltaLinkScore = l5.score + l6.score + l7.score + l8.score - (l1.score + l2.score + l3.score + l4.score)
-          oldPeaks = l1.realPeaks + l2.realPeaks + l3.realPeaks + l4.realPeaks
-          newPeaks = l5.realPeaks + l6.realPeaks + l7.realPeaks + l8.realPeaks
+          oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks + l4.peakLinks
+          newPeaks = l5.peakLinks + l6.peakLinks + l7.peakLinks + l8.peakLinks
           peakSet = oldPeaks + newPeaks
           
       elif not currentResidueA is None :                                                                      # spin system B is not assigned to any residue
@@ -2554,8 +2556,8 @@ cdef class autoAssign :
         l4  = currentResidueA.getFromLinkDict(B,Ap1)
         
         deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
-        oldPeaks = l1.realPeaks + l2.realPeaks
-        newPeaks = l3.realPeaks + l4.realPeaks
+        oldPeaks = l1.peakLinks + l2.peakLinks
+        newPeaks = l3.peakLinks + l4.peakLinks
         peakSet = oldPeaks+newPeaks
   
       elif not currentResidueB is None :                                                                      # spin system A is not assigned to any residue
@@ -2579,8 +2581,8 @@ cdef class autoAssign :
         l4  = currentResidueB.getFromLinkDict(A,Bp1)
 
         deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
-        oldPeaks = l1.realPeaks + l2.realPeaks
-        newPeaks = l3.realPeaks + l4.realPeaks
+        oldPeaks = l1.peakLinks + l2.peakLinks
+        newPeaks = l3.peakLinks + l4.peakLinks
         peakSet = oldPeaks+newPeaks
 
       else :
@@ -2593,9 +2595,9 @@ cdef class autoAssign :
         
         score += DeltaScore
         
-        for peak in peakSet :
+        for pl in peakSet :
           
-          peak.degeneracy = peak.degeneracyTemp
+          pl.peak.degeneracy = pl.peak.degeneracyTemp
           
         B.currentResidueAssignment = currentResidueA
         A.currentResidueAssignment = currentResidueB
@@ -4077,60 +4079,21 @@ cdef class aSpectrum :
     
     cdef myDataModel DataModel
     
-    cdef list simulatedPeakMatrix
-    
-    cdef list residues
-    
-    cdef list simulatedPeakList
-    
-    cdef aResidue resA
-    
-    cdef aResidue resB
+    cdef list simulatedPeakMatrix, residues, simulatedPeakList, spinsystemsaa1, spinsystemsaa2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores, contributions, resonances, peakLists, peaksInWindow
+
+    cdef aResidue resA, resB
     
     cdef dict allSpinSystems
     
-    cdef list spinsystemsaa1
+    cdef mySpinSystem spinSys1, spinSys2, spinSystem
     
-    cdef list spinsystemsaa2
-    
-    cdef mySpinSystem spinSys1
-    
-    cdef mySpinSystem spinSys2
-    
-    cdef mySpinSystem spinSystem
-    
-    cdef int presentPeaks 
-    
-    cdef list listWithPresentPeaks
-    cdef list listWithSimulatedPeaks
-    cdef list listWithNotFoundSimulatedPeaks
-    cdef list listWithScores
+    cdef int presentPeaks, i
     
     cdef simulatedPeak simulatedPeak
     
-    cdef list contributions
-    
-    cdef list resonances
-    
     cdef simulatedPeakContrib contrib
     
-    cdef list peakLists
-    
-    cdef list peaksInWindow
-    
-    cdef list rootOfSquaresList
-    
-    cdef list deltaCSsquaredList
-    
     cdef aDimension dim
-    
-    cdef spinSystemLink linkObject
-    
-    cdef int i
-    
-    cdef double smallest
-    
-    cdef double x
     
     cdef myResonance resonance
     
@@ -4200,19 +4163,8 @@ cdef class aSpectrum :
                 
                 bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
                 
+                bestScore = min(1.0,bestScore)                                                        # Put a flat bottom (top) in. 
                 
-                #if len(peaksInWindow) == 1 :                                                                            # If there is only one peak that falls within the window, we don't have to choose.
-                
-                #  closestPeak = peaksInWindow[0]
-                
-                #else :                                                                                                                 # There might be more than on peak within the tolerances in all dimensions. We will choose the closest one 
-                  
-                #  rootOfSquaresList = [sum([(dim.ppmValue - resonance.CS)**2 for dim, resonance in zip(peak.dimensions, resonances) ])**0.5 for peak in peaksInWindow]
-
-                  #closestPeak = sorted(zip(rootOfSquaresList, peaksInWindow))[0][1]
-            
-                #peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
-                #print peakScores
                 listWithScores.append(bestScore)
 
                 listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
@@ -4229,54 +4181,21 @@ cdef class aSpectrum :
     
     cdef myDataModel DataModel
     
-    cdef list intraResidualSimulatedPeakMatrix
-    
-    cdef list residues
-    
-    cdef list simulatedPeakList
+    cdef list intraResidualSimulatedPeakMatrix, residues, simulatedPeakList, spinsystems, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores, contributions, resonances, peakLists, peaksInWindow
     
     cdef aResidue res
     
     cdef dict allSpinSystems
     
-    cdef list spinsystems
-    
     cdef mySpinSystem spinSys
-    
-    cdef mySpinSystem spinSystem
-    
-    cdef int presentPeaks 
-    
-    cdef list listWithPresentPeaks
-    cdef list listWithSimulatedPeaks
-    cdef list listWithNotFoundSimulatedPeaks
-    cdef list listWithScores
     
     cdef simulatedPeak simulatedPeak
     
-    cdef list contributions
-    
-    cdef list resonances
-    
     cdef simulatedPeakContrib contrib
-    
-    cdef list peakLists
-    
-    cdef list peaksInWindow
-    
-    cdef list rootOfSquaresList
-    
-    cdef list deltaCSsquaredList
     
     cdef aDimension dim
     
-    cdef spinSystemLink linkObject
-    
     cdef int i
-    
-    cdef double smallest
-    
-    cdef double x
     
     cdef myResonance resonance
     
@@ -4328,16 +4247,8 @@ cdef class aSpectrum :
                 
             bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
             
-            #if len(peaksInWindow) == 1 :                                                                            # If there is only one peak that falls within the window, we don't have to choose.
-            #
-            #  closestPeak = peaksInWindow[0]
-            #
-            #else :                                                                                                                 # There might be more than on peak within the tolerances in all dimensions. We will choose the closest one 
-            #  
-            #  rootOfSquaresList = [sum([(dim.ppmValue - resonance.CS)**2 for dim, resonance in zip(peak.dimensions, resonances) ])**0.5 for peak in peaksInWindow]
-            #
-            #  closestPeak = sorted(zip(rootOfSquaresList, peaksInWindow))[0][1]
-
+            bestScore = min(1.0,bestScore)
+            
             listWithScores.append(bestScore)
             
             listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
@@ -4398,11 +4309,15 @@ cdef class aPeak :
     
   def setupDimensions(self):
     
-    for dim in self.ccpnPeak.sortedPeakDims() :
+    ccpnDims = self.ccpnPeak.sortedPeakDims()
+    
+    self.dimensions = [None]*len(ccpnDims)            # We want the dimensions sorted by .dataDim.expDim.refExpDim.dim (this dimNumber is also used everywhere in the simulation, and it is handy during the matching procedure to have the contributions to the simulated peaks in the same order as dimensions of the real peaks in the spectra)
+    
+    for dim in ccpnDims :
 
       dimension = aDimension(self,dim)
 
-      self.dimensions.append(dimension)
+      self.dimensions[dimension.dimNumber - 1] = dimension
       
       
   cdef void checkForIntraResidualAssignment(self):
@@ -5029,25 +4944,27 @@ cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks)
   cdef double peakScoreNew = 0
   cdef double peakScoreOld = 0
   
-  cdef aPeak peak 
-
-  for peak in peakSet :
-    
-    peak.degeneracyTemp = peak.degeneracy
+  #cdef aPeak peak
   
-  for peak in oldPeaks :
-    
-    deg = peak.degeneracy
-    peakScoreOld = peakScoreOld + 1.0/peak.degeneracy
-    peak.degeneracyTemp -= 1
+  cdef peakLink pl
 
-  for peak in newPeaks :
+  for pl in peakSet :
     
-    peak.degeneracyTemp += 1
+    pl.peak.degeneracyTemp = pl.peak.degeneracy
+  
+  for pl in oldPeaks :
     
-  for peak in newPeaks : 
+    deg = pl.peak.degeneracy
+    peakScoreOld = peakScoreOld + 1.0/pl.peak.degeneracy * pl.score
+    pl.peak.degeneracyTemp -= 1
+
+  for pl in newPeaks :
     
-    peakScoreNew += 1.0/peak.degeneracyTemp
+    pl.peak.degeneracyTemp += 1
+    
+  for pl in newPeaks : 
+    
+    peakScoreNew += 1.0/pl.peak.degeneracyTemp * pl.score
     
   return peakScoreNew - peakScoreOld
 
@@ -5058,7 +4975,8 @@ cdef inline double scorePeak(list peakDimensions,list resonances) :
   cdef double k, z, top, summation, delta, tolerance
   
   k = 0.4
-  top = -1.0/(k**2-1)
+  top = 1.0/(k**2-1)
+  #top = -1.0/(k**2-1)
 
   summation = 0.0
   
@@ -5068,6 +4986,7 @@ cdef inline double scorePeak(list peakDimensions,list resonances) :
     tolerance = dim.tolerance
     summation += ((delta/tolerance)**2-1)*top
     
-  z = max(-1, summation/len(peakDimensions)) * -1.0
+  z = summation/len(peakDimensions)
+  #z = max(-1, summation/len(peakDimensions)) * -1.0
   
   return z
