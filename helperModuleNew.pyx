@@ -688,6 +688,8 @@ cdef class autoAssign :
       self.updateInfoText('Simulating ' + spectrum.name)
       
       spectrum.simulate()
+      
+      spectrum.determineSymmetry()
 
   cdef void createSpinSytemsAndResonances(self):
 
@@ -1106,41 +1108,15 @@ cdef class autoAssign :
   cdef void setupSpinSystemExchange(self):
     
     cdef myDataModel DataModel
-    
-    cdef list residues
-    cdef dict residuesByCcpCode
-
-    cdef dict justTypedSpinSystems
-    cdef dict allSpinSystems
-    cdef dict tentativeSpinSystems
-    cdef dict allSpinSystemsWithoutAssigned
-    
+    cdef list residues, listWithSpinSystems, spinSysList
+    cdef dict residuesByCcpCode, allSpinSystems, justTypedSpinSystems, tentativeSpinSystems, allSpinSystemsWithoutAssigned, dictio
     cdef object useAssignments
     cdef object useTentative
-    
-    cdef dict dictio
-    
-    cdef str key
-    
-    cdef list listWithSpinSystems
-    
-    cdef list spinSysList
-    
-    cdef mySpinSystem spinSys
-    
-    cdef mySpinSystem spinSys2
-    
-    cdef str ccpCode
-    
+    cdef str key, ccpCode
+    cdef mySpinSystem spinSys, spinSys2
     cdef int seqCode
-    
     cdef aResidue res
     
-
-    
-    
-      
-      
     useAssignments = self.useAssignments
     useTentative = self.useTentative
     
@@ -3283,6 +3259,49 @@ cdef class aResidue :
     linkObject.simulatedPeaks.extend(simulatedPeaks)
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
+    
+  cdef addPeakToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, aPeak realPeak, aPeak simulatedPeak, list resonances, double score) :
+    
+    cdef spinSystemLink linkObject
+    
+    if spinSys1 is spinSys2 :
+      
+      if spinSys.spinSystemNumber in self.intraDict :
+  
+        linkObject = self.intraDict[spinSys.spinSystemNumber]
+        
+      else :
+        
+        linkObject = spinSystemLink()
+        linkObject.spinSystem1 = spinSys
+        linkObject.spinSystem2 = spinSys
+        self.intraDict[spinSys.spinSystemNumber] = linkObject
+    
+    else :
+      
+      if (spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber) in self.linkDict :
+  
+        linkObject = self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)]
+        
+      else :
+        
+        linkObject = spinSystemLink()
+        linkObject.spinSystem1 = spinSys1
+        linkObject.spinSystem2 = spinSys2
+        self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)] = linkObject
+      
+    newPeakLink = peakLink(realPeak,simPeak,score)  
+      
+    if realPeak is not None :
+
+      linkObject.peakLinks.append(newPeakLink)
+      
+    else :
+      
+      linkObject.notFoundPeakLinks.append(newPeakLink)
+      
+      
+    
      
   cdef spinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
     
@@ -3349,6 +3368,8 @@ cdef class aSpectrum :
   cdef list simulatedPeakMatrix
   
   cdef list intraResidualSimulatedPeakMatrix
+  
+  cdef int symmetry
  
   cdef list peaks
   
@@ -3366,7 +3387,7 @@ cdef class aSpectrum :
     self.ccpnSpectrum = temporary_spectrum_object.ccpnSpectrum
     self.name = temporary_spectrum_object.ccpnSpectrum.name
     self.labellingScheme = temporary_spectrum_object.labellingScheme
-    
+    self.symmetry = 1
     
     if self.labellingScheme is True :
       
@@ -4089,6 +4110,8 @@ cdef class aSpectrum :
     
     cdef int presentPeaks, i
     
+    cdef double symmetry
+    
     cdef simulatedPeak simulatedPeak
     
     cdef simulatedPeakContrib contrib
@@ -4109,6 +4132,8 @@ cdef class aSpectrum :
     allSpinSystems = DataModel.mySpinSystems
     
     residues = DataModel.myChain.residues
+    
+    symmetry = float(self.symmetry)     # preventing int division
 
     for i,  simulatedPeakList in enumerate(simulatedPeakMatrix) :
       
@@ -4163,7 +4188,7 @@ cdef class aSpectrum :
                 
                 bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
                 
-                bestScore = min(1.0,bestScore)                                                        # Put a flat bottom (top) in. 
+                bestScore = min(1.0,bestScore) / symmetry * len(set(resonances))                     # Put a flat bottom (top) in. 
                 
                 listWithScores.append(bestScore)
 
@@ -4261,6 +4286,56 @@ cdef class aSpectrum :
         
         res.addToIntraDict(spinSys, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores)
    
+  cdef void determineSymmetry(self) :
+    
+    '''
+    Checking the symmetry of the spectrum. This could be done in a number of ways. But an easy way seems to be to look at the simulated peaks.
+    We only care about symmetry in the sequential peaks. In almost all cases the symmetry for intra-residual correlations are the same.
+    The symmetry value means the amount of peaks that represents the same correlation between atoms. In a NCOCX the value is 1 since there is only
+    1 peak that represents a correlations between 3 nuclei. In for istance  a 2D C-C through space correlation the value would be 2, because a peak
+    representing a correlation between 2 nuclei shows up on both sides of the diagonal. We take the maximum value we find because a diagonal peak
+    might produce a lower value than the other peaks in the spectrum.
+    '''
+    
+    print 'start checkingSymmetry'
+    
+    cdef int symmetry, maxSymmetry
+    cdef set contribSetA, contribSetB
+    cdef list peaksForOneResidue
+    cdef simulatedPeak peakA, peakB
+    cdef simulatedPeakContrib contrib
+    
+    maxSymmetry = 1
+    
+    for peaksForOneResidue in self.simulatedPeakMatrix :        # We only care about symmetry in sequential peaks
+      
+      for peakA in peaksForOneResidue :
+        
+        symmetry = 0
+        
+        contribSetA = set([(contrib.atomName, contrib.firstOrSecondResidue) for contrib in peakA.simulatedPeakContribs])
+        
+        for peakB in peaksForOneResidue :
+          
+          contribSetB = set([(contrib.atomName, contrib.firstOrSecondResidue) for contrib in peakB.simulatedPeakContribs])
+          
+          if contribSetA == contribSetB :
+            
+            symmetry += 1
+        
+        if symmetry > maxSymmetry :
+          
+          maxSymmetry = symmetry
+        
+        if len(contribSetA) == len(peakA.simulatedPeakContribs) :              # Not checking every single peak when we already found a non-diagonal one. I think this is justified.
+          
+          self.symmetry = maxSymmetry
+          print maxSymmetry
+          return
+        
+    self.symmetry = maxSymmetry
+    return
+    
   cdef void createPythonStyleObject(self):
     
     cdef aPeak peak
@@ -4441,6 +4516,8 @@ cdef class spinSystemLink :
   
   cdef list peakLinks
   
+  cdef list notFoundPeakLinks
+  
   def __init__(self):
     
     self.score = 0
@@ -4450,6 +4527,7 @@ cdef class spinSystemLink :
     self.realPeaks = []
     self.notFoundSimulatedPeaks = []
     self.peakLinks = []
+    self.notFoundPeakLinks = []
     
   cdef void createPythonStyleObject(self) :
     
@@ -4479,11 +4557,14 @@ cdef class peakLink :
   
   cdef double score
   
+  cdef list resonances
+  
   def __init__(self, aPeak peak, simulatedPeak simPeak, double score):
     
     self.peak = peak
     self.simPeak = simPeak
-    self.score = 0.0
+    self.score = score
+    self.resonances = []
 
 cdef class simulatedPeak :
   
