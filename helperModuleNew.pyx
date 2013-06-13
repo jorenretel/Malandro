@@ -4134,6 +4134,9 @@ cdef class aSpectrum :
     residues = DataModel.myChain.residues
     
     symmetry = float(self.symmetry)     # preventing int division
+    
+    print 'symmetry:'
+    print symmetry
 
     for i,  simulatedPeakList in enumerate(simulatedPeakMatrix) :
       
@@ -4187,8 +4190,10 @@ cdef class aSpectrum :
                 peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
                 
                 bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
+
+                bestScore = min(1.0,bestScore) / symmetry * (len(set(resonances))**2.0)                      # Put a flat bottom (top) in. 
                 
-                bestScore = min(1.0,bestScore) / symmetry * len(set(resonances))                     # Put a flat bottom (top) in. 
+                print bestScore
                 
                 listWithScores.append(bestScore)
 
@@ -4468,7 +4473,6 @@ cdef class aDimension :
     self.ppmValue = ccpnDim.value
     self.dimNumber = ccpnDim.dataDim.expDim.refExpDim.dim
     self.tolerance = getAnalysisDataDim(ccpnDim.dataDim).assignTolerance
-    print self.tolerance
       
     self.possibleContributions = []                         # All resonances in the resonanceList that could potentially contribute to this dimension of the peak 
     self.nonLabelledResonances = []                     # Here all resonances are gathered that can not contribute to the peak because of the labelling scheme. They are collected anywya to search for peaks that explicitely should NOT be there.
