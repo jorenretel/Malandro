@@ -41,9 +41,9 @@ cdef class autoAssign :
   
   cdef public myDataModel DataModel
   
-  cdef object useAssignments
+  cdef bint useAssignments
   
-  cdef object useTentative
+  cdef bint useTentative
   
   cdef int amountOfRepeats
   
@@ -203,6 +203,8 @@ cdef class autoAssign :
     cdef list listWithFittingSpinSystems
     
     cdef mySpinSystem randomSpinSystem
+    
+    cdef bint useAssignments, useTentative
 
     useAssignments = self.useAssignments
     useTentative = self.useTentative
@@ -236,25 +238,12 @@ cdef class autoAssign :
                                                 
     else :
       
-      dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)                                                            
-    
-    i = 0
+      dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)
     
     for res in DataModel.myChain.residues :
       
       isAssigned = False
-      
-      if i > 0 :
-        resimin1 = DataModel.myChain.residues[i-1]
-      else :
-        resimin1 = None         
-      if i < (len(DataModel.myChain.residues)-1) :
-        resiplus1 = DataModel.myChain.residues[i+1]
-      else :
-        resiplus1 = None
-      i = i + 1  
-        
-      
+            
       ccpCode = res.ccpCode
       seqCode = res.seqCode
       
@@ -314,7 +303,14 @@ cdef class autoAssign :
         
         if ccpCode in dictio :
           
-          listWithFittingSpinSystems = dictio[ccpCode]
+          listWithSpinSystems = dictio[ccpCode]
+          
+          for spinSystem in listWithSpinSystems :
+            
+            if not spinSystem.currentResidueAssignment :
+              
+              listWithFittingSpinSystems.append(spinSystem)    
+            
           
               
         if len(listWithFittingSpinSystems) > 0 :      
@@ -370,7 +366,7 @@ cdef class autoAssign :
       
       for spinSys in spinSysList :
         
-        spinSys.setupAllowedResidueView(DataModel.myChain)
+        spinSys.setupAllowedResidueView()
 
     
     if useAssignments :                                                 # If the already made assignments are used, the dictionary will just include unassigned spinsystems and Joker spinsystems
@@ -635,7 +631,7 @@ cdef class autoAssign :
         
 
         
-        newSpinSystem = mySpinSystem()
+        newSpinSystem = mySpinSystem(DataModel)
         
         newSpinSystem.isJoker = True
         
@@ -733,7 +729,7 @@ cdef class autoAssign :
 
         if resonanceGroup.residue and resonanceGroup.residue.chain == ccpnChain :                                  # SpinSystem is assigned to a residue in the selected chain
         
-          newSpinSystem = mySpinSystem()                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
+          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
 
           newSpinSystem.spinSystemNumber = resonanceGroup.serial
           
@@ -749,7 +745,7 @@ cdef class autoAssign :
 
         elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
           
-          newSpinSystem = mySpinSystem()                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
+          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
 
           newSpinSystem.spinSystemNumber = resonanceGroup.serial
           
@@ -774,7 +770,7 @@ cdef class autoAssign :
 
         elif resonanceGroup.ccpCode :                                                                                                              # Residue is just Typed
         
-          newSpinSystem = mySpinSystem()                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
+          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
 
           newSpinSystem.spinSystemNumber = resonanceGroup.serial
           
@@ -789,7 +785,7 @@ cdef class autoAssign :
         elif self.typeSpinSystems :                                                                                                                                                      # For spin systems that are not typed at all, I want to type them to one or more amino acid types here on the fly, later the user can decide whether these are actually used. 
         
         
-          newSpinSystem = mySpinSystem()                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
+          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
         
           newSpinSystem.spinSystemNumber = resonanceGroup.serial
           
@@ -1010,13 +1006,13 @@ cdef class autoAssign :
               mySpinSystems[ccpCode] = [newSpinSystem]
               
               
-            if newSpinSystem.ccpCode in allSpinSystemsWithoutAssigned :       
+            if ccpCode in allSpinSystemsWithoutAssigned :       
               
-              allSpinSystemsWithoutAssigned[newSpinSystem.ccpCode].append(newSpinSystem)
+              allSpinSystemsWithoutAssigned[ccpCode].append(newSpinSystem)
               
             else :                                                                                                                          
               
-              allSpinSystemsWithoutAssigned[newSpinSystem.ccpCode] = [newSpinSystem]
+              allSpinSystemsWithoutAssigned[ccpCode] = [newSpinSystem]
 
   cdef void scoreAllLinks(self):
     
@@ -1105,13 +1101,13 @@ cdef class autoAssign :
       
       spectrum.findPossiblePeakContributions(self.useDimenionalAssignments)
 
-  cdef void setupSpinSystemExchange(self):
+  cdef void setupSpinSystemExchange_old(self):
     
     cdef myDataModel DataModel
     cdef list residues, listWithSpinSystems, spinSysList
     cdef dict residuesByCcpCode, allSpinSystems, justTypedSpinSystems, tentativeSpinSystems, allSpinSystemsWithoutAssigned, dictio
-    cdef object useAssignments
-    cdef object useTentative
+    cdef bint useAssignments
+    cdef bint useTentative
     cdef str key, ccpCode
     cdef mySpinSystem spinSys, spinSys2
     cdef int seqCode
@@ -1138,10 +1134,7 @@ cdef class autoAssign :
       for spinSys in spinSysList :
         
         spinSys.allowedResidues = set()
-        
-        
-    
-    
+
     if useAssignments :                                                 # If the already made assignments are used, the dictionary will just include unassigned spinsystems and Joker spinsystems
 
       dictio = allSpinSystemsWithoutAssigned
@@ -1175,16 +1168,14 @@ cdef class autoAssign :
     
     for spinSys in listWithSpinSystems :
     
-      if spinSys.ccpCode :  
+      if spinSys.ccpCode and spinSys.ccpCode in dictio :
+            
+        for spinSys2 in dictio[spinSys.ccpCode]  :
           
-        if spinSys.ccpCode in dictio :
-            
-          for spinSys2 in dictio[spinSys.ccpCode]  :
-            
-            if spinSys != spinSys2 and not (spinSys.isJoker and spinSys2.isJoker) :
-                
-              spinSys.exchangeSpinSystems.append(spinSys2)
-            
+          if not (spinSys is spinSys2) and not (spinSys.isJoker and spinSys2.isJoker) :
+              
+            spinSys.exchangeSpinSystems.append(spinSys2)
+          
           
       elif spinSys.tentativeCcpCodes :
             
@@ -1253,7 +1244,26 @@ cdef class autoAssign :
             for res in residuesByCcpCode[ccpCode] :
               
               spinSys.allowedResidues.add(res.seqCode)
-              
+  
+  cdef void setupSpinSystemExchange(self) :
+    
+    cdef mySpinSystem spinSystem
+    
+    spinSystems = self.DataModel.mySpinSystems
+    
+    for spinSystemList in spinSystems.values() :
+    
+      for spinSystem in spinSystemList :
+        
+        spinSystem.setupAllowedResidues(self.useAssignments, self.useTentative)
+        spinSystem.setupAllowedResidueView()
+    print 'start exChange calc'
+    for spinSystemList in spinSystems.values() :
+    
+      for spinSystem in spinSystemList :
+        spinSystem.setupExchangeSpinSystems(self.useAssignments)
+    print 'finish'  
+      
   cdef double getAtomLabellingFraction(self,str molType, str ccpCode, str atomName, object labellingScheme):
     """
     Get the fraction of labelling for a given atom in a given amino acid.
@@ -2495,7 +2505,7 @@ cdef class autoAssign :
           Ap1 = nextResA.currentSpinSystemAssigned
           Bm1 = previousResB.currentSpinSystemAssigned
           Bp1 = nextResB.currentSpinSystemAssigned
-          
+
           l1 = previousResA.getFromLinkDict(Am1,A)
           l2 = currentResidueA.getFromLinkDict(A,Ap1)
           l3 = previousResB.getFromLinkDict(Bm1,B)
@@ -2542,7 +2552,7 @@ cdef class autoAssign :
         
         seqCodeB = currentResidueB.seqCode
         
-        if not B.allowedResidueView[seqCodeB] :          
+        if not A.allowedResidueView[seqCodeB] :          
           continue
           
         previousResB = currentResidueB.previousResidue
@@ -2759,35 +2769,9 @@ cdef class myDataModel :
 
   cdef myChain myChain
 
-  cdef dict mySpinSystems
-
-  cdef dict previouslyAssignedSpinSystems
-
-  cdef dict justTypedSpinSystems
-
-  cdef dict tentativeSpinSystems
-
-  cdef dict untypedSpinSystems
-
-  cdef dict allSpinSystemsWithoutAssigned
-
-  cdef dict jokerSpinSystems
+  cdef dict mySpinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
   
-  cdef list Hresonances 
-
-  cdef list Nresonances
-    
-  cdef list CAresonances
-  
-  cdef list CBresonances
-    
-  cdef list COresonances 
-    
-  cdef list CXresonances 
-  
-  cdef list HXresonances
-  
-  cdef list NXresonances
+  cdef list Hresonances, Nresonances, CAresonances, CBresonances, COresonances, CXresonances, HXresonances, NXresonances
 
   cdef autoAssign auto
   
@@ -2992,7 +2976,7 @@ cdef class myChain :
     lastResidue = self.residues[-1]
     
     res = aResidue(self,None)
-    spinSystem = mySpinSystem()
+    spinSystem = mySpinSystem(None)
     spinSystem.isJoker = True
     
     res.currentSpinSystemAssigned = spinSystem
@@ -3264,7 +3248,7 @@ cdef class aResidue :
     
     cdef spinSystemLink linkObject
     
-    if spinSys1 is spinSys2 :
+    if spinSys1 is spinSys2 :                   #Not correct, in the way the spectra are matched now, it might by accident happen to for instance an Ala-Ala pair
       
       if spinSys.spinSystemNumber in self.intraDict :
   
@@ -3300,9 +3284,6 @@ cdef class aResidue :
       
       linkObject.notFoundPeakLinks.append(newPeakLink)
       
-      
-    
-     
   cdef spinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
     
     #cdef bool joker1
@@ -3363,21 +3344,11 @@ cdef class aSpectrum :
   
   cdef myDataModel DataModel
   
-  cdef object ccpnSpectrum
+  cdef object ccpnSpectrum, ccpnPeakList, labellingScheme, pySpectrum
  
-  cdef list simulatedPeakMatrix
-  
-  cdef list intraResidualSimulatedPeakMatrix
+  cdef list simulatedPeakMatrix, intraResidualSimulatedPeakMatrix, peaks
   
   cdef int symmetry
- 
-  cdef list peaks
-  
-  cdef object ccpnPeakList
- 
-  cdef object labellingScheme
-  
-  cdef object pySpectrum
   
   cdef frozenset molLabelFractions
   
@@ -4134,9 +4105,6 @@ cdef class aSpectrum :
     residues = DataModel.myChain.residues
     
     symmetry = float(self.symmetry)     # preventing int division
-    
-    print 'symmetry:'
-    print symmetry
 
     for i,  simulatedPeakList in enumerate(simulatedPeakMatrix) :
       
@@ -4152,6 +4120,11 @@ cdef class aSpectrum :
       for spinSys1 in spinsystemsaa1 :
         
         for spinSys2 in spinsystemsaa2 :
+          
+          if spinSys1.spinSystemNumber == 478 and spinSys2.spinSystemNumber == 445 :
+            
+            print 'found'
+            print resA.seqCode
           
           spinSystems = [spinSys1,spinSys2]
           
@@ -4192,8 +4165,6 @@ cdef class aSpectrum :
                 bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
 
                 bestScore = min(1.0,bestScore) / symmetry * (len(set(resonances))**2.0)                      # Put a flat bottom (top) in. 
-                
-                print bestScore
                 
                 listWithScores.append(bestScore)
 
@@ -4638,6 +4609,8 @@ cdef class simulatedPeakContrib:
     self.pySimulatedPeakContrib.firstOrSecondResidue = self.firstOrSecondResidue
 
 cdef class mySpinSystem :
+  
+  cdef myDataModel DataModel
 
   cdef public aResidue currentResidueAssignment
   
@@ -4674,7 +4647,9 @@ cdef class mySpinSystem :
   cdef bint [:] allowedResidueView
   
 
-  def __init__(self):
+  def __init__(self, DataModel):
+    
+    self.DataModel = DataModel
 
     self.ccpCode = None
     
@@ -4700,11 +4675,13 @@ cdef class mySpinSystem :
     
     self.resonancesByAtomSiteName = {}
     
-  cdef void setupAllowedResidueView(self, myChain chain) :
+  cdef void setupAllowedResidueView(self) :
+    
+    cdef myChain chain
     
     cdef int resNumber
     
-    #cdef aResidue res
+    chain = self.DataModel.myChain
     
     cythonArray = cvarray(shape=(len(chain.residues) + 1,), itemsize=sizeof(bint), format="i")
     
@@ -4714,12 +4691,8 @@ cdef class mySpinSystem :
     
     for resNumber in self.allowedResidues :
       
-      #i = res.seqCode
-      
       self.allowedResidueView[resNumber] = True
       
-      
-    
   cdef myResonance getResonanceForAtomName(self,str atomName) :       # Used in matchSpectrum()
     
     if atomName in self.resonanceDict :
@@ -4729,6 +4702,65 @@ cdef class mySpinSystem :
     else :
       
       return None
+
+  cdef void setupAllowedResidues(self, bint useAssignments, bint useTentative) :
+    
+    cdef dict residuesByCcpCode
+    cdef str ccpCode
+    cdef aResidue res
+    
+    residuesByCcpCode = self.DataModel.myChain.residuesByCcpCode
+    
+    if useAssignments and self.ccpnSeqCode :
+      
+      self.allowedResidues = set([self.ccpnSeqCode])
+    
+    elif useTentative and self.tentativeSeqCodes :
+      
+      self.allowedResidues |= set(self.tentativeSeqCodes)
+        
+    elif self.ccpCode :
+      
+      self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[self.ccpCode]])
+      
+    elif self.tentativeCcpCodes :                        # Only end up in here when not useTentative
+        
+      for ccpCode in self.tentativeCcpCodes :
+        
+        self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[ccpCode]])
+        
+    elif self.aminoAcidProbs :
+      
+      for ccpCode in self.aminoAcidProbs.keys() :
+        
+        if ccpCode in residuesByCcpCode :
+          
+          self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[ccpCode]])
+          
+    if self.spinSystemNumber == 52 :
+      
+      print self.allowedResidues
+          
+  cdef void setupExchangeSpinSystems(self, bint useAssignments) :
+    
+    cdef list spinSysList
+    cdef mySpinSystem spinSys
+    cdef dict spinSystemDict
+    
+    spinSystemDict = (useAssignments and self.DataModel.allSpinSystemsWithoutAssigned) or self.DataModel.mySpinSystems
+    
+    for spinSysList in spinSystemDict.values() :
+      
+      for spinSys in spinSysList :
+        
+        if not spinSys is self and not ( self.isJoker and spinSys.isJoker ) and  self.allowedResidues & spinSys.allowedResidues :
+          
+          self.exchangeSpinSystems.append(spinSys)
+
+
+
+
+
   #  
   #  
   #cdef void groupResonancesByAtomSite(self) :                                 #TODO: finish
