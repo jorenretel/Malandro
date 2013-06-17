@@ -816,7 +816,6 @@ cdef class autoAssign :
         a = 0
 
         for resonance in resonanceGroup.resonances :
-          j
               
           a = a +1
           
