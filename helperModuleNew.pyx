@@ -393,19 +393,19 @@ cdef class autoAssign :
     info = 'Running annealing number %s out of ' + str(repeat) + '...'
     
     self.setupSpinSystemExchange()
-    
+
     for x in range(repeat) :
       
       self.cleanAssignments()
-    
+
       self.doRandomAssignment()
-      
+
       self.setupPeakInformationForRandomAssignment()
-      
+
       self.scoreInitialAssignment()
-      
+
       self.updateInfoText(info %str(x+1))
-      
+
       self.runAnnealling()
       
       i = 1
@@ -504,10 +504,8 @@ cdef class autoAssign :
     
     cdef aResidue residue
     
-    cdef mySpinSystem spinSysI
-    
-    cdef mySpinSystem spinSysIplus1
-    
+    cdef mySpinSystem spinSysI, spinSysIplus1
+        
     cdef spinSystemLink link
     
     cdef aPeak peak
@@ -621,11 +619,11 @@ cdef class autoAssign :
         
 
         
-        newSpinSystem = mySpinSystem(DataModel)
+        newSpinSystem = mySpinSystem(DataModel=DataModel,ccpCode=key)
         
-        newSpinSystem.isJoker = True
+        #newSpinSystem.isJoker = True
         
-        newSpinSystem.ccpCode = key
+        #newSpinSystem.ccpCode = key
         
         newSpinSystem.spinSystemNumber = i * 1000000
         
@@ -678,305 +676,8 @@ cdef class autoAssign :
       spectrum.determineSymmetry()
 
   cdef void createSpinSytemsAndResonances(self):
-
-    cdef int cc
     
-    cdef int a
-    
-    cdef object shiftList
-    cdef object ccpnChain
-    
-    cdef mySpinSystem newSpinSystem
-    
-    cdef object resonanceGroup
-    
-    cc = 0
-    
-    shiftList = self.shiftList
-    ccpnChain = self.DataModel.myChain.ccpnChain
-    
-    
-    
-    mySpinSystems = self.DataModel.mySpinSystems
-      
-    previouslyAssignedSpinSystems = self.DataModel.previouslyAssignedSpinSystems
-        
-    justTypedSpinSystems = self.DataModel.justTypedSpinSystems 
-    
-    tentativeSpinSystems = self.DataModel.tentativeSpinSystems 
-    
-    untypedSpinSystems = self.DataModel.untypedSpinSystems
-    
-    allSpinSystemsWithoutAssigned = self.DataModel.allSpinSystemsWithoutAssigned
-    
-      
-    for resonanceGroup in self.nmrProject.resonanceGroups :                                                                     # taking all spinsystems in the project
-    
-      SpinSysType = None
-      #newSpinSystem = mySpinSystem()    
-      
-      if resonanceGroup.resonances : 
-
-        if resonanceGroup.residue and resonanceGroup.residue.chain == ccpnChain :                                  # SpinSystem is assigned to a residue in the selected chain
-        
-          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
-
-          newSpinSystem.spinSystemNumber = resonanceGroup.serial
-          
-          newSpinSystem.ccpnResonanceGroup = resonanceGroup
-        
-          SpinSysType = 'assigned'
-          
-          newSpinSystem.ccpCode = getResidueCode(resonanceGroup.residue.molResidue)
-
-          newSpinSystem.ccpnSeqCode = int(resonanceGroup.residue.seqCode)
-
-          cc = cc +1
-
-        elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
-          
-          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
-
-          newSpinSystem.spinSystemNumber = resonanceGroup.serial
-          
-          newSpinSystem.ccpnResonanceGroup = resonanceGroup
-          
-          SpinSysType = 'tentative'
-          
-          cc = cc +1
-          for residueProb in resonanceGroup.residueProbs:
-            if not residueProb.weight:
-              continue
-              
-            residue = residueProb.possibility
-            
-            seq = residue.seqCode
-            resCode = residue.ccpCode #getResidueCode(residue)
-            
-            if residue.chain == ccpnChain :
-
-              newSpinSystem.tentativeCcpCodes.append(resCode)                                                                   # Only consider the tentative assignments to residues in the selected chain.                                                         
-              newSpinSystem.tentativeSeqCodes.append(seq)
-
-        elif resonanceGroup.ccpCode :                                                                                                              # Residue is just Typed
-        
-          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
-
-          newSpinSystem.spinSystemNumber = resonanceGroup.serial
-          
-          newSpinSystem.ccpnResonanceGroup = resonanceGroup
-        
-          SpinSysType = 'justTyped'
-        
-          cc = cc +1
-          
-          newSpinSystem.ccpCode = resonanceGroup.ccpCode
-          
-        elif self.typeSpinSystems :                                                                                                                                                      # For spin systems that are not typed at all, I want to type them to one or more amino acid types here on the fly, later the user can decide whether these are actually used. 
-        
-        
-          newSpinSystem = mySpinSystem(self.DataModel)                                                                                                      # creating a spinsystemobject for myself, to store some things in without modifying the project
-        
-          newSpinSystem.spinSystemNumber = resonanceGroup.serial
-          
-          newSpinSystem.ccpnResonanceGroup = resonanceGroup
-        
-          SpinSysType = 'unTyped'
-        
-        
-          shifts = []
-          for resonance in resonanceGroup.resonances:
-            if resonance.isotopeCode in ('1H',  '13C',  '15N') :
-              shift = resonance.findFirstShift(parentList=shiftList)
-              if shift:
-                shifts.append(shift)
-        
-          scores = getShiftsChainProbabilities(shifts, ccpnChain)
-          total = sum(scores.values())
-          
-          
-          
-          scoreList = []
-          
-          scoreDict = {}
-          
-          if total:
-              
-            for ccpCode, score in scores.items() :
-              
-              if score > 2*(float(self.DataModel.myChain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.myChain.residues)) :
-                
-                scoreDict[ccpCode] = score
-              
-        
-        else :
-          
-          continue
-          
-        a = 0
-
-        for resonance in resonanceGroup.resonances :
-              
-          a = a +1
-          
-          if len(resonance.assignNames) > 0 :
-            
-          
-            newResonance = myResonance()
-          
-            newResonance.mySpinSystem = newSpinSystem
-            
-            newResonance.ccpnResonance = resonance
-            
-            assignName = resonance.assignNames[0]
-            
-            if assignName == 'CE*':                                 #taking out of some chirality stuff that makes everything harder
-              assignName = 'CE1'
-            elif assignName == 'CD*':
-              assignName = 'CD1'
-            elif assignName == 'CG*':
-              assignName = 'CG1'
-            
-            newResonance.atomName = assignName
-            
-            
-            newResonance.isotopeCode = resonance.isotopeCode
-            
-            newResonance.CS = resonance.findFirstShift().value
-            
-            newSpinSystem.resonanceDict[assignName] = newResonance                  # adding the resonance to the dictionary in the spinsystem
-            
-            if assignName == 'N' :                                                                              # Also adding it to a bunch of lists from quick retrieval
-              
-              self.DataModel.Nresonances.append(newResonance)
-              
-            elif assignName == 'CA' :
-              
-              self.DataModel.CAresonances.append(newResonance)
-              
-            elif assignName == 'CB' :
-            
-              self.DataModel.CBresonances.append(newResonance)  
-              
-            elif assignName == 'C' :
-              
-              self.DataModel.COresonances.append(newResonance)
-              
-            elif assignName == 'H' :
-              
-              self.DataModel.Hresonances.append(newResonance)
-
-            if resonance.isotopeCode == '13C' :
-              
-              self.DataModel.CXresonances.append(newResonance)
-              
-            elif resonance.isotopeCode == '1H' :
-            
-              self.DataModel.HXresonances.append(newResonance)
-            
-            elif resonance.isotopeCode == '15N' :
-            
-              self.DataModel.NXresonances.append(newResonance)
-              
-        if SpinSysType== 'assigned' :
-          
-          if newSpinSystem.ccpCode in mySpinSystems :       
-            
-            mySpinSystems[newSpinSystem.ccpCode].append(newSpinSystem)
-            
-          else :                                                                                                                          
-            
-            mySpinSystems[newSpinSystem.ccpCode] = [newSpinSystem]
-            
-            
-          if newSpinSystem.ccpCode in previouslyAssignedSpinSystems :       
-            
-            previouslyAssignedSpinSystems[newSpinSystem.ccpCode].append(newSpinSystem)
-            
-          else :                                                                                                                          
-            
-            previouslyAssignedSpinSystems[newSpinSystem.ccpCode] = [newSpinSystem]
-            
-        elif SpinSysType== 'tentative' and len(newSpinSystem.tentativeSeqCodes) > 0 :
-          
-          for ccpCode in list(set(newSpinSystem.tentativeCcpCodes))  :
-
-            if ccpCode in mySpinSystems :       
-              
-              mySpinSystems[ccpCode].append(newSpinSystem)
-              
-            else :                                                                                                                          
-              
-              mySpinSystems[ccpCode] = [newSpinSystem]
-              
-              
-            if newSpinSystem.ccpCode in allSpinSystemsWithoutAssigned :       
-              
-              allSpinSystemsWithoutAssigned[newSpinSystem.ccpCode].append(newSpinSystem)
-              
-            else :                                                                                                                          
-              
-              allSpinSystemsWithoutAssigned[newSpinSystem.ccpCode] = [newSpinSystem]
-              
-              
-            if ccpCode in tentativeSpinSystems :       
-              
-              tentativeSpinSystems[ccpCode].append(newSpinSystem)
-              
-            else :                                                                                                                          
-              
-              tentativeSpinSystems[ccpCode] = [newSpinSystem]
-              
-        elif SpinSysType== 'justTyped' :
-          
-          if newSpinSystem.ccpCode in mySpinSystems :       
-            
-            mySpinSystems[newSpinSystem.ccpCode].append(newSpinSystem)
-            
-          else :                                                                                                                          
-            
-            mySpinSystems[newSpinSystem.ccpCode] = [newSpinSystem]
-            
-            
-          if newSpinSystem.ccpCode in allSpinSystemsWithoutAssigned :       
-            
-            allSpinSystemsWithoutAssigned[newSpinSystem.ccpCode].append(newSpinSystem)
-            
-          else :                                                                                                                          
-            
-            allSpinSystemsWithoutAssigned[newSpinSystem.ccpCode] = [newSpinSystem]
-            
-            
-          if newSpinSystem.ccpCode in justTypedSpinSystems :       
-            
-            justTypedSpinSystems[newSpinSystem.ccpCode].append(newSpinSystem)
-            
-          else :                                                                                                                          
-            
-            justTypedSpinSystems[newSpinSystem.ccpCode] = [newSpinSystem]
-            
-        elif SpinSysType== 'unTyped' :
-          
-          newSpinSystem.aminoAcidProbs = scoreDict
-            
-          for ccpCode in scoreDict.keys() :
-
-            if ccpCode in mySpinSystems :       
-              
-              mySpinSystems[ccpCode].append(newSpinSystem)
-              
-            else :                                                                                                                          
-              
-              mySpinSystems[ccpCode] = [newSpinSystem]
-              
-              
-            if ccpCode in allSpinSystemsWithoutAssigned :       
-              
-              allSpinSystemsWithoutAssigned[ccpCode].append(newSpinSystem)
-              
-            else :                                                                                                                          
-              
-              allSpinSystemsWithoutAssigned[ccpCode] = [newSpinSystem]
+    self.DataModel.setupSpinSystems()
 
   cdef void scoreAllLinks(self):
     
@@ -1013,9 +714,6 @@ cdef class autoAssign :
       
       linkDict = res.linkDict
       
-
-      
-      
       for key,  linkObject in linkDict.items() :
         
         
@@ -1035,7 +733,7 @@ cdef class autoAssign :
                 
         NatomsUsed = len(atomsUsed)
         
-        linkObject.score = NfoundPeaks + NatomsUsed                     #- NfoundPeaksThatShouldNotHaveBeenThere
+        linkObject.score = NatomsUsed #NfoundPeaks + NatomsUsed
 
   cdef void matchSimulatedWithRealSpectra(self):
     
@@ -1071,17 +769,22 @@ cdef class autoAssign :
     
     spinSystems = self.DataModel.mySpinSystems
     
-    for spinSystemList in spinSystems.values() :
+    allSpinSystems = []
     
-      for spinSystem in spinSystemList :
+    for spinSystemList in spinSystems.values() :
+      
+      allSpinSystems += spinSystemList
+      
+    allSpinSystems = list(set(allSpinSystems))
+    
+    for spinSystem in allSpinSystems :
         
-        spinSystem.setupAllowedResidues(self.useAssignments, self.useTentative)
-        spinSystem.setupAllowedResidueView()
+      spinSystem.setupAllowedResidues(self.useAssignments, self.useTentative)
+      spinSystem.setupAllowedResidueView()
 
-    for spinSystemList in spinSystems.values() :
+    for spinSystem in allSpinSystems :
     
-      for spinSystem in spinSystemList :
-        spinSystem.setupExchangeSpinSystems(self.useAssignments)
+      spinSystem.setupExchangeSpinSystems(self.useAssignments)
 
   cdef double getAtomLabellingFraction(self,str molType, str ccpCode, str atomName, object labellingScheme):
     """
@@ -1597,10 +1300,8 @@ cdef class myDataModel :
 
   cdef myChain myChain
 
-  cdef dict mySpinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
+  cdef dict mySpinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
   
-  cdef list Hresonances, Nresonances, CAresonances, CBresonances, COresonances, CXresonances, HXresonances, NXresonances
-
   cdef autoAssign auto
   
   cdef object pyDataModel
@@ -1624,27 +1325,13 @@ cdef class myDataModel :
     
     self.tentativeSpinSystems = {}
     
+    self.typeProbSpinSystems = {}
+    
     self.untypedSpinSystems = {}
     
     self.allSpinSystemsWithoutAssigned = {}
     
     self.jokerSpinSystems = {}
-        
-    self.Nresonances = []
-    
-    self.CAresonances = []
-    
-    self.CBresonances = []
-    
-    self.COresonances = []
-    
-    self.CXresonances = []
-    
-    self.HXresonances = []
-    
-    self.NXresonances = []
-    
-    self.Hresonances = []
     
     self.minIsoFrac = auto.minIsoFrac
 
@@ -1662,49 +1349,117 @@ cdef class myDataModel :
 
       self.spectra.append(newspectrum)
 
-  cdef list getResonancesForAtomSite(self, object atomSite) :
+  def setupSpinSystems(self) :
     
-        atomSiteName = atomSite.name
+    cdef mySpinSystem newSpinSystem
+    
+    for resonanceGroup in self.auto.nmrProject.resonanceGroups :   # taking all spinsystems in the project, except for the ones that have no resonances
+
+      if not resonanceGroup.resonances :
         
-        isotope = atomSite.isotopeCode
+        continue
+      
+      if resonanceGroup.residue and resonanceGroup.residue.chain is self.myChain.ccpnChain :                                  # SpinSystem is assigned to a residue in the selected chain
         
-        if atomSiteName == 'H' :
-          
-          return self.Hresonances
+        seqCode = int(resonanceGroup.residue.seqCode)
+        ccpCode = getResidueCode(resonanceGroup.residue.molResidue)
         
-        elif atomSiteName == 'N' :
-          
-          return self.Nresonances
-          
-        elif atomSiteName == 'CA' :
-          
-          return self.CAresonances
-          
-        elif atomSiteName == 'CB' :
-          
-          return self.CBresonances
-          
-        elif atomSiteName == 'CO' :
-          
-          return self.COresonances
-          
-        elif isotope == '1H' :
-          
-          return self.HXresonances
-          
-        elif isotope == '15N' :
-          
-          return self.NXresonances
-          
-        elif isotope == '13C' :
-          
-          return self.CXresonances
-          
-        else :
+        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpnSeqCode = seqCode, ccpCode=ccpCode)
         
-          print 'Isotope not implemented yet'
+        self.addToDictWithLists(self.previouslyAssignedSpinSystems, ccpCode, newSpinSystem)
+        self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+        
+      elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
+        
+        ccpCodes = []
+        seqCodes = []
+        
+        for residueProb in resonanceGroup.residueProbs:
+          if not residueProb.weight:
+            continue
+            
+          residue = residueProb.possibility
           
-          return []
+          seq = residue.seqCode
+          resCode = residue.ccpCode
+          
+          if residue.chain is self.myChain.ccpnChain :
+  
+            ccpCodes.append(resCode)                                                                   # Only consider the tentative assignments to residues in the selected chain.                                                         
+            seqCodes.append(seq)
+            
+        if seqCodes :
+
+          newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, tentativeSeqCodes = seqCodes,tentativeCcpCodes=ccpCodes)
+          
+          for ccpCode in set(ccpCodes) :
+          
+            self.addToDictWithLists(self.tentativeSpinSystems, ccpCode, newSpinSystem)
+            self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+            self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+      
+      elif resonanceGroup.ccpCode :                                                                                                              # Residue is just Typed
+  
+        ccpCode = resonanceGroup.ccpCode
+        
+        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpCode=ccpCode)
+        
+        self.addToDictWithLists(self.justTypedSpinSystems, ccpCode, newSpinSystem)
+        self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+        self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+
+      elif resonanceGroup.residueTypeProbs :
+        
+        typeProbCcpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
+        
+        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup,typeProbCcpCodes=typeProbCcpCodes)
+        
+        for ccpCode in typeProbCcpCodes :
+        
+          self.addToDictWithLists(self.typeProbSpinSystems, ccpCode, newSpinSystem)
+          self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+          self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+        
+      elif self.auto.typeSpinSystems :
+        
+        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, typeSpinSystem=True)
+        
+        for ccpCode in newSpinSystem.aminoAcidProbs.keys() :
+          
+          self.addToDictWithLists(self.untypedSpinSystems, ccpCode, newSpinSystem)
+          self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+          self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+        
+  cdef void addToDictWithLists(self, dict dictToAddTo, key,value) :
+    
+    if key in dictToAddTo :       
+      
+      dictToAddTo[key].append(value)
+      
+    else :                                                                                                                          
+      
+      dictToAddTo[key] = [value]
+
+  cdef list getResonancesForAtomSiteName(self, str atomSiteName) :
+    
+    cdef mySpinSystem spinSystem
+    
+    resonances = []
+    
+    spinSystems = []
+        
+    for spinSystemList in self.mySpinSystems.values() :
+    
+      spinSystems.extend(spinSystemList)
+      
+      
+    spinSystems = set(spinSystems)
+    
+    for spinSystem in spinSystems :
+      
+      resonances.extend(spinSystem.getResonancesForAtomSiteName(atomSiteName))
+      
+    return resonances  
     
   cdef void createPythonStyleObject(self):
     
@@ -1804,18 +1559,14 @@ cdef class myChain :
     lastResidue = self.residues[-1]
     
     res = aResidue(self,None)
-    spinSystem = mySpinSystem(None)
-    spinSystem.isJoker = True
+    spinSystem = mySpinSystem()
+    #spinSystem.isJoker = True
     
     res.currentSpinSystemAssigned = spinSystem
     
     firstResidue.previousResidue = res
     lastResidue.nextResidue = res
     
-    
-    
-
-
   cdef void countResidueTypeFrequency(self):
     
     cdef aResidue res
@@ -1982,7 +1733,7 @@ cdef class aResidue :
     if self.ccpCode == 'Phe' or self.ccpCode == 'Tyr' :
       
       Calis = [atomsByName[name] for name in ['CA','CB']]
-      atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CD2','CE1','CE2','CZ']]
+      atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CE1','CE2','CZ']]
       
     elif self.ccpCode == 'Trp' :
       
@@ -2854,18 +2605,14 @@ cdef class aSpectrum :
         
         atomSite = dataDim.expDim.refExpDim.findFirstRefExpDimRef().expMeasurement.findFirstAtomSite()
         
-        resonances = self.DataModel.getResonancesForAtomSite(atomSite)
-        
+        resonances = self.DataModel.getResonancesForAtomSiteName(atomSite.name)
+                
         tolerance = getAnalysisDataDim(dataDim).assignTolerance
         
         dimAtomsDict[dim.dimNumber] = (resonances, tolerance)
         
     
     for peak in self.peaks :
-      
-      #if peak.intraResidual :
-        
-      #  continue
 
       for dim in peak.dimensions :
         
@@ -2885,6 +2632,7 @@ cdef class aSpectrum :
               
               dim.possibleContributions.append(resonance)
               resonance.addPeakToPeakDimsLib(peak,dim)
+              
               
         else :
           
@@ -2949,11 +2697,6 @@ cdef class aSpectrum :
         
         for spinSys2 in spinsystemsaa2 :
           
-          if spinSys1.spinSystemNumber == 478 and spinSys2.spinSystemNumber == 445 :
-            
-            print 'found'
-            print resA.seqCode
-          
           spinSystems = [spinSys1,spinSys2]
           
           listWithPresentPeaks = []
@@ -2983,7 +2726,7 @@ cdef class aSpectrum :
             if resonances :
               
               peakLists = [ resonance.getPeaksForSpectrumDim(self,contrib.dimNumber) for resonance, contrib in zip(resonances , contributions) ]
-               
+
               peaksInWindow = commonElementInLists(peakLists)                                      # And check whether 1 or more peaks that fit in one dimension actually also fit in all other dimensions. In that case the peak is in the multidimensional tolerance window
 
               if peaksInWindow :
@@ -3100,8 +2843,7 @@ cdef class aSpectrum :
     representing a correlation between 2 nuclei shows up on both sides of the diagonal. We take the maximum value we find because a diagonal peak
     might produce a lower value than the other peaks in the spectrum.
     '''
-    
-    print 'start checkingSymmetry'
+
     
     cdef int symmetry, maxSymmetry
     cdef set contribSetA, contribSetB
@@ -3134,7 +2876,7 @@ cdef class aSpectrum :
         if len(contribSetA) == len(peakA.simulatedPeakContribs) :              # Not checking every single peak when we already found a non-diagonal one. I think this is justified.
           
           self.symmetry = maxSymmetry
-          print maxSymmetry
+          
           return
         
     self.symmetry = maxSymmetry
@@ -3464,6 +3206,8 @@ cdef class mySpinSystem :
   
   cdef list tentativeSeqCodes
   
+  cdef list typeProbCcpCodes
+  
   cdef set allowedResidues
   
   cdef dict aminoAcidProbs
@@ -3475,15 +3219,17 @@ cdef class mySpinSystem :
   cdef bint [:] allowedResidueView
   
 
-  def __init__(self, DataModel):
+  def __init__(self, DataModel=None, ccpnResonanceGroup=None, ccpnSeqCode = 0, ccpCode=None,
+               tentativeSeqCodes = [],tentativeCcpCodes=[] , typeProbCcpCodes=[], typeSpinSystem=False) :
     
     self.DataModel = DataModel
-
-    self.ccpCode = None
-    
+    self.ccpnResonanceGroup = ccpnResonanceGroup
+    self.ccpCode = ccpCode
+    self.ccpnSeqCode = ccpnSeqCode
+    self.typeProbCcpCodes = typeProbCcpCodes
+    self.tentativeCcpCodes = tentativeCcpCodes
+    self.tentativeSeqCodes = tentativeSeqCodes
     self.resonanceDict = {}
-    
-    self.ccpnResonanceGroup = None
     
     self.currentResidueAssignment = None   
     
@@ -3491,17 +3237,83 @@ cdef class mySpinSystem :
     
     self.solutions = []
     
-    #self.userDefinedSolutions = []
-    
-    self.tentativeCcpCodes = []
-    
-    self.tentativeSeqCodes = []
+    self.aminoAcidProbs = {}
     
     self.exchangeSpinSystems = []
     
     self.allowedResidues = set()                                      # This is later on going to be a Frozen Set for fast membership testing during the annealing run. If the set is empty that means everything residue is allowed, if has members, only these residues are allowed.
     
     self.resonancesByAtomSiteName = {}
+
+    if not ccpnResonanceGroup :
+      
+      self.isJoker = True
+      
+      return
+    
+    self.spinSystemNumber = ccpnResonanceGroup.serial
+    
+
+      
+    if typeSpinSystem : 
+
+      self.runAminoAcidTyping()
+ 
+    self.setupResonances()
+
+    self.groupResonancesByAtomSite()
+
+
+  cdef set getCcpCodes(self) :
+    
+    if self.ccpCode :
+      
+      ccpCodes = [self.ccpCode]
+    
+    else :
+      
+      ccpCodes = self.tentativeCcpCodes or self.typeProbCcpCodes or self.aminoAcidProbs.keys() or []
+      
+    return set(ccpCodes)  
+      
+  cdef void setupResonances(self) :
+
+    for resonance in self.ccpnResonanceGroup.resonances :
+          
+      if resonance.assignNames :
+    
+        newResonance = myResonance(self,resonance)
+        
+        self.resonanceDict[newResonance.atomName] = newResonance
+
+  cdef void runAminoAcidTyping(self) :
+    
+    shiftList = self.DataModel.auto.shiftList
+    ccpnChain = self.DataModel.myChain.ccpnChain
+    
+    shifts = []
+    for resonance in self.ccpnResonanceGroup.resonances:
+      if resonance.isotopeCode in ('1H',  '13C',  '15N') :
+        shift = resonance.findFirstShift(parentList=shiftList)
+        if shift:
+          shifts.append(shift)
+  
+    scores = getShiftsChainProbabilities(shifts, ccpnChain)
+    total = sum(scores.values())
+
+    scoreList = []
+    
+    scoreDict = {}
+    
+    if total:
+        
+      for ccpCode, score in scores.items() :
+        
+        if score > 2*(float(self.DataModel.myChain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.myChain.residues)) :
+          
+          scoreDict[ccpCode] = score
+          
+    self.aminoAcidProbs = scoreDict
     
   cdef void setupAllowedResidueView(self) :
     
@@ -3530,44 +3342,43 @@ cdef class mySpinSystem :
     else :
       
       return None
+    
+  cdef list getResonancesForAtomSiteName(self, str atomSiteName) :
+    
+    return self.resonancesByAtomSiteName.get(atomSiteName, [])
 
   cdef void setupAllowedResidues(self, bint useAssignments, bint useTentative) :
     
     cdef dict residuesByCcpCode
     cdef str ccpCode
     cdef aResidue res
-    
     residuesByCcpCode = self.DataModel.myChain.residuesByCcpCode
-    
+
     if useAssignments and self.ccpnSeqCode :
-      
+
       self.allowedResidues = set([self.ccpnSeqCode])
     
     elif useTentative and self.tentativeSeqCodes :
-      
+
       self.allowedResidues |= set(self.tentativeSeqCodes)
         
     elif self.ccpCode :
-      
+
       self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[self.ccpCode]])
       
     elif self.tentativeCcpCodes :                        # Only end up in here when not useTentative
-        
+
       for ccpCode in self.tentativeCcpCodes :
-        
+
         self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[ccpCode]])
         
     elif self.aminoAcidProbs :
-      
+
       for ccpCode in self.aminoAcidProbs.keys() :
-        
+
         if ccpCode in residuesByCcpCode :
-          
+
           self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[ccpCode]])
-          
-    if self.spinSystemNumber == 52 :
-      
-      print self.allowedResidues
           
   cdef void setupExchangeSpinSystems(self, bint useAssignments) :
     
@@ -3585,97 +3396,105 @@ cdef class mySpinSystem :
           
           self.exchangeSpinSystems.append(spinSys)
 
-
-
-
-
-  #  
-  #  
-  #cdef void groupResonancesByAtomSite(self) :                                 #TODO: finish
-  #  
-  #  cdef myResonance resonance
-  #  
-  #  resonancesByAtomSiteName = self.resonancesByAtomSiteName
-  #  resonancesByName = self.resonanceDict
-  #  
-  #  if 'CA' in resonancesByName :
-  #
-  #    resonancesByAtomSiteName['CA'] = [resonancesByName['CA']]
-  #    
-  #  if 'C' in resonancesByName :
-  #
-  #    resonancesByAtomSiteName['CO'] = [resonancesByName['C']]  
-  #    
-  #  
-  #  HAs = []
-  #  HBs = []
-  #  CXs = []
-  #  Calis = []
-  #  
-  #  for name, resonance in resonancesByName :
-  #    
-  #    elementSymbol = resonance.ccpnAtom.chemAtom.elementSymbol
-  #    
-  #    resonancesByAtomSiteName[elementSymbol] = resonancesByAtomSiteName.get(elementSymbol, []) + [atom]
-  #    
-  #    if elementSymbol == 'C' :
-  #      
-  #      CXs.append(resonance)
-  #  
-  #  if 'CB' in atomsByName :
-  #
-  #    atomsByAtomSiteName['CB'] = [atomsByName['CB']]
-  #    
-  #  for name in ['HA','HA1','HA2','HA3'] :
-  #    
-  #    if name in atomsByName :
-  #    
-  #      HAs.append(atomsByName[name])
-  #      
-  #  for name in ['HB','HB1','HB2','HB3'] :
-  #    
-  #    if name in atomsByName :
-  #    
-  #      HBs.append(atomsByName[name])    
-  #  
-  #  if self.ccpCode == 'Phe' or self.ccpCode == 'Tyr' :
-  #    
-  #    Calis = [atomsByName[name] for name in ['CA','CB']]
-  #    atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CD2','CE1','CE2','CZ']]
-  #    
-  #  elif self.ccpCode == 'Trp' :
-  #    
-  #    Calis = [atomsByName[name] for name in ['CA','CB']]
-  #    atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD1','CD2','CE2','CE3','CZ2', 'CZ3','CH2']]
-  #    
-  #  elif self.ccpCode == 'His' :
-  #    
-  #    Calis = [atomsByName[name] for name in ['CA','CB']]
-  #    atomsByAtomSiteName['Caro'] = [atomsByName[name] for name in ['CG','CD2','CE1']]
-  #    
-  #  elif self.ccpCode == 'Glu' or self.ccpCode == 'Gln' :
-  #    
-  #    Calis = [atomsByName[name] for name in ['CA','CB','CG']]
-  #    atomsByAtomSiteName['CO'].append(atomsByName['CD'])
-  #    
-  #  elif self.ccpCode == 'Asp' or self.ccpCode == 'Asn' :
-  #    
-  #    Calis = [atomsByName[name] for name in ['CA','CB']]
-  #    atomsByAtomSiteName['CO'].append(atomsByName['CG'])
-  #    
-  #  else :
-  #    
-  #    for atom in atomsByAtomSiteName['C'] :
-  #      
-  #      if atom.atomName != 'C' :
-  #        
-  #        Calis.append(atom)
-  #        
-  #  atomsByAtomSiteName['HA'] = HAs
-  #  atomsByAtomSiteName['HB'] = HBs
-  #  atomsByAtomSiteName['CX'] = CXs
-  #  atomsByAtomSiteName['Cali'] = Calis    
-  #  
+  cdef void groupResonancesByAtomSite(self) :                                 #TODO: finish
+    
+    cdef myResonance resonance
+    
+    resonancesByAtomSiteName = self.resonancesByAtomSiteName
+    resonancesByName = self.resonanceDict
+    
+    ccpCodes = self.getCcpCodes()
+    
+    HAs = []
+    HBs = []
+    CXs = []
+    Calis = []
+    Caros = []
+    COs = []
+    
+    resonancesByAtomSiteName['CA'] = []
+    resonancesByAtomSiteName['CO'] = []
+    
+    
+    # C,F,Br,H,P,N, CX
+    for name, resonance in resonancesByName.items() :
+      
+      elementSymbol = resonance.ccpnResonance.isotope.chemElement.symbol
+      
+      resonancesByAtomSiteName[elementSymbol] = resonancesByAtomSiteName.get(elementSymbol, []) + [resonance]
+      
+      if elementSymbol == 'C' :
+        
+        CXs.append(resonance)
+    
+    # CA
+    if 'CA' in resonancesByName :
+  
+      resonancesByAtomSiteName['CA'] = [resonancesByName['CA']]
+      
+    # CB
+    if 'CB' in resonancesByName :
+  
+      resonancesByAtomSiteName['CB'] = [resonancesByName['CB']]
+      
+    # CO  
+    if 'C' in resonancesByName :
+  
+      COs.append(resonancesByName['C'])
+      
+    if ('Gln' in ccpCodes or 'Glu' in ccpCodes) and 'CD' in resonancesByName :
+      
+      COs.append(resonancesByName['CD'])
+      
+    if ('Asp' in ccpCodes or 'Asn' in ccpCodes) and 'CG' in resonancesByName :
+      
+      COs.append(resonancesByName['CG'])
+      
+    # HA  
+    for name in ['HA','HA1','HA2','HA3'] :
+      
+      if name in resonancesByName :
+      
+        HAs.append(resonancesByName[name])
+    
+    # HB    
+    for name in ['HB','HB1','HB2','HB3', 'HB*'] :
+      
+      if name in resonancesByName :
+      
+        HBs.append(resonancesByName[name])
+        
+        
+    # Caros
+    if 'Phe' in ccpCodes or 'Tyr' in ccpCodes or 'Trp' in ccpCodes or 'His' in ccpCodes :
+          
+      resonancesByAtomSiteName['Caro'] = []
+      
+      for name in ['CG','CD1','CD2','CE1','CE2','CE3','CZ','CZ2','CZ3','CH2','CE*','CD*'] :
+        
+        if name in resonancesByName :
+          
+          resonance = resonancesByName[name]
+          
+          if 100 < resonance.CS < 170 :
+          
+            Caros.append(resonancesByName[name])
+          
+    #Calis
+    else :
+      
+      for resonance in resonancesByAtomSiteName['C'] :
+        
+        if 0 < resonance.CS < 100 :
+        #if resonance.atomName != 'C' :
+          Calis.append(resonance)
+          
+    resonancesByAtomSiteName['HA'] = HAs
+    resonancesByAtomSiteName['HB'] = HBs
+    resonancesByAtomSiteName['CX'] = CXs
+    resonancesByAtomSiteName['Cali'] = Calis
+    resonancesByAtomSiteName['Caro'] = Caros
+    resonancesByAtomSiteName['CO'] = COs
     
   cdef void createPythonStyleObject(self) :
     
@@ -3717,7 +3536,7 @@ cdef class myResonance :
   
   cdef double CS
   
-  cdef str isotopeCode               # String?
+  cdef str isotopeCode
   
   cdef str atomName 
   
@@ -3733,21 +3552,21 @@ cdef class myResonance :
   
   
   
-  def __init__(self):
+  def __init__(self, mySpinSystem, ccpnResonance):
 
-    self.mySpinSystem = None
+    self.mySpinSystem = mySpinSystem
     
-    self.isotopeCode = None
+    self.ccpnResonance = ccpnResonance
     
-    self.atomName = None
+    self.isotopeCode = ccpnResonance.isotopeCode
+    
+    self.atomName = ccpnResonance.assignNames[0]
+    
+    self.CS = ccpnResonance.findFirstShift().value
     
     self.peakDimsLib = {}
     
     self.peakDimsLibIntra = {}
-    
-    #self.peakDimsLibUnlabelled = {}                     # This is a dictionary with all dimensions of peaks that are in spectra where this resonance is not labelled. Helps to find peaks that should explicitely NOT be there.
-    
-    self.ccpnResonance = None
     
   cdef void addPeakToPeakDimsLib(self, aPeak peak, aDimension dim) :
     
