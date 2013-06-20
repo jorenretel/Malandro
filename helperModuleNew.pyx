@@ -587,15 +587,6 @@ cdef class autoAssign :
       
       amountOfTentativeSpinSystemsWithOnlyOneCcpCode = 0
       
-#      if key in DataModel.tentativeSpinSystems :                                                         # Commented this out since it gives problems when there is more than one tentative spin system pointing to the same residue and nothing else. In this case too little Jokers would be added. Rather have a Joker too much than too little.
-#      
-#        for spinsys in DataModel.tentativeSpinSystems[key] :
-#          
-#          if len(spinsys.tentativeCcpCodes) == 1 :
-#            
-#            amountOfTentativeSpinSystemsWithOnlyOneCcpCode += 1
-          
-  
       
       if key in DataModel.myChain.residueTypeFrequencyDict :
         
@@ -617,20 +608,13 @@ cdef class autoAssign :
       
       for x in range(short) :
         
-
-        
         newSpinSystem = mySpinSystem(DataModel=DataModel,ccpCode=key)
-        
-        #newSpinSystem.isJoker = True
-        
-        #newSpinSystem.ccpCode = key
         
         newSpinSystem.spinSystemNumber = i * 1000000
         
         i = i + 1
         
 
-        
         if key in DataModel.mySpinSystems :
         
           DataModel.mySpinSystems[key].append(newSpinSystem)
@@ -1613,35 +1597,21 @@ cdef class myChain :
 
 cdef class aResidue :
 
-  cdef aResidue previousResidue
+  cdef aResidue previousResidue, nextResidue
   
-  cdef aResidue nextResidue
-  
-  cdef object ccpnResidue
+  cdef object ccpnResidue, pyResidue
   
   cdef str ccpCode
   
   cdef myChain chain
   
-  cdef list atoms
+  cdef list atoms, solutions
   
-  cdef dict atomsByName
-  
-  cdef dict atomsByAtomSiteName
-  
-  cdef dict atomsByCcpnChemAtom
-  
-  cdef list solutions
+  cdef dict atomsByName, atomsByAtomSiteName, atomsByCcpnChemAtom, linkDict, intraDict
   
   cdef mySpinSystem currentSpinSystemAssigned
   
   cdef int seqCode
-  
-  cdef dict linkDict
-  
-  cdef dict intraDict
-  
-  cdef object pyResidue
   
   def __init__(self, chain, ccpnResidue):
 
@@ -3638,6 +3608,78 @@ cdef class myResonance :
     
     self.pyResonance.atomName = self.atomName
     
+cdef class dictContainingLists(dict) :
+  
+  @classmethod  
+  def fromDict(cls,dictionary) :
+    
+    newDictContainingLists = cls()
+    
+    for key, value in dictionary.items() :
+      
+      newDictContainingLists[key] = value
+      
+    return newDictContainingLists
+    
+  def __init__(self):
+    
+    pass
+
+  cdef void addValue(self,key, value):  
+    
+    if key in self :
+      self[key].append(value)      
+    else :  
+      self[key] = [value]
+      
+  cdef void addList(self, key, value) :
+    
+    if key in self :
+      
+      self[key].extend(value)
+      
+    else :
+      
+      self[key] = value
+      
+  def __add__(self,dictContainingLists otherDict):
+    
+    newDict = dictContainingLists()
+    
+    for key, value in self.items() :
+      
+      newDict.addList(key, value[:])
+
+    for key, value in otherDict.items():
+      
+      newDict.addList(key, value[:])
+          
+    return newDict
+  
+  cdef dictContainingLists myCopy(self) :
+    
+    cdef dictContainingLists newDict
+    
+    newDict = dictContainingLists()
+    
+    for key, value in self.items() :
+      
+      newDict.addList(key, value[:])
+      
+    return newDict  
+  
+  cdef set getValueSet(self) :
+    
+    cdef list alist
+    
+    newList = []
+    
+    for alist in self.values() :
+      
+      newList.extend(alist)
+    
+    return set(newList)
+
 cdef inline list commonElementInLists(list listOfLists):                                                         # Is only called in matchSpectrum, maybe should be function instead of method
      
   if listOfLists :
