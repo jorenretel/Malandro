@@ -95,7 +95,7 @@ from ccpnmr.analysis.core.MarkBasic import createPeakMark
 import ccpnmr.analysis.core.WindowBasic as WindowBasic
 
 
-from helperModuleNew import autoAssign
+from src.cython.malandro import Malandro
 
 from pythonStyleClasses import *
 
@@ -138,7 +138,7 @@ class connector(object):
     
     self.GUI = ViewAssignmentPopup(guiParent, self)
     
-    self.auto = autoAssign()
+    self.auto = Malandro()
     
     self.addEnergyPoint = self.GUI.addEnergyPoint
         
@@ -190,6 +190,70 @@ class connector(object):
     
   def runAllCalculations(self):
     
+    self.update()
+    
+    
+    self.preCalculateDataModel()
+    self.startAnnealing()
+    
+    #self.nmrProject.
+    
+    
+    
+    #for resonanceGroup in self.nmrProject.resonanceGroups :
+    #  
+    #  for res in resonanceGroup.resonances :
+    #    
+    #    print res.isotope.chemElement.symbol
+        
+    #ResonanceGroup.    
+
+    
+    #for resonanceGroup in self.nmrProject.resonanceGroups :
+    #  print 'newww'
+    #  
+    #  if resonanceGroup.residue :
+    #    
+    #    if not resonanceGroup.residue.seqCode == 202 :
+    #      continue
+    #    #print resonanceGroup.residue.seqCode
+    #    
+    #    
+    #    
+    #  else :
+    #    continue
+    #    print 'no'
+    #    
+    #    
+    #  if resonanceGroup.ccpCode :
+    #    
+    #    print resonanceGroup.ccpCode
+    #    
+    #    
+    #  
+    #  for resonance in resonanceGroup.resonances :
+    #    print '###'
+    #    print resonance.assignNames
+    #    
+    #    print resonance.resonanceSet
+    #    
+    #    #for res in resonance.resonanceSet.resonances :
+    #    #  print '+++'
+    #    #  print resonance.assignNames
+    #    
+    #for res in self.chain.residues :
+    #  
+    #  print res.ccpCode
+    #  atomSetz = set()
+    #    
+    #  for atom in res.atoms :
+    #    #print atom.name
+    #    atomSetz.add(atom.atomSet.name)
+    #    
+    #  print atomSetz 
+      
+      
+    
     #self.update()
     #
     #spec = self.selectedSpectra[0]
@@ -236,8 +300,7 @@ class connector(object):
     #
     #
     
-    self.preCalculateDataModel()
-    self.startAnnealing()
+
     
   def preCalculateDataModel(self):
     

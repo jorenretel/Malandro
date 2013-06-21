@@ -7,6 +7,6 @@ import numpy
 
 setup(
     cmdclass = {'build_ext': build_ext},
-    ext_modules = [Extension("helperModuleNew", ["helperModuleNew.pyx"])],
+    ext_modules = [Extension("malandro", ["malandro.pyx"])],
     include_dirs = [numpy.get_include(),],
 )
