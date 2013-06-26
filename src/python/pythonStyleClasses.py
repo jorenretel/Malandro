@@ -1,4 +1,7 @@
 
+from ccp.api.nmr.Nmr import ResonanceGroup as CCPNResonanceGroup
+
+
 class pyDataModel(object):
 
   def __init__(self) :
@@ -42,17 +45,49 @@ class pyDataModel(object):
     
 class pyChain(object):
 
-  def __init__(self) :
+  def __init__(self, ccpnChain) :
+    
+    self.ccpnChain = ccpnChain
+    
+    self.key = (ccpnChain.molSystem.code, ccpnChain.code)
   
     self.residues = []
+    
     
   def __getstate__(self):
     
     print 'pychain'
     
+    self.ccpnChain = None
+    
     state = dict(self.__dict__)
       
     return state
+      
+  
+  def connectToProject(self, project) :
+    
+    molSystemCode, chainCode = self.key
+    
+    molSystem = project.findFirstMolSystem(code=molSystemCode)
+    
+    if molSystem :
+    
+      self.ccpnChain = molSystem.findFirstChain(code=chainCode)
+      
+      if self.ccpnChain :
+        
+        for res in self.residues :
+          
+          pass
+          #res.connectToProject()
+        
+        return
+      
+    print 'It seems like the ' + molSystemCode + ' ' + chainCode + ' chain was removed.'
+    
+    
+
 
 class pyResidue(object):
 
@@ -225,6 +260,10 @@ class pySpinSystem(object):
     
     self.allowedResidues = set()
     
+  def getCCPNObject(self, nmrProject) :
+    
+    return nmrProject.findFirstResonanceGroup(serial=self.spinSystemNumber)
+  
   def __getstate__(self):
     
     state = dict(self.__dict__)

@@ -11,6 +11,8 @@ cdef class myChain :
   
   cdef object pyChain
   
+
+  
   def __init__(self, ccpnChain):
     
     self.ccpnChain = ccpnChain
@@ -113,7 +115,7 @@ cdef class myChain :
     
     cdef aResidue res
     
-    self.pyChain = pyChain()
+    self.pyChain = pyChain(self.ccpnChain)
     
     for res in self.residues :
       

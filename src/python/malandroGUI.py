@@ -42,7 +42,7 @@ from memops.universal.Io import joinPath, splitPath
 
 from memops.general import Implementation
 
-from memops.general import Implementation
+#from memops.general import Implementation
 
 from memops.gui.Button import Button
 from memops.gui.ButtonList import ButtonList, UtilityButtonList
@@ -97,7 +97,12 @@ import ccpnmr.analysis.core.WindowBasic as WindowBasic
 
 from src.cython.malandro import Malandro
 
+import pythonStyleClasses
+
+reload(pythonStyleClasses)
+
 from pythonStyleClasses import *
+
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
 
@@ -1402,6 +1407,8 @@ class ViewAssignmentPopup(BasePopup):
     
   def updateSpinSystemTable(self, spinSystem):
     
+    print spinSystem.getCCPNObject(self.nmrProject)
+    
     if not spinSystem :
       
       self.emptySpinSystemTable()
@@ -1410,6 +1417,11 @@ class ViewAssignmentPopup(BasePopup):
     DataModel = self.connector.results
     
     residues = DataModel.chain.residues
+    
+    print 'zie'
+    DataModel.chain.connectToProject(self.project)
+    print DataModel.chain.ccpnChain
+    #print DataModel.chain.getCCPNObject(self.project)
     
     data = []
     colorMatrix = []

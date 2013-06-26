@@ -1,5 +1,6 @@
 
-from src.python.malandroGUI import connector
+import src.python.malandroGUI as GUI
+
 
 def open_malandro(argServer):
   """Descrn: Opens the macro.
@@ -7,5 +8,5 @@ def open_malandro(argServer):
      Output: None
   """
   print 'version...'
-
-  program = connector(argServer.parent)
+  reload(GUI)
+  program = GUI.connector(argServer.parent)
