@@ -46,11 +46,11 @@ cdef class aResidue :
       
       self.setupAtoms()
     
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'ccpnResidue' in state :
-      del state['ccpnResidue']
-    return state
+  #def __getstate__(self):
+  #  state = dict(self.__dict__)
+  #  if 'ccpnResidue' in state :
+  #    del state['ccpnResidue']
+  #  return state
 
   def setupAtoms(self):
     
@@ -266,3 +266,15 @@ cdef class aResidue :
       self.pyResidue.seqCode = self.seqCode
       
       self.pyResidue.ccpCode = self.ccpCode
+      
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.chain, self.seqCode, self.ccpCode, self.atoms, self.solutions, self.linkDict, self.intraDict, self.previousResidue, self.nextResidue)
+  
+  def __setstate__(self, state) :
+
+    self.chain, self.seqCode, self.ccpCode, self.atoms, self.solutions, self.linkDict, self.intraDict, self.previousResidue, self.nextResidue = state

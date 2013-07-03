@@ -92,4 +92,16 @@ cdef class aPeak :
     for dim in self.dimensions :
       
       self.pyPeak.dimensions.append(dim.pyDimension)
+      
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.dimensions, self.spectrum, self.serial, self.peakListSerial)
+  
+  def __setstate__(self, state) :
+
+    self.dimensions, self.spectrum, self.serial, self.peakListSerial = state
  

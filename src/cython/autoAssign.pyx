@@ -23,6 +23,8 @@ from ccpnmr.analysis.core.Util import getAnalysisDataDim
 
 from ..python.pythonStyleClasses import *
 
+from generalFactory import generalFactory
+
 cdef extern from "math.h":
 
   double exp(double x)

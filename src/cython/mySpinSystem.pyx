@@ -84,7 +84,6 @@ cdef class mySpinSystem :
 
     self.groupResonancesByAtomSite()
 
-
   cdef set getCcpCodes(self) :
     
     if self.ccpCode :
@@ -349,4 +348,17 @@ cdef class mySpinSystem :
       
     for name,  resonance in self.resonanceDict.items() :
     
-      self.pySpinSystem.resonanceDict[name] = resonance.pyResonance 
+      self.pySpinSystem.resonanceDict[name] = resonance.pyResonance
+      
+      
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs)
+  
+  def __setstate__(self, state) :
+
+    self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs = state

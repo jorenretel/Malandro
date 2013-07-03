@@ -14,4 +14,3 @@ include "simulatedPeakContrib.pyx"
 include "mySpinSystem.pyx"
 include "myResonance.pyx"
 include "rest.pyx"
-

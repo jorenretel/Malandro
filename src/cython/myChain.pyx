@@ -31,10 +31,10 @@ cdef class myChain :
     
     self.addDummyResiduesAtEnds()
     
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'ccpnChain' in state :
-      del state['ccpnChain']
+  #def __getstate__(self):
+  #  state = dict(self.__dict__)
+  #  if 'ccpnChain' in state :
+  #    del state['ccpnChain']
 
   cdef void setupResidues(self):
   
@@ -120,3 +120,15 @@ cdef class myChain :
     for res in self.residues :
       
       self.pyChain.residues.append(res.pyResidue)
+      
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.residues)
+  
+  def __setstate__(self, state) :
+
+    self.residues = state

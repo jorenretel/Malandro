@@ -95,7 +95,7 @@ from ccpnmr.analysis.core.MarkBasic import createPeakMark
 import ccpnmr.analysis.core.WindowBasic as WindowBasic
 
 
-from src.cython.malandro import Malandro
+from src.cython.malandro import Malandro, myDataModel
 
 import pythonStyleClasses
 
@@ -504,7 +504,9 @@ class connector(object):
         
       writeFile = open(fileName,  'wb')
       
-      cPickle.dump(self.results,  writeFile)
+      #cPickle.dump(self.results,  writeFile)
+      
+      cPickle.dump(self.auto.DataModel, writeFile, protocol=2)
       
       writeFile.close()
      
@@ -549,8 +551,11 @@ class connector(object):
         showWarning('Can not open file', string,  parent=self)
         
       if results :
+        
+        print results
+        print type(results)
        
-        if str(type(results)) == "<class 'pythonStyleClasses.pyDataModel'>" :
+        if str(type(results)) == "<type 'malandro.myDataModel'>" :
       
           self.results = results
           

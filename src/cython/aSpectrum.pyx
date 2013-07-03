@@ -38,13 +38,13 @@ cdef class aSpectrum :
     
     self.setupPeaks()
 
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'ccpnSpectrum' in state :
-      del state['ccpnSpectrum']
-    if 'labellingScheme' in state :
-      del state['labellingScheme']      
-    return state
+  #def __getstate__(self):
+  #  state = dict(self.__dict__)
+  #  if 'ccpnSpectrum' in state :
+  #    del state['ccpnSpectrum']
+  #  if 'labellingScheme' in state :
+  #    del state['labellingScheme']      
+  #  return state
     
   def setupPeaks(self):
 
@@ -975,3 +975,15 @@ cdef class aSpectrum :
     for peak in self.peaks :
       
       self.pySpectrum.peaks.append(peak.pyPeak)
+      
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.name, self.peaks)
+  
+  def __setstate__(self, state) :
+
+    self.name, self.peaks = state

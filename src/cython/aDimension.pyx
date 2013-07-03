@@ -1,21 +1,15 @@
 
 cdef class aDimension :
   
-  cdef object ccpnDim
+  cdef object ccpnDim, pyDimension
   
-  cdef double ppmValue
+  cdef double ppmValue, tolerance
   
   cdef int dimNumber
   
-  cdef list possibleContributions
-  
-  cdef list nonLabelledResonances
+  cdef list possibleContributions, nonLabelledResonances
   
   cdef aPeak peak
-  
-  cdef object pyDimension
-  
-  cdef double tolerance
   
   
   def __init__(self, peak, ccpnDim):
@@ -31,20 +25,20 @@ cdef class aDimension :
 
     self.peak = None
     
-  def __getstate__(self):
-    state = dict(self.__dict__)
-    if 'ccpnDim' in state :
-      del state['ccpnDim']
-    if 'popup' in state :
-      del state['popup']
-    if 'possibleContributions' in state :
-      del state['possibleContributions']
-    if 'nonLabelledResonances' in state :
-      del state['nonLabelledResonances']
-    if 'peak' in state :
-      del state['peak']
-    
-    return state
+  #def __getstate__(self):
+  #  state = dict(self.__dict__)
+  #  if 'ccpnDim' in state :
+  #    del state['ccpnDim']
+  #  if 'popup' in state :
+  #    del state['popup']
+  #  if 'possibleContributions' in state :
+  #    del state['possibleContributions']
+  #  if 'nonLabelledResonances' in state :
+  #    del state['nonLabelledResonances']
+  #  if 'peak' in state :
+  #    del state['peak']
+  #  
+  #  return state
     
   cdef void createPythonStyleObject(self) :
     
@@ -53,3 +47,18 @@ cdef class aDimension :
     self.pyDimension.ppmValue = self.ppmValue
     
     self.pyDimension.dimNumber = self.dimNumber
+    
+    
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.dimNumber, self.ppmValue, self.peak)
+  
+  def __setstate__(self, state) :
+
+    self.dimNumber, self.ppmValue, self.peak = state
+    
+  

@@ -107,3 +107,16 @@ cdef class myResonance :
     
     self.pyResonance.atomName = self.atomName
     
+    
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.mySpinSystem, self.CS, self.isotopeCode, self.atomName)
+  
+  def __setstate__(self, state) :
+
+    self.mySpinSystem, self.CS, self.isotopeCode, self.atomName = state
+    

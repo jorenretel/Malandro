@@ -3,13 +3,9 @@ cdef class spinSystemLink :
 
   cdef int score
   
-  cdef list realPeaks
+  cdef list realPeaks, simulatedPeaks
   
-  cdef mySpinSystem spinSystem1
-  
-  cdef mySpinSystem spinSystem2
-  
-  cdef list simulatedPeaks
+  cdef mySpinSystem spinSystem1, spinSystem2
   
   cdef list notFoundSimulatedPeaks
   
@@ -49,4 +45,17 @@ cdef class spinSystemLink :
     for simulatedPeak in self.simulatedPeaks :
       
       self.pySpinSystemLink.simulatedPeaks.append(simulatedPeak.pySimulatedPeak)
+      
+      
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.peakLinks, self.notFoundPeakLinks)
+  
+  def __setstate__(self, state) :
+
+    self.peakLinks, self.notFoundPeakLinks = state
     

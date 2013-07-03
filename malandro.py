@@ -1,6 +1,7 @@
 
 import src.python.malandroGUI as GUI
 
+from src.cython.malandro import *
 
 def open_malandro(argServer):
   """Descrn: Opens the macro.

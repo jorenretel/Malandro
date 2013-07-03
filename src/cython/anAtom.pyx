@@ -23,3 +23,15 @@ cdef class anAtom :
     self.assignmentPossibilityDimensions = []
     
     self.labelInfoTemp = {}
+    
+  def __reduce__(self) :
+
+    return (generalFactory, (type(self),), self.__getstate__())
+    
+  def __getstate__(self) :
+    
+    return (self.atomName, self.residue)
+  
+  def __setstate__(self, state) :
+
+    self.atomName, self.residue = state
