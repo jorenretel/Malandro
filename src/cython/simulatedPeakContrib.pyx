@@ -10,6 +10,8 @@ cdef class simulatedPeakContrib:
   
   cdef int dimNumber
   
+  cdef aResidue residue
+  
   cdef int firstOrSecondResidue
   
   cdef object pySimulatedPeakContrib
@@ -46,3 +48,20 @@ cdef class simulatedPeakContrib:
   def __setstate__(self, state) :
 
     self.ccpCode, self.atomName, self.dimNumber, self.firstOrSecondResidue = state
+    
+  def getCcpCode(self) :
+    
+    return self.ccpCode
+  
+  def getAtomName(self) :
+    
+    return self.atomName
+  
+  def getDimNumber(self) :
+    
+    return self.dimNumber
+  
+  def getResidue(self) :
+    
+    return self.residue
+

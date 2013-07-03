@@ -25,20 +25,6 @@ cdef class aDimension :
 
     self.peak = None
     
-  #def __getstate__(self):
-  #  state = dict(self.__dict__)
-  #  if 'ccpnDim' in state :
-  #    del state['ccpnDim']
-  #  if 'popup' in state :
-  #    del state['popup']
-  #  if 'possibleContributions' in state :
-  #    del state['possibleContributions']
-  #  if 'nonLabelledResonances' in state :
-  #    del state['nonLabelledResonances']
-  #  if 'peak' in state :
-  #    del state['peak']
-  #  
-  #  return state
     
   cdef void createPythonStyleObject(self) :
     
@@ -61,4 +47,11 @@ cdef class aDimension :
 
     self.dimNumber, self.ppmValue, self.peak = state
     
+  def getChemicalShift(self) :
+    
+    return self.ppmValue
+    
+  def getDimNumber(self) :
+    
+    return self.dimNumber
   

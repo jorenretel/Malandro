@@ -1,7 +1,7 @@
 
 cdef class simulatedPeak :
   
-  cdef double colabelling
+  cdef public double colabelling
   
   cdef list simulatedPeakContribs
   
@@ -42,3 +42,10 @@ cdef class simulatedPeak :
   def __setstate__(self, state) :
 
     self.spectrum, self.simulatedPeakContribs, self.colabelling = state
+    
+  def getContribs(self) :
+    
+    return self.simulatedPeakContribs
+  
+    
+    

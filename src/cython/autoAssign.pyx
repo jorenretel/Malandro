@@ -92,7 +92,7 @@ cdef class Malandro :
 
   cdef object getResultsC(self):
     
-    return self.DataModel.pyDataModel
+    return self.DataModel #.pyDataModel
 
   def updateSettings(self,  connector):
     

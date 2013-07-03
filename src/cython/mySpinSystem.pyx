@@ -3,11 +3,11 @@ cdef class mySpinSystem :
   
   cdef myDataModel DataModel
 
-  cdef public aResidue currentResidueAssignment
+  cdef aResidue currentResidueAssignment
   
-  cdef public int spinSystemNumber
+  cdef int spinSystemNumber
   
-  cdef public list exchangeSpinSystems
+  cdef list exchangeSpinSystems
   
   cdef str ccpCode
   
@@ -19,7 +19,7 @@ cdef class mySpinSystem :
   
   cdef bint isJoker
   
-  cdef list solutions
+  cdef public list solutions
   
   #cdef list userDefinedSolutions
   
@@ -29,7 +29,9 @@ cdef class mySpinSystem :
   
   cdef list typeProbCcpCodes
   
-  cdef set allowedResidues
+  cdef public list userDefinedSolutions
+  
+  cdef public set allowedResidues
   
   cdef dict aminoAcidProbs
   
@@ -51,6 +53,8 @@ cdef class mySpinSystem :
     self.tentativeCcpCodes = tentativeCcpCodes
     self.tentativeSeqCodes = tentativeSeqCodes
     self.resonanceDict = {}
+    
+    self.userDefinedSolutions = []
     
     self.currentResidueAssignment = None   
     
@@ -357,8 +361,82 @@ cdef class mySpinSystem :
     
   def __getstate__(self) :
     
-    return (self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs)
+    return (self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.userDefinedSolutions)
   
   def __setstate__(self, state) :
 
-    self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs = state
+    self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.userDefinedSolutions = state
+
+  def getDescription(self) :
+    
+    cdef aResidue residue
+    
+    if self.isJoker :
+      
+      return 'Joker'
+    
+    residues = self.DataModel.myChain.residues
+    
+    spinSystemInfo = '{' + str(self.spinSystemNumber) + '}'
+    
+    if self.ccpnSeqCode :
+      
+      residue = residues[self.ccpnSeqCode -1]
+      
+      spinSystemInfo += '-' + str(self.ccpnSeqCode) + ' ' + residue.ccpCode
+      
+    elif self.tentativeSeqCodes :
+      
+      spinSystemInfo += '-'
+      
+      for seqCode in self.tentativeSeqCodes :
+        
+        residue = residues[seqCode -1]
+      
+        spinSystemInfo += str(seqCode) + ' ' + residue.ccpCode + '? /'
+        
+      spinSystemInfo = spinSystemInfo[:-1]
+      
+    elif self.ccpCode :
+      
+      spinSystemInfo += '-' + self.ccpCode
+      
+    elif self.tentativeCcpCodes :
+      
+      spinSystemInfo += '-'
+      
+      for ccpCode in self.tentativeCcpCodes :
+        
+        spinSystemInfo += ' ' + ccpCode + '? /'
+        
+      spinSystemInfo = spinSystemInfo[:-1]
+      
+    return spinSystemInfo  
+
+
+  def getIsJoker(self) :
+    
+    return self.isJoker
+  
+  def getSeqCode(self) :
+    
+    return self.ccpnSeqCode
+  
+  def getCcpCode(self) :
+    
+    return self.ccpCode
+  
+  def getTentativeCcpCodes(self) :
+    
+    return self.tentativeCcpCodes
+  
+  def getSerial(self) :
+    
+    return self.spinSystemNumber
+  
+  def getCcpnSeqCode(self) :
+    
+    return self.ccpnSeqCode
+  
+  
+  

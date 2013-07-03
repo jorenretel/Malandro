@@ -59,3 +59,14 @@ cdef class spinSystemLink :
 
     self.peakLinks, self.notFoundPeakLinks = state
     
+  def getSimulatedPeaks(self):
+    
+    return self.simulatedPeaks
+  
+  def getRealPeaks(self):
+    
+    return self.realPeaks
+  
+  def getPeakLinks(self) :
+    
+    return self.peakLinks

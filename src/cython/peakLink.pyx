@@ -27,3 +27,16 @@ cdef class peakLink :
   def __setstate__(self, state) :
 
     self.peak, self.simPeak, self.score, self.resonances = state
+    
+  def getPeak(self):
+    
+    return self.peak
+    
+  def getSimulatedPeak(self) :
+    
+    return self.simPeak
+  
+  def getResonances(self) :
+    
+    return self.resonances
+  

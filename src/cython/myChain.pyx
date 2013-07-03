@@ -1,7 +1,7 @@
 
 cdef class myChain :
 
-  cdef list residues 
+  cdef public list residues 
     
   cdef dict residuesByCcpCode
   
@@ -31,11 +31,6 @@ cdef class myChain :
     
     self.addDummyResiduesAtEnds()
     
-  #def __getstate__(self):
-  #  state = dict(self.__dict__)
-  #  if 'ccpnChain' in state :
-  #    del state['ccpnChain']
-
   cdef void setupResidues(self):
   
     for res in self.ccpnChain.sortedResidues() :
@@ -132,3 +127,7 @@ cdef class myChain :
   def __setstate__(self, state) :
 
     self.residues = state
+    
+  def getResidues(self) :
+    
+    return self.residues

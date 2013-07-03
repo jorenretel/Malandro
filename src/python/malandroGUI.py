@@ -1158,7 +1158,7 @@ class ViewAssignmentPopup(BasePopup):
     
     DataModel = self.connector.results
     resNumber = self.resultsResidueNumber
-    chain = DataModel.chain
+    chain = DataModel.myChain
     residues = chain.residues    
     solutionNumber = self.selectedSolution-1
     
@@ -1216,9 +1216,11 @@ class ViewAssignmentPopup(BasePopup):
     
     link = None
     
-    spinSystemNumber = spinSystem.spinSystemNumber
+    #spinSystemNumber = spinSystem.spinSystemNumber
     
-    link = res.intraDict.get(spinSystemNumber)
+    #link = res.intraDict.get(spinSystemNumber)
+    
+    link = res.getIntraLink(spinSystem)
         
     if not link :
       
@@ -1231,30 +1233,35 @@ class ViewAssignmentPopup(BasePopup):
       
       objectList = []
       
-      simPeaks = link.simulatedPeaks
-      realPeaks = link.realPeaks
+      #simPeaks = link.getSimulatedPeaks()
+      #realPeaks = link.getRealPeaks()
       
-      for simPeak,  realPeak in zip(simPeaks, realPeaks) :
+      #for simPeak,  realPeak in zip(simPeaks, realPeaks) :
+       
+      for peakLink in link.getPeakLinks() :
         
+        realPeak = peakLink.getPeak()
+        simPeak = peakLink.getSimulatedPeak()
+      
         oneRow = [None, None, None, None, None, None, None, None, None]
         
-        oneRow[1] = realPeak.spectrum.name
+        oneRow[1] = realPeak.getSpectrum().name
 
         oneRow[8] = simPeak.colabelling
         
-        for simulatedPeakContrib in simPeak.simulatedPeakContribs :
+        for simulatedPeakContrib in simPeak.getContribs() :
           
-          atomName = simulatedPeakContrib.atomName
+          atomName = simulatedPeakContrib.getAtomName()
           
-          ccpCode = simulatedPeakContrib.ccpCode
+          ccpCode = simulatedPeakContrib.getCcpCode()
           
-          dimNumber = simulatedPeakContrib.dimNumber
+          dimNumber = simulatedPeakContrib.getDimNumber()
             
           oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
          
-        for dim in realPeak.dimensions :
+        for dim in realPeak.getDimensions() :
             
-          oneRow[dim.dimNumber+4] =  dim.ppmValue
+          oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
           
         data.append(oneRow)
         objectList.append(realPeak)
@@ -1275,17 +1282,18 @@ class ViewAssignmentPopup(BasePopup):
       self.emptyPeakTable()
       return
     
-    link = None
+    #link = None
+    #
+    #spinSystemNumberA = spinSystemA.spinSystemNumber
+    #spinSystemNumberB = spinSystemB.spinSystemNumber
+    #
+    #key = spinSystemNumberA*10000+spinSystemNumberB                             # This is the key for the dictionary where the links for all combinations of two sequential spin systems are stored. I am aware this could be a tuple. But this is slightly faster in Cython.
+    #
+    #if key in resA.linkDict :
+    #  
+    #  link = resA.linkDict[key] 
     
-    spinSystemNumberA = spinSystemA.spinSystemNumber
-    spinSystemNumberB = spinSystemB.spinSystemNumber
-    
-    key = spinSystemNumberA*10000+spinSystemNumberB                             # This is the key for the dictionary where the links for all combinations of two sequential spin systems are stored. I am aware this could be a tuple. But this is slightly faster in Cython.
-    
-    if key in resA.linkDict :
-      
-      link = resA.linkDict[key] 
-    
+    link = resA.getLink(spinSystemA,spinSystemB)
     
     if not link :
       
@@ -1298,38 +1306,51 @@ class ViewAssignmentPopup(BasePopup):
       
       objectList = []
       
-      simPeaks = link.simulatedPeaks
-      realPeaks = link.realPeaks
-      
-      for simPeak,  realPeak in zip(simPeaks, realPeaks) :
+      #simPeaks = link.getSimulatedPeaks()
+      #realPeaks = link.getRealPeaks()
+      #
+      #for simPeak,  realPeak in zip(simPeaks, realPeaks) :
+        
+      for peakLink in link.getPeakLinks() :
+        
+        realPeak = peakLink.getPeak()
+        simPeak = peakLink.getSimulatedPeak()
         
         oneRow = [None, None, None, None, None, None, None, None, None]
         
-        oneRow[1] = realPeak.spectrum.name
+        oneRow[1] = realPeak.getSpectrum().name
 
         oneRow[8] = simPeak.colabelling
         
-        for simulatedPeakContrib in simPeak.simulatedPeakContribs :
+        for simulatedPeakContrib in simPeak.getContribs() :
           
-          atomName = simulatedPeakContrib.atomName
+          atomName = simulatedPeakContrib.getAtomName()
           
-          ccpCode = simulatedPeakContrib.ccpCode
+          ccpCode = simulatedPeakContrib.getCcpCode()
           
-          dimNumber = simulatedPeakContrib.dimNumber
+          dimNumber = simulatedPeakContrib.getDimNumber()
           
-          if simulatedPeakContrib.firstOrSecondResidue == 1 :
+          if resA is simulatedPeakContrib.getResidue() :
             
-            spinSystemNumber = spinSystemA.spinSystemNumber
+            spinSystemNumber = spinSystemA.getSerial()
             
-          elif simulatedPeakContrib.firstOrSecondResidue == 2 :
+          else :
             
-            spinSystemNumber = spinSystemB.spinSystemNumber
+            spinSystemNumber = spinSystemB.getSerial()
+            
+          #if simulatedPeakContrib.firstOrSecondResidue == 1 :
+          #  
+          #  spinSystemNumber = spinSystemA.spinSystemNumber
+          #  
+          #elif simulatedPeakContrib.firstOrSecondResidue == 2 :
+          #  
+          #  spinSystemNumber = spinSystemB.spinSystemNumber
             
           oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
          
-        for dim in realPeak.dimensions :
+        for dim in realPeak.getDimensions() :
             
-          oneRow[dim.dimNumber+4] =  dim.ppmValue
+          oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
           
         data.append(oneRow)
         objectList.append(realPeak)
@@ -1394,7 +1415,7 @@ class ViewAssignmentPopup(BasePopup):
       
   def selectSpinSystem(self, number, spinSystem):
     
-    res = self.connector.results.chain.residues[self.resultsResidueNumber-3 + number]
+    res = self.connector.results.myChain.residues[self.resultsResidueNumber-3 + number]
     
     oldSpinSystemForResidue = res.userDefinedSolution
     
@@ -1412,7 +1433,7 @@ class ViewAssignmentPopup(BasePopup):
     
   def updateSpinSystemTable(self, spinSystem):
     
-    print spinSystem.getCCPNObject(self.nmrProject)
+    #print spinSystem.getCCPNObject(self.nmrProject)
     
     if not spinSystem :
       
@@ -1421,11 +1442,11 @@ class ViewAssignmentPopup(BasePopup):
     
     DataModel = self.connector.results
     
-    residues = DataModel.chain.residues
+    residues = DataModel.myChain.residues
     
-    print 'zie'
-    DataModel.chain.connectToProject(self.project)
-    print DataModel.chain.ccpnChain
+    #print 'zie'
+    #DataModel.myChain.connectToProject(self.project)
+    #print DataModel.myChain.ccpnChain
     #print DataModel.chain.getCCPNObject(self.project)
     
     data = []
@@ -1439,11 +1460,13 @@ class ViewAssignmentPopup(BasePopup):
       
       oneRowColor = []
       
-      string = str(residue.seqCode) + ' ' + residue.ccpCode
+      string = str(residue.getSeqCode()) + ' ' + residue.getCcpCode()
 
       oneRow.append(string)
+      
+      ccpnSeqCode = spinSystem.getCcpnSeqCode()
           
-      if spinSystem.ccpnSeqCode and spinSystem.ccpnSeqCode == residue.seqCode :                          # Assigned in the project to this residue
+      if ccpnSeqCode and ccpnSeqCode == residue.getSeqCode() :                          # Assigned in the project to this residue
        
         oneRow.append('x') 
         
@@ -1499,7 +1522,7 @@ class ViewAssignmentPopup(BasePopup):
     
     selectedSolution = self.selectedSolution
     
-    for res in DataModel.chain.residues :
+    for res in DataModel.myChain.residues :
       
       res.userDefinedSolution = res.solutions[selectedSolution]
      
@@ -1519,9 +1542,8 @@ class ViewAssignmentPopup(BasePopup):
   @lockUntillResults     
   def resultsNextSolution(self):
     
-    amountOfRepeats = self.connector.results.amountOfRepeats
+    amountOfRepeats = len(self.connector.results.myChain.residues[0].solutions)
     
-
     if self.selectedSolution < amountOfRepeats:
       self.selectedSolution = self.selectedSolution + 1
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
@@ -1586,7 +1608,7 @@ class ViewAssignmentPopup(BasePopup):
     Update for entry of residue number in strip plots
     '''
 
-    residues = self.connector.results.chain.residues
+    residues = self.connector.results.myChain.residues
 
     value = self.resultsResidueNumberEntry.get()
     if value == self.resultsResidueNumber:
@@ -1615,7 +1637,7 @@ class ViewAssignmentPopup(BasePopup):
     Update for entry of residue number in strip plots
     '''
   
-    Nsolutions = len(self.connector.results.chain.residues[0].solutions)
+    Nsolutions = len(self.connector.results.myChain.residues[0].solutions)
 
     value = self.resultsSolutionNumberEntry.get()
     if value == self.selectedSolution:
@@ -1647,7 +1669,7 @@ class ViewAssignmentPopup(BasePopup):
     
     DataModel = self.connector.results
     
-    chain = DataModel.chain
+    chain = DataModel.myChain
     
     residues = chain.residues
   
@@ -1665,7 +1687,7 @@ class ViewAssignmentPopup(BasePopup):
       
       ccpCode = res.ccpCode
       
-      spinSystemsWithThisCcpCode = DataModel.spinSystems[ccpCode]
+      spinSystemsWithThisCcpCode = DataModel.getSpinSystems()[ccpCode]
       
       data = []
       colorMatrix = []
@@ -1676,7 +1698,7 @@ class ViewAssignmentPopup(BasePopup):
       
       for spinSys in spinSystemsWithThisCcpCode :
         
-        if spinSys.isJoker :
+        if spinSys.getIsJoker() :
           
           jokers.append(spinSys)
           
@@ -1689,7 +1711,7 @@ class ViewAssignmentPopup(BasePopup):
         oneRow = []
         oneRowColor = []
         
-        spinSystemInfo = self.getStringDescriptionOfSpinSystem(spinsys)
+        spinSystemInfo = spinsys.getDescription() #self.getStringDescriptionOfSpinSystem(spinsys)
           
         oneRow.append(spinSystemInfo)
           
@@ -1748,7 +1770,7 @@ class ViewAssignmentPopup(BasePopup):
       
       spinsys = res.solutions[self.selectedSolution-1]
       
-      text = str(res.seqCode) + ' ' + res.ccpCode + ': ' + self.getStringDescriptionOfSpinSystem(spinsys)
+      text = str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': ' + spinsys.getDescription() #self.getStringDescriptionOfSpinSystem(spinsys)
       
       button.config(text=text)
       
@@ -1763,7 +1785,7 @@ class ViewAssignmentPopup(BasePopup):
       if res.userDefinedSolution :
         
         selectedSpinSystem = res.userDefinedSolution
-        text = self.getStringDescriptionOfSpinSystem(selectedSpinSystem)
+        text = selectedSpinSystem.getDescription() #self.getStringDescriptionOfSpinSystem(selectedSpinSystem)
         
         if len(selectedSpinSystem.userDefinedSolutions) > 1 :
       
@@ -1775,7 +1797,7 @@ class ViewAssignmentPopup(BasePopup):
         
       else :
         
-        text = str(res.seqCode) + ' ' + res.ccpCode + ': -'
+        text = str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': -'
       
         button.config(text=text,  bg='grey83')
         
@@ -1821,49 +1843,49 @@ class ViewAssignmentPopup(BasePopup):
     
     resNumber = self.resultsResidueNumber    
 
-    residues = self.connector.results.chain.residues[resNumber - 3 : resNumber + 2]
+    residues = self.connector.results.myChain.residues[resNumber - 3 : resNumber + 2]
   
     return residues
   
-  def getStringDescriptionOfSpinSystem(self,spinsys) :
-    
-    if spinsys.isJoker :
-      
-      return 'Joker'
-    
-    residues = self.connector.results.chain.residues
-    
-    spinSystemInfo = '{' + str(spinsys.spinSystemNumber) + '}'
-    
-    if spinsys.ccpnSeqCode :
-      
-      spinSystemInfo += '-' + str(spinsys.ccpnSeqCode) + ' ' + residues[spinsys.ccpnSeqCode -1].ccpCode
-      
-    elif spinsys.tentativeSeqCodes :
-      
-      spinSystemInfo += '-'
-      
-      for seqCode in spinsys.tentativeSeqCodes :
-      
-        spinSystemInfo += str(seqCode) + ' ' + residues[seqCode -1].ccpCode + '? /'
-        
-      spinSystemInfo = spinSystemInfo[:-1]
-      
-    elif spinsys.ccpCode :
-      
-      spinSystemInfo += '-' + spinsys.ccpCode
-      
-    elif spinsys.tentativeCcpCodes :
-      
-      spinSystemInfo += '-'
-      
-      for ccpCode in spinSys.tentativeCcpCodes :
-        
-        spinSystemInfo += ' ' + ccpCode + '? /'
-        
-      spinSystemInfo = spinSystemInfo[:-1]
-      
-    return spinSystemInfo  
+  #def getStringDescriptionOfSpinSystem(self,spinsys) :
+  #  
+  #  if spinsys.getIsJoker :
+  #    
+  #    return 'Joker'
+  #  
+  #  residues = self.connector.results.myChain.residues
+  #  
+  #  spinSystemInfo = '{' + str(spinsys.spinSystemNumber) + '}'
+  #  
+  #  if spinsys.ccpnSeqCode :
+  #    
+  #    spinSystemInfo += '-' + str(spinsys.ccpnSeqCode) + ' ' + residues[spinsys.ccpnSeqCode -1].ccpCode
+  #    
+  #  elif spinsys.tentativeSeqCodes :
+  #    
+  #    spinSystemInfo += '-'
+  #    
+  #    for seqCode in spinsys.tentativeSeqCodes :
+  #    
+  #      spinSystemInfo += str(seqCode) + ' ' + residues[seqCode -1].ccpCode + '? /'
+  #      
+  #    spinSystemInfo = spinSystemInfo[:-1]
+  #    
+  #  elif spinsys.ccpCode :
+  #    
+  #    spinSystemInfo += '-' + spinsys.ccpCode
+  #    
+  #  elif spinsys.tentativeCcpCodes :
+  #    
+  #    spinSystemInfo += '-'
+  #    
+  #    for ccpCode in spinSys.tentativeCcpCodes :
+  #      
+  #      spinSystemInfo += ' ' + ccpCode + '? /'
+  #      
+  #    spinSystemInfo = spinSystemInfo[:-1]
+  #    
+  #  return spinSystemInfo  
   
   def pickColorByPercentage(self, percentage):
 

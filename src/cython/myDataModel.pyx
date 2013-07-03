@@ -3,7 +3,7 @@ cdef class myDataModel :
 
   cdef list spectra
 
-  cdef myChain myChain
+  cdef public myChain myChain
 
   cdef dict mySpinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
   
@@ -196,9 +196,6 @@ cdef class myDataModel :
         
       self.pyDataModel.spinSystems[key] = listWithPySpinSystems
       
-  
-
-  
   def __reduce__(self) :
     
     print 'trying'
@@ -219,4 +216,11 @@ cdef class myDataModel :
 
     self.spectra, self.myChain, self.mySpinSystems = state
     
- 
+  def getChain(self) :
+  
+    return self.myChain
+  
+  def getSpinSystems(self) :
+    
+    return self.mySpinSystems
+  

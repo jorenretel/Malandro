@@ -1,7 +1,7 @@
 
 cdef class aSpectrum :
   
-  cdef str name
+  cdef public str name
   
   cdef myDataModel DataModel
   
@@ -37,14 +37,6 @@ cdef class aSpectrum :
     self.peaks = []
     
     self.setupPeaks()
-
-  #def __getstate__(self):
-  #  state = dict(self.__dict__)
-  #  if 'ccpnSpectrum' in state :
-  #    del state['ccpnSpectrum']
-  #  if 'labellingScheme' in state :
-  #    del state['labellingScheme']      
-  #  return state
     
   def setupPeaks(self):
 
@@ -293,6 +285,8 @@ cdef class aSpectrum :
             atom = firstAtomPathWay[stepNumber-1]
 
             residue = atom.residue
+            
+            contrib.residue = residue
             
             contrib.ccpCode = residue.ccpCode
             
@@ -987,3 +981,7 @@ cdef class aSpectrum :
   def __setstate__(self, state) :
 
     self.name, self.peaks = state
+    
+  def getName(self):
+    
+    return self.name

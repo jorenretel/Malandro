@@ -3,13 +3,17 @@ cdef class aResidue :
 
   cdef aResidue previousResidue, nextResidue
   
-  cdef object ccpnResidue, pyResidue
+  cdef public object ccpnResidue, pyResidue
   
-  cdef str ccpCode
+  cdef public str ccpCode
+  
+  cdef public mySpinSystem userDefinedSolution
   
   cdef myChain chain
   
-  cdef list atoms, solutions
+  cdef public list solutions
+  
+  cdef list atoms
   
   cdef dict atomsByName, atomsByAtomSiteName, atomsByCcpnChemAtom, linkDict, intraDict
   
@@ -36,6 +40,8 @@ cdef class aResidue :
     
     self.atomsByAtomSiteName = {}
     
+    self.userDefinedSolution = None
+    
     if ccpnResidue :
     
       self.ccpnResidue = ccpnResidue
@@ -45,12 +51,6 @@ cdef class aResidue :
       self.seqCode = ccpnResidue.seqCode
       
       self.setupAtoms()
-    
-  #def __getstate__(self):
-  #  state = dict(self.__dict__)
-  #  if 'ccpnResidue' in state :
-  #    del state['ccpnResidue']
-  #  return state
 
   def setupAtoms(self):
     
@@ -273,8 +273,40 @@ cdef class aResidue :
     
   def __getstate__(self) :
     
-    return (self.chain, self.seqCode, self.ccpCode, self.atoms, self.solutions, self.linkDict, self.intraDict, self.previousResidue, self.nextResidue)
+    return (self.chain, self.seqCode, self.ccpCode, self.atoms, self.solutions, self.linkDict, self.intraDict, self.previousResidue, self.nextResidue, self.userDefinedSolution)
   
   def __setstate__(self, state) :
 
-    self.chain, self.seqCode, self.ccpCode, self.atoms, self.solutions, self.linkDict, self.intraDict, self.previousResidue, self.nextResidue = state
+    self.chain, self.seqCode, self.ccpCode, self.atoms, self.solutions, self.linkDict, self.intraDict, self.previousResidue, self.nextResidue, userDefinedSolution = state
+
+  def getSolutions(self) :
+    
+    return self.solutions
+  
+  def getLink(self,spinSystem1,spinSystem2) :
+    
+    return self.getFromLinkDict(spinSystem1,spinSystem2)
+  
+  def getIntraLink(self, mySpinSystem spinSystem) :
+    
+    if spinSystem.isJoker :
+      
+      return emptyLink
+
+    cdef spinSystemLink link
+    
+    cdef int hashCode
+    
+    hashCode = spinSystem.spinSystemNumber
+    
+    link = self.intraDict[hashCode]
+    
+    return link
+
+  def getSeqCode(self):
+    
+    return self.seqCode
+  
+  def getCcpCode(self):
+    
+    return self.ccpCode

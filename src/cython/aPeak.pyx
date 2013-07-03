@@ -104,4 +104,12 @@ cdef class aPeak :
   def __setstate__(self, state) :
 
     self.dimensions, self.spectrum, self.serial, self.peakListSerial = state
+    
+  def getSpectrum(self):
+    
+    return self.spectrum
+  
+  def getDimensions(self) :
+    
+    return self.dimensions
  
