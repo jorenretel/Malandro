@@ -1,11 +1,11 @@
 
 cdef class aDimension :
   
-  cdef object ccpnDim, pyDimension
+  cdef object ccpnDim
   
   cdef double ppmValue, tolerance
   
-  cdef int dimNumber
+  cdef int dimNumber, dim     # I always use dimNumber, which comes from the reference Experiment because this is also the basis of the simulation of the spectra. 'dim' just serves as a key.
   
   cdef list possibleContributions, nonLabelledResonances
   
@@ -18,22 +18,11 @@ cdef class aDimension :
     self.ccpnDim = ccpnDim
     self.ppmValue = ccpnDim.value
     self.dimNumber = ccpnDim.dataDim.expDim.refExpDim.dim
+    self.dim = ccpnDim.dim
     self.tolerance = getAnalysisDataDim(ccpnDim.dataDim).assignTolerance
       
     self.possibleContributions = []                         # All resonances in the resonanceList that could potentially contribute to this dimension of the peak 
     self.nonLabelledResonances = []                     # Here all resonances are gathered that can not contribute to the peak because of the labelling scheme. They are collected anywya to search for peaks that explicitely should NOT be there.
-
-    self.peak = None
-    
-    
-  cdef void createPythonStyleObject(self) :
-    
-    self.pyDimension = pyDimension()
-          
-    self.pyDimension.ppmValue = self.ppmValue
-    
-    self.pyDimension.dimNumber = self.dimNumber
-    
     
   def __reduce__(self) :
 
@@ -41,11 +30,15 @@ cdef class aDimension :
     
   def __getstate__(self) :
     
-    return (self.dimNumber, self.ppmValue, self.peak)
+    return (self.dimNumber, self.dim, self.ppmValue, self.peak)
   
   def __setstate__(self, state) :
 
-    self.dimNumber, self.ppmValue, self.peak = state
+    self.dimNumber, self.dim, self.ppmValue, self.peak = state
+    
+  def connectToProject(self) :
+    print 'dimension'
+    self.ccpnDim = self.peak.ccpnPeak.findFirstPeakDim(dim=self.dim)
     
   def getChemicalShift(self) :
     

@@ -44,8 +44,7 @@ cdef class aPeak :
       dimension = aDimension(self,dim)
 
       self.dimensions[dimension.dimNumber - 1] = dimension
-      
-      
+          
   cdef void checkForIntraResidualAssignment(self):
     
     lists = []
@@ -78,27 +77,13 @@ cdef class aPeak :
         intra = True
         
     self.intraResidual = intra
-
-  cdef void createPythonStyleObject(self):
-    
-    cdef aDimension dim
-    
-    self.pyPeak =pyPeak()
-    
-    self.pyPeak.serial = self.serial
-        
-    self.pyPeak.peakListSerial = self.peakListSerial
-    
-    for dim in self.dimensions :
-      
-      self.pyPeak.dimensions.append(dim.pyDimension)
       
   def __reduce__(self) :
 
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    
+    print 'peak'
     return (self.dimensions, self.spectrum, self.serial, self.peakListSerial)
   
   def __setstate__(self, state) :
@@ -112,4 +97,19 @@ cdef class aPeak :
   def getDimensions(self) :
     
     return self.dimensions
+  
+  def connectToProject(self) :
+    
+    try :
+    
+      self.ccpnPeak = self.spectrum.ccpnSpectrum.findFirstPeakList(serial=self.peakListSerial).findFirstPeak(serial=self.serial)
+
+    except AttributeError :
+      
+      print 'Error: Cannot find peak %s from peak list %s in spectrum %s' %(str(self.serial), str(self.peakListSerial), self.spectrum.name)
+      return
+    
+    for dimension in self.dimensions :
+      
+      dimension.connectToProject()
  

@@ -18,18 +18,6 @@ cdef class simulatedPeak :
     self.simulatedPeakContribs = []
     
     self.spectrum = None
-    
-  cdef void createPythonStyleObject(self) :
-    
-    cdef simulatedPeakContrib contrib
-    
-    self.pySimulatedPeak = pySimulatedPeak()
-    
-    self.pySimulatedPeak.colabelling = self.colabelling
-    
-    for contrib in self.simulatedPeakContribs :
-      
-      self.pySimulatedPeak.simulatedPeakContribs.append(contrib.pySimulatedPeakContrib)
    
   def __reduce__(self) :
 

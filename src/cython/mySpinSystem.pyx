@@ -35,8 +35,6 @@ cdef class mySpinSystem :
   
   cdef dict aminoAcidProbs
   
-  cdef object pySpinSystem
-  
   cdef dict resonancesByAtomSiteName
   
   cdef bint [:] allowedResidueView
@@ -319,54 +317,36 @@ cdef class mySpinSystem :
     resonancesByAtomSiteName['Cali'] = Calis
     resonancesByAtomSiteName['Caro'] = Caros
     resonancesByAtomSiteName['CO'] = COs
-    
-  cdef void createPythonStyleObject(self) :
-    
-    cdef aResidue res
-    
-    cdef myResonance resonance
-    
-    cdef str name
-
-    self.pySpinSystem = pySpinSystem()
-
-    self.pySpinSystem.spinSystemNumber = self.spinSystemNumber
-    
-    self.pySpinSystem.ccpCode = self.ccpCode
-  
-    self.pySpinSystem.ccpnSeqCode = self.ccpnSeqCode
-    
-    self.pySpinSystem.isJoker = self.isJoker
-    
-    self.pySpinSystem.tentativeCcpCodes = self.tentativeCcpCodes
-  
-    self.pySpinSystem.tentativeSeqCodes = self.tentativeSeqCodes
-    
-    self.pySpinSystem.allowedResidues = self.allowedResidues
-
-    
-    
-    for res in self.solutions :
-      
-      self.pySpinSystem.solutions.append(res.pyResidue)
-      
-    for name,  resonance in self.resonanceDict.items() :
-    
-      self.pySpinSystem.resonanceDict[name] = resonance.pyResonance
-      
       
   def __reduce__(self) :
 
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    
-    return (self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.userDefinedSolutions)
+    print 'spin system'
+    return (self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.solutions, self.userDefinedSolutions)
   
   def __setstate__(self, state) :
 
-    self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.userDefinedSolutions = state
+    self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.solutions, self.userDefinedSolutions = state
 
+  def connectToProject(self, nmrProject) :
+    
+    if self.isJoker :
+      
+      return
+    
+    self.ccpnResonanceGroup = nmrProject.findFirstResonanceGroup(serial=self.spinSystemNumber)
+    
+    if not self.ccpnResonanceGroup :
+      
+      print 'Error: could not find spin system %s' %str(self.spinSystemNumber)
+      return
+    
+    for resonance in self.resonanceDict.values() :
+      
+      resonance.connectToProject()
+      
   def getDescription(self) :
     
     cdef aResidue residue
@@ -412,7 +392,6 @@ cdef class mySpinSystem :
       spinSystemInfo = spinSystemInfo[:-1]
       
     return spinSystemInfo  
-
 
   def getIsJoker(self) :
     

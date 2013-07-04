@@ -21,8 +21,6 @@ from ccp.util.LabeledMolecule import getIsotopomerSingleAtomFractions, getIsotop
 
 from ccpnmr.analysis.core.Util import getAnalysisDataDim
 
-from ..python.pythonStyleClasses import *
-
 from generalFactory import generalFactory
 
 cdef extern from "math.h":
@@ -420,7 +418,7 @@ cdef class Malandro :
         
         res.solutions.append(res.currentSpinSystemAssigned)
         
-        res.currentSpinSystemAssigned.solutions.append(res)
+        res.currentSpinSystemAssigned.solutions.append(res.seqCode)
         
         
         if res.ccpnResidue.findFirstResonanceGroup() :
@@ -429,8 +427,6 @@ cdef class Malandro :
 
             matches = matches + 1
         i = i + 1
-
-    self.convertToPythonStyleDataModel()
     
     self.updateInfoText('Done')
 
@@ -1123,105 +1119,6 @@ cdef class Malandro :
           
     self.score = score
 
-  cdef void convertToPythonStyleDataModel(self) :
-   
-    cdef myDataModel DataModel
-   
-    cdef myChain chain
-    
-    cdef aResidue res
-    
-    cdef aSpectrum spec
-    
-    cdef aPeak peak
-    
-    cdef aDimension dim
-    
-    cdef list PeakList
-    
-    cdef list spinSystemList
-    
-    cdef simulatedPeak simulatedPeak
-    
-    cdef simulatedPeakContrib simulatedPeakContrib
-    
-    cdef mySpinSystem spinSystem
-    
-    cdef myResonance resonance
-    
-    cdef spinSystemLink spinSystemLink
-   
-    DataModel = self.DataModel
-   
-    chain = DataModel.myChain
-  
-    for res in chain.residues :
-      
-      res.createPythonStyleObject()
-      
-    chain.createPythonStyleObject()  
-      
-    for spec in DataModel.spectra :
-        
-      for peak in spec.peaks :
-        
-        for dim in peak.dimensions :
-          
-          dim.createPythonStyleObject()
-          
-        peak.createPythonStyleObject()
-      
-      spec.createPythonStyleObject()
-      
-      for peak in spec.peaks :
-        
-        peak.pyPeak.spectrum = spec.pySpectrum
-
-      for peakList in spec.simulatedPeakMatrix + spec.intraResidualSimulatedPeakMatrix:
-        
-        for simulatedPeak in peakList :
-          
-          for simulatedPeakContrib in simulatedPeak.simulatedPeakContribs :
-          
-            simulatedPeakContrib.createPythonStyleObject()
-          
-          simulatedPeak.createPythonStyleObject()
-      
-      
-    for spinSystemList in DataModel.mySpinSystems.values() :
-      
-      for spinSystem in spinSystemList :
-        
-        for resonance in spinSystem.resonanceDict.values():
-          
-          resonance.createPythonStyleObject()
-        
-        spinSystem.createPythonStyleObject()
-        
-        
-        
-    for res in chain.residues :
-            
-      for spinSystem in res.solutions :
-        
-        res.pyResidue.solutions.append(spinSystem.pySpinSystem)
-
-        
-      for key, spinSystemLink in res.linkDict.items() :
-        
-        spinSystemLink.createPythonStyleObject()
-        
-        res.pyResidue.linkDict[key] = spinSystemLink.pySpinSystemLink
-        
-      for key, spinSystemLink in res.intraDict.items() :
-        
-        spinSystemLink.createPythonStyleObject()
-        
-        res.pyResidue.intraDict[key] = spinSystemLink.pySpinSystemLink
-        
-    DataModel.createPythonStyleObject()
-    DataModel.pyDataModel.amountOfRepeats = self.amountOfRepeats
-         
   cdef void scoreInitialAssignment(self) :
     
     cdef list residues

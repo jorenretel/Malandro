@@ -501,6 +501,8 @@ class connector(object):
       if os.path.exists(fileName) and not showYesNo('File exists', 'File "%s" exists, overwrite?' % fileName, parent=self.GUI) :
           
           return
+      
+      self.updateInfoText('Saving results...')
         
       writeFile = open(fileName,  'wb')
       
@@ -509,6 +511,8 @@ class connector(object):
       cPickle.dump(self.auto.DataModel, writeFile, protocol=2)
       
       writeFile.close()
+      
+      self.updateInfoText('Results succesfully saved.')
      
        
     
@@ -519,6 +523,11 @@ class connector(object):
       showWarning('No results to save', string,  parent=self.GUI)
       
   def loadDataFromPyc(self, fileName):
+    
+    self.updateInfoText('Loading file...')
+    
+    self.project = self.GUI.project                                                       #TODO : fix this, getting these values from the GUI is ridiculous
+    self.nmrProject = self.GUI.nmrProject
     
     results = None
     
@@ -548,16 +557,16 @@ class connector(object):
         
         string = 'Probably the file you try to open is not of the correct type.'
       
-        showWarning('Can not open file', string,  parent=self)
+        showWarning('Can not open file', string,  parent=self.GUI)
         
       if results :
+                
+        if isinstance(results, myDataModel) :
         
-        print results
-        print type(results)
-       
-        if str(type(results)) == "<type 'malandro.myDataModel'>" :
-      
           self.results = results
+          self.results.connectToProject(self.project,self.nmrProject)
+          self.updateInfoText('File loaded succesfully.')
+          return
           
         else :
           
@@ -566,14 +575,13 @@ class connector(object):
           showWarning('Can not open file', string,  parent=self.GUI)
         
             
-      
-        
-      
     else :
       
       string = 'The file you selected does not exist.'
       
       showWarning('No Such File', string,  parent=self.GUI)
+      
+    self.updateInfoText(' ')  
 
 
 class spectrumSettings(object):
@@ -1216,7 +1224,7 @@ class ViewAssignmentPopup(BasePopup):
     
     link = None
     
-    #spinSystemNumber = spinSystem.spinSystemNumber
+    spinSystemNumber = spinSystem.getSerial()
     
     #link = res.intraDict.get(spinSystemNumber)
     
@@ -1382,6 +1390,7 @@ class ViewAssignmentPopup(BasePopup):
     names = []
     peakList = None
     tryWindows = WindowBasic.getActiveWindows(self.project)
+    
     windowData = []
     getName = WindowBasic.getWindowPaneName
     
@@ -1419,21 +1428,19 @@ class ViewAssignmentPopup(BasePopup):
     
     oldSpinSystemForResidue = res.userDefinedSolution
     
-    if oldSpinSystemForResidue and res in oldSpinSystemForResidue.userDefinedSolutions :
+    if oldSpinSystemForResidue and res.getSeqCode() in oldSpinSystemForResidue.userDefinedSolutions :
     
-      oldSpinSystemForResidue.userDefinedSolutions.remove(res)
+      oldSpinSystemForResidue.userDefinedSolutions.remove(res.getSeqCode())
     
     res.userDefinedSolution = spinSystem
     
-    spinSystem.userDefinedSolutions.append(res)
+    spinSystem.userDefinedSolutions.append(res.getSeqCode())
     
     #self.updateSpinSystemTable(spinSystem)
     self.updateLink()
     self.updateResultsBottomRowButtons()
     
   def updateSpinSystemTable(self, spinSystem):
-    
-    #print spinSystem.getCCPNObject(self.nmrProject)
     
     if not spinSystem :
       
@@ -1443,11 +1450,6 @@ class ViewAssignmentPopup(BasePopup):
     DataModel = self.connector.results
     
     residues = DataModel.myChain.residues
-    
-    #print 'zie'
-    #DataModel.myChain.connectToProject(self.project)
-    #print DataModel.myChain.ccpnChain
-    #print DataModel.chain.getCCPNObject(self.project)
     
     data = []
     colorMatrix = []
@@ -1474,7 +1476,7 @@ class ViewAssignmentPopup(BasePopup):
         
         oneRow.append(None)
         
-      if residue in spinSystem.userDefinedSolutions :                                # The user selected this res for this spinsystem (could be more than one res for which this happens)
+      if residue.getSeqCode() in spinSystem.userDefinedSolutions :                                # The user selected this res for this spinsystem (could be more than one res for which this happens)
         
         oneRow.append('x')
         
@@ -1492,7 +1494,7 @@ class ViewAssignmentPopup(BasePopup):
       
       if spinSystem.solutions :
         
-        percentage = spinSystem.solutions.count(residue)/float(len(spinSystem.solutions))*100.0
+        percentage = spinSystem.solutions.count(residueNumber)/float(len(spinSystem.solutions))*100.0
         
       else :
         
@@ -1846,46 +1848,6 @@ class ViewAssignmentPopup(BasePopup):
     residues = self.connector.results.myChain.residues[resNumber - 3 : resNumber + 2]
   
     return residues
-  
-  #def getStringDescriptionOfSpinSystem(self,spinsys) :
-  #  
-  #  if spinsys.getIsJoker :
-  #    
-  #    return 'Joker'
-  #  
-  #  residues = self.connector.results.myChain.residues
-  #  
-  #  spinSystemInfo = '{' + str(spinsys.spinSystemNumber) + '}'
-  #  
-  #  if spinsys.ccpnSeqCode :
-  #    
-  #    spinSystemInfo += '-' + str(spinsys.ccpnSeqCode) + ' ' + residues[spinsys.ccpnSeqCode -1].ccpCode
-  #    
-  #  elif spinsys.tentativeSeqCodes :
-  #    
-  #    spinSystemInfo += '-'
-  #    
-  #    for seqCode in spinsys.tentativeSeqCodes :
-  #    
-  #      spinSystemInfo += str(seqCode) + ' ' + residues[seqCode -1].ccpCode + '? /'
-  #      
-  #    spinSystemInfo = spinSystemInfo[:-1]
-  #    
-  #  elif spinsys.ccpCode :
-  #    
-  #    spinSystemInfo += '-' + spinsys.ccpCode
-  #    
-  #  elif spinsys.tentativeCcpCodes :
-  #    
-  #    spinSystemInfo += '-'
-  #    
-  #    for ccpCode in spinSys.tentativeCcpCodes :
-  #      
-  #      spinSystemInfo += ' ' + ccpCode + '? /'
-  #      
-  #    spinSystemInfo = spinSystemInfo[:-1]
-  #    
-  #  return spinSystemInfo  
   
   def pickColorByPercentage(self, percentage):
 

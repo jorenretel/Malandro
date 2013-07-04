@@ -71,6 +71,7 @@ class pyChain(object):
     
     molSystem = project.findFirstMolSystem(code=molSystemCode)
     
+    
     if molSystem :
     
       self.ccpnChain = molSystem.findFirstChain(code=chainCode)

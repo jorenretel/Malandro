@@ -11,11 +11,15 @@ cdef class myChain :
   
   cdef object pyChain
   
-
+  cdef str ccpnChainCode, molSystemCode
   
   def __init__(self, ccpnChain):
     
     self.ccpnChain = ccpnChain
+    
+    self.ccpnChainCode = ccpnChain.code
+    
+    self.molSystemCode = ccpnChain.molSystem.code
 
     self.residues = []
     
@@ -105,28 +109,45 @@ cdef class myChain :
       res.nextResidue = nextResidue
       
       nextResidue.previousResidue = res
-
-  cdef void createPythonStyleObject(self):
-    
-    cdef aResidue res
-    
-    self.pyChain = pyChain(self.ccpnChain)
-    
-    for res in self.residues :
-      
-      self.pyChain.residues.append(res.pyResidue)
       
   def __reduce__(self) :
-
+    print 'chain'
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
     
-    return (self.residues)
+    return (self.residues, self.molSystemCode, self.ccpnChainCode)
   
   def __setstate__(self, state) :
 
-    self.residues = state
+    self.residues, self.molSystemCode, self.ccpnChainCode = state
+   
+  def connectToProject(self, project) :
+    '''(Re)set the connection to the chain in the analysis project,
+        i.e. set self.ccpnChain atribute.
+    '''
+    cdef aResidue residue
+    
+    molSystem = project.findFirstMolSystem(code=self.molSystemCode)
+    
+    if molSystem :
+    
+      ccpnChain = molSystem.findFirstChain(code=self.ccpnChainCode)
+      
+      if ccpnChain :
+        
+        self.ccpnChain = ccpnChain
+        
+    if not self.ccpnChain :
+      
+      print 'It seems like the ' + self.molSystemCode + ' ' + self.ccpnChainCode + ' chain was removed.'
+      return
+    
+    for residue in self.residues :
+      
+      residue.connectToProject()
+      
+      
     
   def getResidues(self) :
     

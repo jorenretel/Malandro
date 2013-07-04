@@ -17,7 +17,7 @@ cdef class myResonance :
   
   cdef object ccpnResonance
   
-  cdef object pyResonance
+  cdef int serial
   
   
   
@@ -26,6 +26,8 @@ cdef class myResonance :
     self.mySpinSystem = mySpinSystem
     
     self.ccpnResonance = ccpnResonance
+    
+    self.serial = ccpnResonance.serial
     
     self.isotopeCode = ccpnResonance.isotopeCode
     
@@ -98,25 +100,24 @@ cdef class myResonance :
       
       
     return peaks
-    
-  cdef void createPythonStyleObject(self) :
-    
-    self.pyResonance = pyResonance()
-    
-    self.pyResonance.CS = self.CS
-    
-    self.pyResonance.atomName = self.atomName
-    
-    
+        
   def __reduce__(self) :
 
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    
-    return (self.mySpinSystem, self.CS, self.isotopeCode, self.atomName)
+    print 'resonance'
+    return (self.mySpinSystem, self.CS, self.isotopeCode, self.atomName, self.serial)
   
   def __setstate__(self, state) :
 
-    self.mySpinSystem, self.CS, self.isotopeCode, self.atomName = state
+    self.mySpinSystem, self.CS, self.isotopeCode, self.atomName, self.serial = state
     
+  def connectToProject(self) :
+    
+    self.ccpnResonance = self.mySpinSystem.ccpnResonanceGroup.findFirstResonance(serial=self.serial)
+    
+    if not self.ccpnResonance :
+      
+      print 'Error: could not find spin system %s' %str(self.serial)
+      return

@@ -29,9 +29,13 @@ cdef class anAtom :
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    
+    print 'atom'
     return (self.atomName, self.residue)
   
   def __setstate__(self, state) :
 
     self.atomName, self.residue = state
+    
+  def connectToProject(self) :
+    
+    self.ccpnAtom = self.residue.ccpnResidue.findFirstAtom(name=self.atomName)

@@ -13,8 +13,6 @@ cdef class simulatedPeakContrib:
   cdef aResidue residue
   
   cdef int firstOrSecondResidue
-  
-  cdef object pySimulatedPeakContrib
     
   def __init__(self):
 
@@ -23,19 +21,6 @@ cdef class simulatedPeakContrib:
     self.atomName = None
     
     self.isotopeCode = None
-    
-  cdef void createPythonStyleObject(self) :
-    
-    self.pySimulatedPeakContrib = pySimulatedPeakContrib()
-    
-    self.pySimulatedPeakContrib.ccpCode = self.ccpCode
-    
-    self.pySimulatedPeakContrib.atomName = self.atomName
-    
-    self.pySimulatedPeakContrib.dimNumber =  self.dimNumber
-    
-    self.pySimulatedPeakContrib.firstOrSecondResidue = self.firstOrSecondResidue
-    
     
   def __reduce__(self) :
 

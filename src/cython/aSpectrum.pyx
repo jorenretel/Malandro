@@ -9,7 +9,7 @@ cdef class aSpectrum :
  
   cdef list simulatedPeakMatrix, intraResidualSimulatedPeakMatrix, peaks
   
-  cdef int symmetry
+  cdef int symmetry, experimentSerial, serial
   
   cdef frozenset molLabelFractions
   
@@ -17,6 +17,8 @@ cdef class aSpectrum :
     
     self.DataModel = None
     self.ccpnSpectrum = temporary_spectrum_object.ccpnSpectrum
+    self.experimentSerial = self.ccpnSpectrum.experiment.serial
+    self.serial = self.ccpnSpectrum.serial
     self.name = temporary_spectrum_object.ccpnSpectrum.name
     self.labellingScheme = temporary_spectrum_object.labellingScheme
     self.symmetry = 1
@@ -958,29 +960,34 @@ cdef class aSpectrum :
     self.symmetry = maxSymmetry
     return
     
-  cdef void createPythonStyleObject(self):
-    
-    cdef aPeak peak
-
-    self.pySpectrum= pySpectrum()
-    
-    self.pySpectrum.name = self.name
-    
-    for peak in self.peaks :
-      
-      self.pySpectrum.peaks.append(peak.pyPeak)
-      
   def __reduce__(self) :
 
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    
-    return (self.name, self.peaks)
+    print 'spectrum'
+    return (self.name, self.peaks, self.experimentSerial, self.serial)
   
   def __setstate__(self, state) :
 
-    self.name, self.peaks = state
+    self.name, self.peaks, self.experimentSerial, self.serial = state
+    
+  def connectToProject(self, nmrProject) :
+    
+    try :
+      
+      self.ccpnSpectrum = nmrProject.findFirstExperiment(serial=self.experimentSerial).findFirstDataSource(serial=self.serial)
+      
+    except AttributeError :
+      
+      print "Error: Cannot find spectrum %s, navigating to peaks in this spectrum will not be possible." % self.name
+      
+      return
+
+    for peak in self.peaks :
+      
+      peak.connectToProject()
+    
     
   def getName(self):
     

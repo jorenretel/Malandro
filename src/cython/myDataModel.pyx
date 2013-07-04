@@ -9,8 +9,6 @@ cdef class myDataModel :
   
   cdef Malandro auto
   
-  cdef object pyDataModel
-  
   cdef double minIsoFrac
 
 
@@ -165,37 +163,7 @@ cdef class myDataModel :
       resonances.extend(spinSystem.getResonancesForAtomSiteName(atomSiteName))
       
     return resonances  
-    
-  cdef void createPythonStyleObject(self):
-    
-    cdef aSpectrum spec
-    
-    cdef mySpinSystem spinSystem 
-    
-    cdef list listWithSpinSystems
-    
-    cdef list listWithPySpinSystems
-    
-    cdef str key
-    
-    self.pyDataModel = pyDataModel()
-    
-    self.pyDataModel.chain = self.myChain.pyChain
-    
-    for spec in self.spectra :
-    
-      self.pyDataModel.spectra.append(spec.pySpectrum)
-      
-    for key, listWithSpinSystems in self.mySpinSystems.items():
-    
-      listWithPySpinSystems = []
-    
-      for spinSystem in listWithSpinSystems :
-        
-        listWithPySpinSystems.append(spinSystem.pySpinSystem)
-        
-      self.pyDataModel.spinSystems[key] = listWithPySpinSystems
-      
+          
   def __reduce__(self) :
     
     print 'trying'
@@ -215,6 +183,32 @@ cdef class myDataModel :
   def __setstate__(self, state) :
 
     self.spectra, self.myChain, self.mySpinSystems = state
+    
+  def connectToProject(self, project, nmrProject) :
+    
+    '''This method can be called after a unpickling from file. Because not the whole ccpn analysis project
+       should be pickled (it would also not be possible), the link between the malandro objects and the analysis
+       objects is lost. By running this method, the attributes that link to objects in the ccpn project are
+       set again. Of course when the project has changed a lot in the mean time and objects have been removed,
+       they can not be set again.
+    '''
+    
+    # Connect the chain, residues and atoms to the corresponding chain, residues and atoms in ccpn.
+    self.myChain.connectToProject(project)
+    
+    # Connect spinsystems and resonances
+    spinSystems = set([spinSystem for sublist in self.mySpinSystems.values() for spinSystem in sublist])
+
+    for spinSystem in spinSystems :
+      
+      spinSystem.connectToProject(nmrProject)
+      
+    # Connect spectra, peaks and peak dimensions  
+    for spectrum in self.spectra :
+      
+      spectrum.connectToProject(nmrProject)
+      
+      
     
   def getChain(self) :
   
