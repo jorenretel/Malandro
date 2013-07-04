@@ -165,19 +165,11 @@ cdef class myDataModel :
     return resonances  
           
   def __reduce__(self) :
-    
-    print 'trying'
-    print type(self)
-    #return (myDataModel.__new__, (None,), self.__getstate__())
+
     return (generalFactory, (myDataModel,), self.__getstate__())
     
   def __getstate__(self) :
-    
-    print 'hereee'
-    print self.spectra
-    print self.myChain
-    print self.mySpinSystems
-    
+
     return (self.spectra, self.myChain, self.mySpinSystems)
   
   def __setstate__(self, state) :

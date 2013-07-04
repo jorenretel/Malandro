@@ -106,7 +106,7 @@ cdef class myResonance :
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    print 'resonance'
+
     return (self.mySpinSystem, self.CS, self.isotopeCode, self.atomName, self.serial)
   
   def __setstate__(self, state) :

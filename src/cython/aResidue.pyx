@@ -264,7 +264,7 @@ cdef class aResidue :
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    print 'residue'
+
     return (self.chain, self.seqCode, self.ccpCode, self.atoms, self.solutions, self.linkDict, self.intraDict, self.previousResidue, self.nextResidue, self.userDefinedSolution)
   
   def __setstate__(self, state) :

@@ -83,7 +83,7 @@ cdef class aPeak :
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    print 'peak'
+
     return (self.dimensions, self.spectrum, self.serial, self.peakListSerial)
   
   def __setstate__(self, state) :
@@ -106,7 +106,14 @@ cdef class aPeak :
 
     except AttributeError :
       
+      print 'Error: Cannot find peak list %s in spectrum %s' %(str(self.peakListSerial), self.spectrum.name)
+      
+      return
+    
+    if not self.ccpnPeak :
+      
       print 'Error: Cannot find peak %s from peak list %s in spectrum %s' %(str(self.serial), str(self.peakListSerial), self.spectrum.name)
+      
       return
     
     for dimension in self.dimensions :

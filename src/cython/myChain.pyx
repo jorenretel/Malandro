@@ -111,7 +111,7 @@ cdef class myChain :
       nextResidue.previousResidue = res
       
   def __reduce__(self) :
-    print 'chain'
+
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :

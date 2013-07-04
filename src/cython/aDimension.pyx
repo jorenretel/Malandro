@@ -37,7 +37,7 @@ cdef class aDimension :
     self.dimNumber, self.dim, self.ppmValue, self.peak = state
     
   def connectToProject(self) :
-    print 'dimension'
+
     self.ccpnDim = self.peak.ccpnPeak.findFirstPeakDim(dim=self.dim)
     
   def getChemicalShift(self) :

@@ -965,7 +965,7 @@ cdef class aSpectrum :
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    print 'spectrum'
+
     return (self.name, self.peaks, self.experimentSerial, self.serial)
   
   def __setstate__(self, state) :

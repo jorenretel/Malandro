@@ -29,7 +29,7 @@ cdef class anAtom :
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    print 'atom'
+
     return (self.atomName, self.residue)
   
   def __setstate__(self, state) :

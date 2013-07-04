@@ -564,8 +564,10 @@ class connector(object):
         if isinstance(results, myDataModel) :
         
           self.results = results
-          self.results.connectToProject(self.project,self.nmrProject)
           self.updateInfoText('File loaded succesfully.')
+          self.updateInfoText('Re-connecting to object in the ccpn analysis project...')
+          self.results.connectToProject(self.project,self.nmrProject)
+          self.updateInfoText('Done')
           return
           
         else :

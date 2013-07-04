@@ -323,7 +323,7 @@ cdef class mySpinSystem :
     return (generalFactory, (type(self),), self.__getstate__())
     
   def __getstate__(self) :
-    print 'spin system'
+
     return (self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.solutions, self.userDefinedSolutions)
   
   def __setstate__(self, state) :
