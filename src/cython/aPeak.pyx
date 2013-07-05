@@ -98,6 +98,14 @@ cdef class aPeak :
     
     return self.dimensions
   
+  def getCcpnPeak(self) :
+    
+    return self.ccpnPeak
+  
+  def getSerial(self) :
+    
+    return self.serial
+  
   def connectToProject(self) :
     
     try :
@@ -119,4 +127,6 @@ cdef class aPeak :
     for dimension in self.dimensions :
       
       dimension.connectToProject()
+      
+      
  

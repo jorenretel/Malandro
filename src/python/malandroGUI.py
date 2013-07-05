@@ -508,7 +508,7 @@ class connector(object):
       
       #cPickle.dump(self.results,  writeFile)
       
-      cPickle.dump(self.auto.DataModel, writeFile, protocol=2)
+      cPickle.dump(self.results, writeFile, protocol=2)
       
       writeFile.close()
       
@@ -1255,6 +1255,8 @@ class ViewAssignmentPopup(BasePopup):
       
         oneRow = [None, None, None, None, None, None, None, None, None]
         
+        oneRow[0] = realPeak.getSerial()
+        
         oneRow[1] = realPeak.getSpectrum().name
 
         oneRow[8] = simPeak.colabelling
@@ -1327,6 +1329,8 @@ class ViewAssignmentPopup(BasePopup):
         simPeak = peakLink.getSimulatedPeak()
         
         oneRow = [None, None, None, None, None, None, None, None, None]
+        
+        oneRow[0] = realPeak.getSerial()
         
         oneRow[1] = realPeak.getSpectrum().name
 
@@ -1803,7 +1807,7 @@ class ViewAssignmentPopup(BasePopup):
         
         text = str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': -'
       
-        button.config(text=text,  bg='grey83')
+        button.config(text=text)
         
   def updateButtonHighLights(self):
     

@@ -184,13 +184,5 @@ cdef inline double scorePeak(list peakDimensions,list resonances) :
     summation += ((delta/tolerance)**2-1)*top
     
   z = summation/len(peakDimensions)
-  #z = max(-1, summation/len(peakDimensions)) * -1.0
   
   return z
-
-
-#def generalFactory(ClassOfObject,*args) :
-#  
-#  print 'been here'
-#  
-#  return ClassOfObject.__new__(ClassOfObject,*args)
