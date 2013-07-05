@@ -3,18 +3,18 @@ cdef class peakLink :
   
   cdef aPeak peak
   
-  cdef simulatedPeak simPeak
+  cdef simulatedPeak simulatedPeak
   
   cdef double score
   
   cdef list resonances
   
-  def __init__(self, aPeak peak, simulatedPeak simPeak, double score):
+  def __init__(self, aPeak peak, simulatedPeak simPeak, list resonances, double score):
     
     self.peak = peak
-    self.simPeak = simPeak
+    self.simulatedPeak = simPeak
     self.score = score
-    self.resonances = []
+    self.resonances = resonances
 
   def __reduce__(self) :
 
@@ -22,11 +22,11 @@ cdef class peakLink :
     
   def __getstate__(self) :
     
-    return (self.peak, self.simPeak, self.score, self.resonances)
+    return (self.peak, self.simulatedPeak, self.score)#, self.resonances)
   
   def __setstate__(self, state) :
 
-    self.peak, self.simPeak, self.score, self.resonances = state
+    self.peak, self.simulatedPeak, self.score = state  #, self.resonances
     
   def getPeak(self):
     
@@ -34,7 +34,7 @@ cdef class peakLink :
     
   def getSimulatedPeak(self) :
     
-    return self.simPeak
+    return self.simulatedPeak
   
   def getResonances(self) :
     

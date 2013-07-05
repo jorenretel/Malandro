@@ -30,14 +30,38 @@ cdef class spinSystemLink :
     
   def __getstate__(self) :
     
-    return (self.peakLinks, self.notFoundPeakLinks)
+    return (self.peakLinks)#, self.notFoundPeakLinks)
   
   def __setstate__(self, state) :
 
-    self.peakLinks, self.notFoundPeakLinks = state
+    self.peakLinks = state #self.notFoundPeakLinks
     
-  def getSimulatedPeaks(self):
+  def getContributingResonances(self) :
     
+    resonances = []
+    
+    for pl in self.peakLinks :
+      
+      resonances.extend(pl.getResonances())
+      
+    return set(resonances)  
+  
+  def getAllResonances(self) :
+  
+    resonances = []
+    
+    for pl in self.peakLinks :
+      
+      resonances.extend(pl.getResonances())
+      
+    for pl in self.notFoundPeakLinks :
+      
+      resonances.extend(pl.getResonances())
+      
+    return set(resonances)  
+    
+  def getSimulatedPeaks(self):        #TODO: update, simulatedPeaks is not used anymore
+        
     return self.simulatedPeaks
   
   def getRealPeaks(self):
@@ -47,3 +71,11 @@ cdef class spinSystemLink :
   def getPeakLinks(self) :
     
     return self.peakLinks
+  
+  def getNotFoundPeakLinks(self) :
+    
+    return self.notFoundPeakLinks
+  
+  def getAllPeakLinks(self) :
+    
+    return self.peakLinks + self.notFoundPeakLinks

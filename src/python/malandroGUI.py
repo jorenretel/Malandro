@@ -1040,11 +1040,11 @@ class ViewAssignmentPopup(BasePopup):
     
     tipTexts = [None, None, None, None, None, None, None, None, None]
     
-    editWidgets = [None, None, None, None, None, None, None, None, None]
+    #editWidgets = [None, None, None, None, None, None, None, None, None]
     
     editGetCallbacks = [self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak]
 
-    editSetCallbacks = [None, None, None, None, None, None, None, None, None]
+    #editSetCallbacks = [None, None, None, None, None, None, None, None, None]
     
     self.displayPeakTable = ScrolledMatrix(PeakFrame,headingList=headingList,
                                        editWidgets=editWidgets, multiSelect=False,
@@ -1243,21 +1243,21 @@ class ViewAssignmentPopup(BasePopup):
       
       objectList = []
       
+      peakLinks = link.getAllPeakLinks()
+      
       #simPeaks = link.getSimulatedPeaks()
       #realPeaks = link.getRealPeaks()
       
       #for simPeak,  realPeak in zip(simPeaks, realPeaks) :
        
-      for peakLink in link.getPeakLinks() :
+      for peakLink in peakLinks: #link.getPeakLinks() :
         
         realPeak = peakLink.getPeak()
         simPeak = peakLink.getSimulatedPeak()
       
         oneRow = [None, None, None, None, None, None, None, None, None]
         
-        oneRow[0] = realPeak.getSerial()
-        
-        oneRow[1] = realPeak.getSpectrum().name
+        oneRow[1] = simPeak.getSpectrum().name
 
         oneRow[8] = simPeak.colabelling
         
@@ -1270,10 +1270,14 @@ class ViewAssignmentPopup(BasePopup):
           dimNumber = simulatedPeakContrib.getDimNumber()
             
           oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
+          
+        if realPeak :
+          
+          oneRow[0] = realPeak.getSerial()
          
-        for dim in realPeak.getDimensions() :
-            
-          oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
+          for dim in realPeak.getDimensions() :
+              
+            oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
           
         data.append(oneRow)
         objectList.append(realPeak)
@@ -1294,23 +1298,11 @@ class ViewAssignmentPopup(BasePopup):
       self.emptyPeakTable()
       return
     
-    #link = None
-    #
-    #spinSystemNumberA = spinSystemA.spinSystemNumber
-    #spinSystemNumberB = spinSystemB.spinSystemNumber
-    #
-    #key = spinSystemNumberA*10000+spinSystemNumberB                             # This is the key for the dictionary where the links for all combinations of two sequential spin systems are stored. I am aware this could be a tuple. But this is slightly faster in Cython.
-    #
-    #if key in resA.linkDict :
-    #  
-    #  link = resA.linkDict[key] 
-    
     link = resA.getLink(spinSystemA,spinSystemB)
     
     if not link :
       
-      self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
-      self.displayNegPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
+      self.emptyPeakTable()
       
     else :
       
@@ -1318,21 +1310,19 @@ class ViewAssignmentPopup(BasePopup):
       
       objectList = []
       
-      #simPeaks = link.getSimulatedPeaks()
-      #realPeaks = link.getRealPeaks()
-      #
-      #for simPeak,  realPeak in zip(simPeaks, realPeaks) :
-        
-      for peakLink in link.getPeakLinks() :
+      #peakLinks = link.getPeakLinks()
+      
+      peakLinks = link.getAllPeakLinks()
+
+      
+      for peakLink in peakLinks : #link.getPeakLinks() :
         
         realPeak = peakLink.getPeak()
         simPeak = peakLink.getSimulatedPeak()
         
         oneRow = [None, None, None, None, None, None, None, None, None]
         
-        oneRow[0] = realPeak.getSerial()
-        
-        oneRow[1] = realPeak.getSpectrum().name
+        oneRow[1] = simPeak.getSpectrum().name
 
         oneRow[8] = simPeak.colabelling
         
@@ -1361,10 +1351,14 @@ class ViewAssignmentPopup(BasePopup):
           #  spinSystemNumber = spinSystemB.spinSystemNumber
             
           oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
+          
+        if realPeak :
+          
+          oneRow[0] = realPeak.getSerial()
          
-        for dim in realPeak.getDimensions() :
-            
-          oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
+          for dim in realPeak.getDimensions() :
+              
+            oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
           
         data.append(oneRow)
         objectList.append(realPeak)

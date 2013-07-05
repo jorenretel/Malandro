@@ -135,7 +135,7 @@ cdef spinSystemLink emptyLink = spinSystemLink()
 @cython.nonecheck(False)
 @cython.wraparound(False)
 @cython.boundscheck(False)
-@cython.cdivision(True)  
+#@cython.cdivision(True)  
 cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks):
     
   cdef double peakScoreNew = 0

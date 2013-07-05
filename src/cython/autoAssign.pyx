@@ -497,42 +497,31 @@ cdef class Malandro :
 
   cdef void setupPeakInformationForRandomAssignment(self):
     
-    cdef myDataModel DataModel
-    
-    cdef myChain chain
-    
     cdef list residues
     
-    cdef aResidue residue
-    
-    cdef mySpinSystem spinSysI, spinSysIplus1
-        
+    cdef aResidue res
+      
     cdef spinSystemLink link
     
     cdef aPeak peak
+  
+    cdef peakLink pl
     
-    cdef int hc
-    
-    hc = self.hc
-    
-    DataModel = self.DataModel
-    
-    chain = DataModel.myChain
-    
-    residues = chain.residues
-    
-    for residue in residues[:-1] :
+    residues = self.DataModel.myChain.residues
       
-      spinSysI = residue.currentSpinSystemAssigned
-      spinSysIplus1 = residue.nextResidue.currentSpinSystemAssigned
+    for res in residues :
       
-      if not spinSysI.isJoker and not spinSysIplus1.isJoker :
+      nextRes = res.nextResidue
       
-        link = residue.linkDict[spinSysI.spinSystemNumber*hc+spinSysIplus1.spinSystemNumber]
-      
-        for peak in link.realPeaks :
+      link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
+ 
+      for pl in link.peakLinks :
         
-          peak.degeneracy += 1
+        pl.peak.degeneracy += 1
+      
+        #for peak in link.realPeaks :
+        
+        #  peak.degeneracy += 1
 
   cdef void createJokerSpinSystems(self):
     
@@ -688,6 +677,8 @@ cdef class Malandro :
     
     cdef int hc
     
+    cdef peakLink pl
+    
     hc = self.hc
     
       
@@ -701,24 +692,35 @@ cdef class Malandro :
       
       for key,  linkObject in linkDict.items() :
         
+        NresonancesUsed = len(linkObject.getContributingResonances())
         
-        NfoundPeaks = len(linkObject.realPeaks)                                                                                          # These are the simulated peaks where a real peak was found for in the spectra during the matching procedure
-
-        atomsUsed = []
+        linkObject.score = NresonancesUsed
         
-        for peak in linkObject.simulatedPeaks :                                                                                                              # These are the simulated variant of the 'realPeaks'.
-            
-          for contrib in peak.simulatedPeakContribs :
-                
-            atomName = contrib.atomName
-            
-            if atomName not in atomsUsed :
-                
-                atomsUsed.append(atomName)
-                
-        NatomsUsed = len(atomsUsed)
-        
-        linkObject.score = NatomsUsed #NfoundPeaks + NatomsUsed
+        #allResonances
+        #
+        #for pl in link.peakLinks :
+        #  
+        #  
+        #
+        #len(set([pl.resonances pl in link.peakLinks]))
+        #
+        ##NfoundPeaks = len(linkObject.realPeaks)                                                                                          # These are the simulated peaks where a real peak was found for in the spectra during the matching procedure
+        #
+        ##atomsUsed = []
+        #
+        ##for peak in linkObject.simulatedPeaks :                                                                                                              # These are the simulated variant of the 'realPeaks'.
+        #    
+        #  for contrib in peak.simulatedPeakContribs :
+        #        
+        #    atomName = contrib.atomName
+        #    
+        #    if atomName not in atomsUsed :
+        #        
+        #        atomsUsed.append(atomName)
+        #        
+        #NatomsUsed = len(atomsUsed)
+        #
+        #linkObject.score = NatomsUsed #NfoundPeaks + NatomsUsed
 
   cdef void matchSimulatedWithRealSpectra(self):
     
@@ -1145,6 +1147,8 @@ cdef class Malandro :
     
     cdef double peakScore
     
+    cdef peakLink pl
+    
     
     
     residues = self.DataModel.myChain.residues
@@ -1154,29 +1158,40 @@ cdef class Malandro :
     for res in residues :
       
       nextRes = res.nextResidue
+        
+      link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
       
-      if nextRes :
+      #keyA = res.currentSpinSystemAssigned.spinSystemNumber
+      #keyB = nextRes.currentSpinSystemAssigned.spinSystemNumber
+      
+      #key = keyA*self.hc + keyB
+      
+      #linkDict = res.linkDict
+      #peakScore = 0.0
+      score += sum([1.0/pl.peak.degeneracy for pl in link.peakLinks]) + link.score
+      #peakScore = sum([1.0/pl.peak.degeneracy for pl in link.peakLinks])
+      
+      #for pl in link.peakLinks :
         
-        keyA = res.currentSpinSystemAssigned.spinSystemNumber
-        keyB = nextRes.currentSpinSystemAssigned.spinSystemNumber
-        
-        key = keyA*self.hc + keyB
-        
-        linkDict = res.linkDict
+      #  peakScore += 1.0/pl.peak.degeneracy
+      
+      #score += peakScore + link.score    
           
-        if key in linkDict :
+    self.score = score      
           
-          link = linkDict[key]
-          
-          peaks = link.realPeaks
-          
-          peakScore = 0.0
-          
-          for peak in peaks :
-            
-            peakScore = peakScore + 1.0/peak.degeneracy
-            
-          score += peakScore + link.score
-            
-    self.score = score
+    #    if key in linkDict :
+    #      
+    #      link = linkDict[key]
+    #      
+    #      peaks = link.realPeaks
+    #      
+    #      peakScore = 0.0
+    #      
+    #      for peak in peaks :
+    #        
+    #        peakScore = peakScore + 1.0/peak.degeneracy
+    #        
+    #      score += peakScore + link.score
+    #        
+    #self.score = score
   

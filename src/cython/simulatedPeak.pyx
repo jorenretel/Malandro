@@ -35,5 +35,9 @@ cdef class simulatedPeak :
     
     return self.simulatedPeakContribs
   
+  def getSpectrum(self) :
+    
+    return self.spectrum
+  
     
     

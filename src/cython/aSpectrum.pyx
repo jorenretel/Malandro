@@ -749,6 +749,8 @@ cdef class aSpectrum :
     
     cdef int hc
     
+    cdef double bestScore
+    
     hc = 10000 #self.hc
 
     DataModel = self.DataModel
@@ -777,31 +779,28 @@ cdef class aSpectrum :
           
           spinSystems = [spinSys1,spinSys2]
           
-          listWithPresentPeaks = []
-          listWithSimulatedPeaks = []
-          listWithNotFoundSimulatedPeaks = []
-          listWithScores = []
+          #listWithPresentPeaks = []
+          #listWithSimulatedPeaks = []
+          #listWithNotFoundSimulatedPeaks = []
+          #listWithScores = []
   
           for simulatedPeak in simulatedPeakList :
             
-            contributions = simulatedPeak.simulatedPeakContribs
-                        
+            closestPeak = None
+            bestScore = 0.0
             resonances = []
             
+            contributions = simulatedPeak.simulatedPeakContribs
+
             for contrib in contributions :
               
               spinSystem = spinSystems[contrib.firstOrSecondResidue-1]
               
               resonance = spinSystem.getResonanceForAtomName(contrib.atomName)
               
-              if resonance is None :
-                
-                resonances = []
-                break
+              resonances.append(resonance)
               
-              resonances.append(resonance) 
-            
-            if resonances :
+            if resonances and not None in resonances :
               
               peakLists = [ resonance.getPeaksForSpectrumDim(self,contrib.dimNumber) for resonance, contrib in zip(resonances , contributions) ]
 
@@ -815,17 +814,24 @@ cdef class aSpectrum :
 
                 bestScore = min(1.0,bestScore) / symmetry * (len(set(resonances))**2.0)                      # Put a flat bottom (top) in. 
                 
-                listWithScores.append(bestScore)
+                #listWithScores.append(bestScore)
 
-                listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
+                #listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
                   
-                listWithSimulatedPeaks.append(simulatedPeak)
+                #listWithSimulatedPeaks.append(simulatedPeak)
              
-              else :
+              #else :
+                
+              #  closestPeak = None
+              #  score = 0.0
                
-                listWithNotFoundSimulatedPeaks.append(simulatedPeak)   
+                #listWithNotFoundSimulatedPeaks.append(simulatedPeak)
+            #print '---'    
+            #print bestScore
+            #print closestPeak
+            resA.addPeakToLinkDict(spinSys1, spinSys2, closestPeak, simulatedPeak, resonances, bestScore, False)    
           
-          resA.addToLinkDict(spinSys1, spinSys2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores)  
+          #resA.addToLinkDict(spinSys1, spinSys2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores)  
    
   cdef void matchIntraResidual(self):
     
@@ -853,6 +859,8 @@ cdef class aSpectrum :
     
     cdef int hc
     
+    cdef double bestScore
+    
     hc = 10000 #self.hc
 
     DataModel = self.DataModel
@@ -870,46 +878,50 @@ cdef class aSpectrum :
       
       for spinSys in spinsystems :
         
-        listWithPresentPeaks = []
-        listWithSimulatedPeaks = []
-        listWithNotFoundSimulatedPeaks = []
-        listWithScores = []
+        #listWithPresentPeaks = []
+        #listWithSimulatedPeaks = []
+        #listWithNotFoundSimulatedPeaks = []
+        #listWithScores = []
 
         for simulatedPeak in simulatedPeakList :
           
           contributions = simulatedPeak.simulatedPeakContribs
           
-          resonances = []
+          closestPeak = None
+          bestScore = 0.0
           
           resonances = [spinSys.getResonanceForAtomName(contrib.atomName) for contrib in contributions]
           
-          if None in resonances :
+          #if None in resonances :
             
-            continue
+          #  continue
+          if resonances and not None in resonances :
             
-          peakLists = [ resonance.getPeaksForSpectrumDim(self,contrib.dimNumber,True) for resonance, contrib in zip(resonances , contributions) ]
+            peakLists = [ resonance.getPeaksForSpectrumDim(self,contrib.dimNumber,True) for resonance, contrib in zip(resonances , contributions) ]
            
-          peaksInWindow = commonElementInLists(peakLists)                                      # And check whether 1 or more peaks that fit in one dimension actually also fit in all other dimensions. In that case the peak is in the multidimensional tolerance window
+            peaksInWindow = commonElementInLists(peakLists)                                      # And check whether 1 or more peaks that fit in one dimension actually also fit in all other dimensions. In that case the peak is in the multidimensional tolerance window
 
-          if peaksInWindow :
-            
-            peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
-                
-            bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
-            
-            bestScore = min(1.0,bestScore)
-            
-            listWithScores.append(bestScore)
-            
-            listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
+            if peaksInWindow :
               
-            listWithSimulatedPeaks.append(simulatedPeak)
+              peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
+                  
+              bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
+              
+              bestScore = min(1.0,bestScore)
+              
+              #listWithScores.append(bestScore)
+              
+              #listWithPresentPeaks.append(closestPeak)                                             # The peak with the smallest deviation is added to the list of found peaks
+                
+              #listWithSimulatedPeaks.append(simulatedPeak)
          
-          else :
+          #else :
            
-            listWithNotFoundSimulatedPeaks.append(simulatedPeak)   
+          #  listWithNotFoundSimulatedPeaks.append(simulatedPeak)
+          
+          res.addPeakToLinkDict(spinSys, spinSys, closestPeak, simulatedPeak, resonances, bestScore, True) 
         
-        res.addToIntraDict(spinSys, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores)
+        #res.addToIntraDict(spinSys, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores)
    
   cdef void determineSymmetry(self) :
     

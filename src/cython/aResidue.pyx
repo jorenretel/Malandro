@@ -197,11 +197,11 @@ cdef class aResidue :
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
     
-  cdef addPeakToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, aPeak realPeak, aPeak simulatedPeak, list resonances, double score) :
+  cdef addPeakToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, aPeak realPeak, simulatedPeak simPeak, list resonances, double score, bint isIntra) :
     
     cdef spinSystemLink linkObject
     
-    if spinSys1 is spinSys2 :                   #Not correct, in the way the spectra are matched now, it might by accident happen to for instance an Ala-Ala pair
+    if isIntra is True:                   #Not correct, in the way the spectra are matched now, it might by accident happen to for instance an Ala-Ala pair
       
       if spinSys1.spinSystemNumber in self.intraDict :
   
@@ -227,7 +227,7 @@ cdef class aResidue :
         linkObject.spinSystem2 = spinSys2
         self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)] = linkObject
       
-    newPeakLink = peakLink(realPeak,simulatedPeak,score)  
+    newPeakLink = peakLink(realPeak,simPeak,resonances, score)  
       
     if realPeak is not None :
 
