@@ -22,11 +22,11 @@ cdef class peakLink :
     
   def __getstate__(self) :
     
-    return (self.peak, self.simulatedPeak, self.score)#, self.resonances)
+    return (self.peak, self.simulatedPeak, self.resonances, self.score)
   
   def __setstate__(self, state) :
 
-    self.peak, self.simulatedPeak, self.score = state  #, self.resonances
+    self.peak, self.simulatedPeak, self.resonances, self.score = state
     
   def getPeak(self):
     

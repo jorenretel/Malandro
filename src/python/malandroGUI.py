@@ -36,6 +36,7 @@ import time
 import cProfile
 
 import cPickle
+import gzip
 
 from sys import setrecursionlimit
 from memops.universal.Io import joinPath, splitPath
@@ -500,7 +501,7 @@ class connector(object):
       
       if os.path.exists(fileName) and not showYesNo('File exists', 'File "%s" exists, overwrite?' % fileName, parent=self.GUI) :
           
-          return
+        return
       
       self.updateInfoText('Saving results...')
         
@@ -547,7 +548,7 @@ class connector(object):
       
       try :
    
-        readFile =open(fileName,  'rb') 
+        readFile = open(fileName,  'rb') 
     
         results = cPickle.load(readFile)
         
@@ -1311,13 +1312,13 @@ class ViewAssignmentPopup(BasePopup):
       objectList = []
       
       #peakLinks = link.getPeakLinks()
-      
+
       peakLinks = link.getAllPeakLinks()
 
-      
       for peakLink in peakLinks : #link.getPeakLinks() :
-        
+
         realPeak = peakLink.getPeak()
+
         simPeak = peakLink.getSimulatedPeak()
         
         oneRow = [None, None, None, None, None, None, None, None, None]
@@ -1325,19 +1326,19 @@ class ViewAssignmentPopup(BasePopup):
         oneRow[1] = simPeak.getSpectrum().name
 
         oneRow[8] = simPeak.colabelling
-        
+
         for simulatedPeakContrib in simPeak.getContribs() :
-          
+
           atomName = simulatedPeakContrib.getAtomName()
-          
+
           ccpCode = simulatedPeakContrib.getCcpCode()
-          
+
           dimNumber = simulatedPeakContrib.getDimNumber()
-          
+
           if resA is simulatedPeakContrib.getResidue() :
-            
+
             spinSystemNumber = spinSystemA.getSerial()
-            
+
           else :
             
             spinSystemNumber = spinSystemB.getSerial()
@@ -1353,9 +1354,9 @@ class ViewAssignmentPopup(BasePopup):
           oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
           
         if realPeak :
-          
+
           oneRow[0] = realPeak.getSerial()
-         
+
           for dim in realPeak.getDimensions() :
               
             oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
@@ -1371,7 +1372,8 @@ class ViewAssignmentPopup(BasePopup):
 
     if self.selectedPeak and self.windowPane:
       
-      ccpnPeak = self.getCcpnPeakForMyPeak(self.selectedPeak)
+      #ccpnPeak = self.getCcpnPeakForMyPeak(self.selectedPeak)
+      ccpnPeak = self.selectedPeak.getCcpnPeak()
       createPeakMark(ccpnPeak, lineWidth=2.0)
       
       windowFrame = self.windowPane.getWindowFrame()

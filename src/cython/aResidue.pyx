@@ -227,15 +227,16 @@ cdef class aResidue :
         linkObject.spinSystem2 = spinSys2
         self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)] = linkObject
       
-    newPeakLink = peakLink(realPeak,simPeak,resonances, score)  
-      
+     
     if realPeak is not None :
-
+      
+      newPeakLink = peakLink(realPeak,simPeak,resonances, score) 
       linkObject.peakLinks.append(newPeakLink)
       
     else :
       
-      linkObject.notFoundPeakLinks.append(newPeakLink)
+      linkObject.notFoundSimulatedPeaks.append(simPeak)
+      #linkObject.notFoundPeakLinks.append(newPeakLink)
       
   cdef spinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
     

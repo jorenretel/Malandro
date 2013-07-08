@@ -9,8 +9,8 @@ cdef class simulatedPeak :
   
   cdef object pySimulatedPeak
   
+  cdef int N
   
-    
   def __init__(self):
 
     self.colabelling = 0.0

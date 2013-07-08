@@ -30,11 +30,11 @@ cdef class spinSystemLink :
     
   def __getstate__(self) :
     
-    return (self.peakLinks)#, self.notFoundPeakLinks)
+    return (self.peakLinks, self.notFoundSimulatedPeaks, self.spinSystem1, self.spinSystem2) #, self.notFoundPeakLinks)#, self.notFoundPeakLinks)
   
   def __setstate__(self, state) :
 
-    self.peakLinks = state #self.notFoundPeakLinks
+    self.peakLinks, self.notFoundSimulatedPeaks, self.spinSystem1, self.spinSystem2 = state # , self.notFoundPeakLinks = state #self.notFoundPeakLinks
     
   def getContributingResonances(self) :
     
@@ -74,8 +74,30 @@ cdef class spinSystemLink :
   
   def getNotFoundPeakLinks(self) :
     
-    return self.notFoundPeakLinks
+    cdef simulatedPeak simPeak
+    cdef simulatedPeakContrib contrib
+    cdef mySpinSystem spinSystem
+
+    notFoundPeakLinks = []
+    
+    spinSystems = {1:self.spinSystem1,2:self.spinSystem2}
+    
+    for simPeak in self.notFoundSimulatedPeaks :
+      
+      resonances = []
+      
+      for contrib in simPeak.simulatedPeakContribs :
+        
+        spinSystem = spinSystems[contrib.firstOrSecondResidue]
+        
+        resonances.append(spinSystem.getResonanceForAtomName(contrib.atomName))
+      
+      notFoundPeakLinks.append(peakLink(None, simPeak,resonances,0.0))
+    
+    return notFoundPeakLinks
   
   def getAllPeakLinks(self) :
     
-    return self.peakLinks + self.notFoundPeakLinks
+    #return self.peakLinks + self.notFoundPeakLinks
+    
+    return self.getPeakLinks() + self.getNotFoundPeakLinks()
