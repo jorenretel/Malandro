@@ -1497,26 +1497,20 @@ class ViewAssignmentPopup(BasePopup):
     
     chemCompVarNmrRef = chemCompNmrRef.findFirstChemCompVarNmrRef(linking='any',descriptor='any')
     
-    if not chemCompVarNmrRef :
+    if chemCompVarNmrRef :
       
-      return None
-    
-    chemAtomNmrRef = chemCompVarNmrRef.findFirstChemAtomNmrRef(name=atomName)
-    
-    if not chemAtomNmrRef :
+      chemAtomNmrRef = chemCompVarNmrRef.findFirstChemAtomNmrRef(name=atomName)
       
-      return None
+      if chemAtomNmrRef :
+        
+        distribution   = chemAtomNmrRef.distribution
+        
+        maxIndex = max([(value,index) for index, value in enumerate(distribution)])[1]
     
-    distribution   = chemAtomNmrRef.distribution
-    
-    if not distribution :
-      
-      return None
-    
-    maxIndex = max([(value,index) for index, value in enumerate(distribution)])[1]
-
-    return chemAtomNmrRef.refValue + chemAtomNmrRef.valuePerPoint*(maxIndex-chemAtomNmrRef.refPoint)
-
+        return chemAtomNmrRef.refValue + chemAtomNmrRef.valuePerPoint*(maxIndex-chemAtomNmrRef.refPoint)
+        
+    return None
+  
   def selectWindowPane(self, windowPane):
   
     if windowPane is not self.windowPane:
