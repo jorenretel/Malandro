@@ -821,7 +821,6 @@ class ViewAssignmentPopup(BasePopup):
                                        height=300, title='Annealing',
                                        xLabel='time', yLabel='energy')
     self.energyPlot.grid(row=row, column=0, columnspan=10, sticky='nsew')
-    
 
     
 ##############################################################################
@@ -889,8 +888,56 @@ class ViewAssignmentPopup(BasePopup):
     self.adoptButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
     self.adoptButton.grid(row=0, column=9, sticky='nsew')  
     
-    resultsFirstFrame = LabelFrame(resultsFrame, text='Sequence Fragment')
-    resultsFirstFrame.grid(row=1, column=0, sticky='ew')
+
+    
+    
+    
+    resultsSecondFrame = Frame(resultsFrame)#LabelFrame(resultsFrame, text='Spin Systems')
+    resultsSecondFrame.grid(row=2, column=0, sticky='nsew')
+    
+    resultsSecondFrame.grid_columnconfigure(0,  weight=1) 
+    resultsSecondFrame.grid_columnconfigure(1,  weight=1)        
+    resultsSecondFrame.grid_columnconfigure(2,  weight=1)    
+    resultsSecondFrame.grid_columnconfigure(3,  weight=1)    
+    resultsSecondFrame.grid_columnconfigure(4,  weight=1) 
+
+    headingList = [ '#',  '%']
+
+    tipTexts = [ 'Spinsystem number {} indicates serial of the spinsystem. If the spinsystem was already assigned to a residue, the residue number is shown aswell',  'percentage of the solutions that connected this spinsystem to this residue']
+
+    editWidgets = [None, None]
+
+    editSetCallbacks = [None, None]
+    
+    self.displayResultsTables = []
+    self.residueLabels = []
+    
+    # Sorry for this one, but it saves a lot of lines of code with arbitrary function names. createCallBackFunction takes one argument 'tableNumber'
+    # and returns a function that also takes one archument 'spinSystem'. This function is called in the end when the user
+    # clicks on the table to select a spinsystem. What this function does is calling self.selectSpinSystem(tableNumber,spinSystem).
+    # In this way it is possible to create five tables in a loop but still tell self.selectSpinSystem from who the call came. 
+    createCallbackFunction = lambda tableNumber : (lambda spinSystem :  self.selectSpinSystem(tableNumber, spinSystem) )
+    
+    for i in range(5) :
+      
+      label = Label(resultsSecondFrame, text='residue')
+      label.grid(row=0, column=i)
+      
+      editGetCallbacks = [createCallbackFunction(i)]*3
+      
+      displayResultsTable = ScrolledMatrix(resultsSecondFrame, headingList=headingList,
+                                       editWidgets=editWidgets, multiSelect=False,
+                                       editGetCallbacks=editGetCallbacks,
+                                       editSetCallbacks=editSetCallbacks,
+                                       tipTexts=tipTexts)
+      displayResultsTable.grid(row=2, column=i, sticky='nsew')
+      displayResultsTable.sortDown = False
+      
+      self.residueLabels.append(label)
+      self.displayResultsTables.append(displayResultsTable)
+      
+    resultsFirstFrame = Frame(resultsSecondFrame) #LabelFrame(resultsFrame, text='Sequence Fragment')
+    resultsFirstFrame.grid(row=1, column=0, sticky='ew', columnspan=5)
     
     resultsFirstFrame.grid_rowconfigure(0, weight=1)
     resultsFirstFrame.grid_rowconfigure(1, weight=1)
@@ -938,54 +985,11 @@ class ViewAssignmentPopup(BasePopup):
       
         self.sequenceButtonsB.grid_columnconfigure(n, uniform=2)  
     
-    
-    
-    resultsSecondFrame = LabelFrame(resultsFrame, text='Spin Systems')
-    resultsSecondFrame.grid(row=2, column=0, sticky='nsew')
-    
-    resultsSecondFrame.grid_columnconfigure(0,  weight=1) 
-    resultsSecondFrame.grid_columnconfigure(1,  weight=1)        
-    resultsSecondFrame.grid_columnconfigure(2,  weight=1)    
-    resultsSecondFrame.grid_columnconfigure(3,  weight=1)    
-    resultsSecondFrame.grid_columnconfigure(4,  weight=1) 
-
-    headingList = [ '#',  '%']
-
-    tipTexts = [ 'Spinsystem number {} indicates serial of the spinsystem. If the spinsystem was already assigned to a residue, the residue number is shown aswell',  'percentage of the solutions that connected this spinsystem to this residue']
-
-    editWidgets = [None, None]
-
-    editSetCallbacks = [None, None]
-    
-    self.displayResultsTables = []
-    
-    # Sorry for this one, but it saves a lot of lines of code with arbitrary function names. createCallBackFunction takes one argument 'tableNumber'
-    # and returns a function that also takes one archument 'spinSystem'. This function is called in the end when the user
-    # clicks on the table to select a spinsystem. What this function does is calling self.selectSpinSystem(tableNumber,spinSystem).
-    # In this way it is possible to create five tables in a loop but still tell self.selectSpinSystem from who the call came. 
-    createCallbackFunction = lambda tableNumber : (lambda spinSystem :  self.selectSpinSystem(tableNumber, spinSystem) )
-    
-    for i in range(5) :
-      
-      editGetCallbacks = [createCallbackFunction(i)]*3
-      
-      displayResultsTable = ScrolledMatrix(resultsSecondFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
-      displayResultsTable.grid(row=0, column=i, sticky='nsew')
-      displayResultsTable.sortDown = False
-      
-      self.displayResultsTables.append(displayResultsTable)
-      
-  
-    
     #self.sortDisplayResultsTable()
     
     resultsFrame.grid_rowconfigure(3, weight=2)
     
-    resultsThirdFrame = LabelFrame(resultsFrame, text='info')
+    resultsThirdFrame = Frame(resultsFrame) #LabelFrame(resultsFrame, text='info')
     resultsThirdFrame.grid(row=3, column=0, sticky='nsew')
     
     
@@ -1025,14 +1029,17 @@ class ViewAssignmentPopup(BasePopup):
                                        editSetCallbacks=editSetCallbacks,
                                        tipTexts=tipTexts)
     self.spinSysTable.grid(row=0, column=0, sticky='nsew')
+    
+    buttonFrameinPeakFrame = Frame(PeakFrame)
+    buttonFrameinPeakFrame.grid()
 
-    self.findButton  = Button(PeakFrame, text=' Find Peak ',
+    self.findButton  = Button(buttonFrameinPeakFrame, text=' Find Peak ',
                               borderwidth=1, padx=2, pady=1,command=self.findPeak,
                               tipText='Locate the currently selected peak in the specified window')
                               
     self.findButton.grid(row=0, column=0, sticky='ew')
 
-    self.windowPulldown = PulldownList(PeakFrame, callback=self.selectWindowPane,
+    self.windowPulldown = PulldownList(buttonFrameinPeakFrame, callback=self.selectWindowPane,
                                       tipText='Choose the spectrum window for locating peaks or strips')
                                     
     self.windowPulldown.grid(row=0, column=1, sticky='w')
@@ -1712,6 +1719,7 @@ class ViewAssignmentPopup(BasePopup):
       self.updateResultsTopRowButtons()
       self.updateResultsBottomRowButtons()
       self.updateResultsTable()
+      self.updateResidueLabels()
       
   @lockUntillResults
   def resultsNextResidue(self):
@@ -1735,6 +1743,7 @@ class ViewAssignmentPopup(BasePopup):
       self.updateResultsTopRowButtons()
       self.updateResultsBottomRowButtons()
       self.updateResultsTable()
+      self.updateResidueLabels()
   
   def resultsChangeSelectedCcpCode(self, ccpCode):
   
@@ -1768,6 +1777,7 @@ class ViewAssignmentPopup(BasePopup):
     self.updateResultsTopRowButtons()
     self.updateResultsBottomRowButtons()
     self.updateResultsTable()
+    self.updateResidueLabels()
 
   @lockUntillResults
   def solutionUpdateAfterEntry(self, event=None):
@@ -1797,6 +1807,7 @@ class ViewAssignmentPopup(BasePopup):
   def updateResultsTab(self) :
     
     self.updateLink()
+    self.updateResidueLabels()
     self.updateResultsTable()
     self.updateResultsTopRowButtons()
     self.updateResultsBottomRowButtons()
@@ -1898,6 +1909,20 @@ class ViewAssignmentPopup(BasePopup):
         
       table.update(objectList=objectList,textMatrix=data,colorMatrix=colorMatrix)
 
+  def updateResidueLabels(self) :
+        
+    resList = self.getCurrentlyDisplayedResidues()
+    labels = self.residueLabels
+    
+    for residue, label in zip(resList, labels) :
+      
+      print residue.getSeqCode()
+      
+      text = str(residue.getSeqCode()) + ' ' + residue.getCcpCode()
+      
+      label.set(text)
+
+
   def updateResultsTopRowButtons(self) :
     
     resList = self.getCurrentlyDisplayedResidues()
@@ -1908,7 +1933,7 @@ class ViewAssignmentPopup(BasePopup):
       
       spinsys = res.solutions[self.selectedSolution-1]
       
-      text = str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': ' + spinsys.getDescription() #self.getStringDescriptionOfSpinSystem(spinsys)
+      text = spinsys.getDescription() #str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': ' + spinsys.getDescription() #self.getStringDescriptionOfSpinSystem(spinsys)
       
       button.config(text=text)
       
@@ -1935,7 +1960,7 @@ class ViewAssignmentPopup(BasePopup):
         
       else :
         
-        text = str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': -'
+        text = '-' #str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': -'
       
         button.config(text=text)
         
@@ -2356,6 +2381,7 @@ class ViewAssignmentPopup(BasePopup):
     colorList = (NdataSets/Ncolors)*colors + colors[:NdataSets%Ncolors]
     
     self.energyPlot.update(dataSets=self.energyDataSets, dataColors=colorList)
+    
     
   def updateAcceptanceConstantList(self,event=None) :
     
