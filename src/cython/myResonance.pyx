@@ -121,3 +121,16 @@ cdef class myResonance :
       
       print 'Error: could not find spin system %s' %str(self.serial)
       return
+  
+  def getChemicalShift(self) :
+    
+    return self.CS
+  
+  def getSpinSystem(self) :
+    
+    return self.mySpinSystem
+  
+  def getAtomName(self) :
+    
+    return self.atomName
+

@@ -1004,3 +1004,7 @@ cdef class aSpectrum :
   def getName(self):
     
     return self.name
+  
+  def getCcpnSpectrum(self) :
+    
+    return self.ccpnSpectrum

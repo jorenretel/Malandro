@@ -36,7 +36,7 @@ import time
 import cProfile
 
 import cPickle
-import gzip
+#import gzip
 
 from sys import setrecursionlimit
 from memops.universal.Io import joinPath, splitPath
@@ -90,10 +90,11 @@ from ccpnmr.analysis.core.MoleculeBasic import greekSortAtomNames
 
 from ccpnmr.analysis.core.Util import getAnalysisDataDim
 
-from ccpnmr.analysis.core.MarkBasic import createPeakMark
+from ccpnmr.analysis.core.MarkBasic import createPeakMark, createNonPeakMark
 
 
 import ccpnmr.analysis.core.WindowBasic as WindowBasic
+from ccpnmr.analysis.core.WindowBasic import getSpectrumWindowView
 
 
 from src.cython.malandro import Malandro, myDataModel
@@ -1043,16 +1044,19 @@ class ViewAssignmentPopup(BasePopup):
     
     #editWidgets = [None, None, None, None, None, None, None, None, None]
     
-    editGetCallbacks = [self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak]
+    editGetCallbacks = [None, None, None, None, None, None, None, None, None]
+    
+    #editGetCallbacks = [self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak, self.selectPeak]
 
-    #editSetCallbacks = [None, None, None, None, None, None, None, None, None]
+    editSetCallbacks = [None, None, None, None, None, None, None, None, None]
     
     self.displayPeakTable = ScrolledMatrix(PeakFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
+                                       editWidgets=editWidgets, multiSelect=True,
                                        editGetCallbacks=editGetCallbacks,
                                        editSetCallbacks=editSetCallbacks,
                                        tipTexts=tipTexts)
     self.displayPeakTable.grid(row=1, column=0, sticky='nsew')
+    #editGetCallbacks=editGetCallbacks,
     
     
     self.displayNegPeakTable = ScrolledMatrix(negPeakFrame,headingList=headingList,
@@ -1279,9 +1283,21 @@ class ViewAssignmentPopup(BasePopup):
           for dim in realPeak.getDimensions() :
               
             oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
+            
+        else :
+          
+          for resonance, simulatedPeakContrib in zip(peakLink.getResonances(), simPeak.getContribs()) :
+            
+            if resonance :
+            
+              oneRow[simulatedPeakContrib.getDimNumber()+4] = resonance.getChemicalShift()
+              
+            else :
+              
+              oneRow[simulatedPeakContrib.getDimNumber()+4] = '?'
           
         data.append(oneRow)
-        objectList.append(realPeak)
+        objectList.append(peakLink)
       
       self.displayPeakTable.update(objectList=objectList,textMatrix=data)
       
@@ -1360,24 +1376,146 @@ class ViewAssignmentPopup(BasePopup):
           for dim in realPeak.getDimensions() :
               
             oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
+            
+        else :
+          
+          for resonance, simulatedPeakContrib in zip(peakLink.getResonances(), simPeak.getContribs()) :
+            
+            if resonance :
+            
+              oneRow[simulatedPeakContrib.getDimNumber()+4] = resonance.getChemicalShift()
+              
+            else :
+              
+              oneRow[simulatedPeakContrib.getDimNumber()+4] = '?'
           
         data.append(oneRow)
-        objectList.append(realPeak)
+        objectList.append(peakLink)
       
       self.displayPeakTable.update(objectList=objectList,textMatrix=data)
+      
+      
       
       self.selectedPeak = None  
 
   def findPeak(self):
-
-    if self.selectedPeak and self.windowPane:
+    
+    if not self.windowPane :
       
-      #ccpnPeak = self.getCcpnPeakForMyPeak(self.selectedPeak)
-      ccpnPeak = self.selectedPeak.getCcpnPeak()
+      return
+    
+    selectedPeakLinks = self.displayPeakTable.currentObjects
+    
+    if not selectedPeakLinks :
+      
+      self.updateInfoText('Please select a peak first.')
+      return
+    
+    if len(selectedPeakLinks) > 1 :
+      
+      self.updateInfoText('Can only go to one peak at a time.')
+      return
+    
+    selectedPeakLink = selectedPeakLinks[0]
+    selectedPeak = selectedPeakLink.getPeak()
+    
+    if selectedPeak :
+
+      ccpnPeak = selectedPeak.getCcpnPeak()
       createPeakMark(ccpnPeak, lineWidth=2.0)
       
       windowFrame = self.windowPane.getWindowFrame()
       windowFrame.gotoPeak(ccpnPeak)
+      
+    else :
+      
+      simPeak = selectedPeakLink.getSimulatedPeak()
+      spectrum = simPeak.getSpectrum()
+      ccpnSpectrum = spectrum.getCcpnSpectrum()
+      view = getSpectrumWindowView(self.windowPane, ccpnSpectrum)
+      
+      if not view :
+        
+        self.updateInfoText('This peak cannot be displayed in the window you chose.')
+      
+      axisMappingByRefExpDimNumber = {}
+      
+      for axisMapping in view.axisMappings :
+        
+        refExpDimNumber = axisMapping.analysisDataDim.dataDim.expDim.refExpDim.dim
+      
+        axisMappingByRefExpDimNumber[refExpDimNumber] = axisMapping
+        
+        
+      positionToGoTo = {}
+      markPosition = []
+      axisTypes = []
+      
+      for resonance, contrib in zip(selectedPeakLink.getResonances(), simPeak.getContribs()) :
+        
+        dimNumber = contrib.getDimNumber()
+        
+        axisMapping = axisMappingByRefExpDimNumber.get(dimNumber)
+        
+        label = axisMapping.label
+          
+        if resonance :
+          
+          axisType = axisMapping.axisPanel.axisType
+          chemicalShift = resonance.getChemicalShift()
+          
+          positionToGoTo[label] = chemicalShift
+          markPosition.append(chemicalShift)
+          axisTypes.append(axisType)
+          
+        else :                                                    # Not drawing a mark at this chemical shift, just hoovering to the good region in the spectrum 
+          
+          ccpCode = contrib.getResidue().getCcpCode()
+          atomName = contrib.getAtomName()
+          
+          medianChemicalShift = self.getMedianChemicalShift(ccpCode, atomName)
+          
+          if medianChemicalShift :
+          
+            positionToGoTo[label] = medianChemicalShift
+        
+      
+      if positionToGoTo :
+        
+        windowFrame = self.windowPane.getWindowFrame()
+        windowFrame.gotoPosition(positionToGoTo)
+        
+      if markPosition :  
+        
+        createNonPeakMark(markPosition, axisTypes)
+
+  def getMedianChemicalShift(self, ccpCode, atomName) :
+    
+    nmrRefStore = self.project.findFirstNmrReferenceStore(molType='protein',ccpCode=ccpCode)
+
+    chemCompNmrRef = nmrRefStore.findFirstChemCompNmrRef(sourceName='RefDB')
+    
+    chemCompVarNmrRef = chemCompNmrRef.findFirstChemCompVarNmrRef(linking='any',descriptor='any')
+    
+    if not chemCompVarNmrRef :
+      
+      return None
+    
+    chemAtomNmrRef = chemCompVarNmrRef.findFirstChemAtomNmrRef(name=atomName)
+    
+    if not chemAtomNmrRef :
+      
+      return None
+    
+    distribution   = chemAtomNmrRef.distribution
+    
+    if not distribution :
+      
+      return None
+    
+    maxIndex = max([(value,index) for index, value in enumerate(distribution)])[1]
+
+    return chemAtomNmrRef.refValue + chemAtomNmrRef.valuePerPoint*(maxIndex-chemAtomNmrRef.refPoint)
 
   def selectWindowPane(self, windowPane):
   
@@ -1418,7 +1556,9 @@ class ViewAssignmentPopup(BasePopup):
     
     self.windowPulldown.setup(names, windowPanes, index)
     
-  def selectPeak(self, obj):
+  def selectPeak(self, obj):                                      #Todo: remove not used any longer
+    
+    print self.displayPeakTable.currentObjects
     
     if obj != self.selectedPeak :
       
