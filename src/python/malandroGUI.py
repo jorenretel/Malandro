@@ -1916,12 +1916,9 @@ class ViewAssignmentPopup(BasePopup):
     
     for residue, label in zip(resList, labels) :
       
-      print residue.getSeqCode()
-      
       text = str(residue.getSeqCode()) + ' ' + residue.getCcpCode()
       
       label.set(text)
-
 
   def updateResultsTopRowButtons(self) :
     
