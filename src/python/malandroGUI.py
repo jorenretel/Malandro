@@ -997,19 +997,19 @@ class ViewAssignmentPopup(BasePopup):
     resultsThirdFrame.grid_columnconfigure(0,  weight=1) 
    
     
-    tabbedFrameB = TabbedFrame(resultsThirdFrame,options=['Spin System',  'Peaks',  'Peaks also appearing in spectra where they should not'],
+    tabbedFrameB = TabbedFrame(resultsThirdFrame,options=['Spin System',  'Peaks'],
                               callback=self.toggleTab, grid=(0,0))
     self.tabbedFrameB = tabbedFrame
 
-    SpinSystemFrame,  PeakFrame,  negPeakFrame = tabbedFrameB.frames
+    SpinSystemFrame,  PeakFrame = tabbedFrameB.frames
     
 
     SpinSystemFrame.grid_rowconfigure(0, weight=1)
     PeakFrame.grid_rowconfigure(1, weight=1)
-    negPeakFrame.grid_rowconfigure(0, weight=1)
+    #negPeakFrame.grid_rowconfigure(0, weight=1)
     SpinSystemFrame.grid_columnconfigure(0,  weight=1)    
     PeakFrame.grid_columnconfigure(0,  weight=1)    
-    negPeakFrame.grid_columnconfigure(0,  weight=1)    
+    #negPeakFrame.grid_columnconfigure(0,  weight=1)    
     
     
     headingList = [ 'residue','assigned to in project','user defined sequence', 'selected annealing result','%']
@@ -1047,7 +1047,13 @@ class ViewAssignmentPopup(BasePopup):
 
     headingList = [ '#','spectrum','Dim1', 'Dim2','Dim3', 'c.s. dim1','c.s. dim2','c.s. dim3', 'colabelling']
     
-    tipTexts = [None, None, None, None, None, None, None, None, None]
+    tipTexts = ['Peak number, only present when the peak was actually found in the spectrum.',
+                'Name of the spectrum',
+                'Name of atomSet measured in this dimension. Dimension number corresponds to Ref Exp Dim as indicated by going in the main menu to Experiment-->Experiments-->Experiment Type',
+                'Name of atomSet measured in this dimension. Dimension number corresponds to Ref Exp Dim as indicated by going in the main menu to Experiment-->Experiments-->Experiment Type',
+                'Name of atomSet measured in this dimension. Dimension number corresponds to Ref Exp Dim as indicated by going in the main menu to Experiment-->Experiments-->Experiment Type',
+                'Chemical Shift', 'Chemical Shift', 'Chemical Shift',
+                'Colabbeling fraction over all nuclei that are on the magnetization transfer pathway during the experiment that gave rise to the peak, including visited nuclei that were not measured in any of the peak dimensions']
     
     #editWidgets = [None, None, None, None, None, None, None, None, None]
     
@@ -1066,12 +1072,12 @@ class ViewAssignmentPopup(BasePopup):
     #editGetCallbacks=editGetCallbacks,
     
     
-    self.displayNegPeakTable = ScrolledMatrix(negPeakFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
-    self.displayNegPeakTable.grid(row=0, column=0, sticky='nsew')
+    #self.displayNegPeakTable = ScrolledMatrix(negPeakFrame,headingList=headingList,
+    #                                   editWidgets=editWidgets, multiSelect=False,
+    #                                   editGetCallbacks=editGetCallbacks,
+    #                                   editSetCallbacks=editSetCallbacks,
+    #                                   tipTexts=tipTexts)
+    #self.displayNegPeakTable.grid(row=0, column=0, sticky='nsew')
     
     
     self.infoLabel = Label(guiFrame,text=' ')
@@ -2188,7 +2194,7 @@ class ViewAssignmentPopup(BasePopup):
       
     pass
       
-  def changeUse(self,  x):
+  def changeUse(self, x):
     
     if self.selectedAutoSpec.used == False :
       self.selectedAutoSpec.changeSpectrumUse(True)
@@ -2378,7 +2384,6 @@ class ViewAssignmentPopup(BasePopup):
     colorList = (NdataSets/Ncolors)*colors + colors[:NdataSets%Ncolors]
     
     self.energyPlot.update(dataSets=self.energyDataSets, dataColors=colorList)
-    
     
   def updateAcceptanceConstantList(self,event=None) :
     
