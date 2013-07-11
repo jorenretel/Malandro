@@ -200,8 +200,6 @@ cdef class myDataModel :
       
       spectrum.connectToProject(nmrProject)
       
-      
-    
   def getChain(self) :
   
     return self.myChain

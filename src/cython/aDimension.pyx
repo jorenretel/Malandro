@@ -48,3 +48,7 @@ cdef class aDimension :
     
     return self.dimNumber
   
+  def getCcpnDimension(self) :
+    
+    return self.ccpnDim
+  

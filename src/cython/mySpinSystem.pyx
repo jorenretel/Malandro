@@ -347,52 +347,72 @@ cdef class mySpinSystem :
       
       resonance.connectToProject()
       
-  def getDescription(self) :
-    
-    cdef aResidue residue
+  def getDescription(self, noSerialWhenSeqCodeIsPresent=False) :
     
     if self.isJoker :
       
       return 'Joker'
     
-    residues = self.DataModel.myChain.residues
+    info = []
     
-    spinSystemInfo = '{' + str(self.spinSystemNumber) + '}'
+    resonanceGroup = self.ccpnResonanceGroup
     
-    if self.ccpnSeqCode :
+    if resonanceGroup.residue :
       
-      residue = residues[self.ccpnSeqCode -1]
-      
-      spinSystemInfo += '-' + str(self.ccpnSeqCode) + ' ' + residue.ccpCode
-      
-    elif self.tentativeSeqCodes :
-      
-      spinSystemInfo += '-'
-      
-      for seqCode in self.tentativeSeqCodes :
+      serial = '{%s}-' %resonanceGroup.serial
+      resCode = resonanceGroup.residue.seqCode
+      ccpCode = resonanceGroup.residue.ccpCode
+      if noSerialWhenSeqCodeIsPresent :
         
-        residue = residues[seqCode -1]
-      
-        spinSystemInfo += str(seqCode) + ' ' + residue.ccpCode + '? /'
+        serial = ''
         
-      spinSystemInfo = spinSystemInfo[:-1]
+      return '%s%s%s' %(serial,resCode,ccpCode)
+    
+    
+    elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
       
-    elif self.ccpCode :
+      ccpCodes = []
+      seqCodes = []
       
-      spinSystemInfo += '-' + self.ccpCode
+      spinSystemInfo = '' 
       
-    elif self.tentativeCcpCodes :
-      
-      spinSystemInfo += '-'
-      
-      for ccpCode in self.tentativeCcpCodes :
+      for residueProb in resonanceGroup.residueProbs:
+        if not residueProb.weight:
+          continue
+          
+        residue = residueProb.possibility
         
-        spinSystemInfo += ' ' + ccpCode + '? /'
-        
-      spinSystemInfo = spinSystemInfo[:-1]
+        if residue :
+          
+          spinSystemInfo += '%s%s?/' %(residue.seqCode,residue.ccpCode)
       
-    return spinSystemInfo  
+      if spinSystemInfo :
+        
+        spinSystemInfo = spinSystemInfo[:-1]
+        
+        if noSerialWhenSeqCodeIsPresent :
+          
+          return spinSystemInfo
+          
+      return '{%s}-%s' %(resonanceGroup.serial, spinSystemInfo)
+      
 
+    elif resonanceGroup.ccpCode :
+      
+      return '{%s}-%s' %(resonanceGroup.serial, resonanceGroup.ccpCode)
+    
+    elif resonanceGroup.residueTypeProbs :
+        
+      typeProbCcpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
+      
+      ccpCodeString = (('%s/' * len(typeProbCcpCodes)) %tuple(typeProbCcpCodes))[:-1]
+      
+      return '{%s}-%s' %(resonanceGroup.serial, ccpCodeString)
+    
+    else :
+      
+      return '{%s}' %resonanceGroup.serial
+    
   def getIsJoker(self) :
     
     return self.isJoker
@@ -417,5 +437,7 @@ cdef class mySpinSystem :
     
     return self.ccpnSeqCode
   
-  
+  def getCcpnResonanceGroup(self) :
+    
+    return self.ccpnResonanceGroup
   

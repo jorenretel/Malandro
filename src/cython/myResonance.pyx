@@ -133,4 +133,8 @@ cdef class myResonance :
   def getAtomName(self) :
     
     return self.atomName
+  
+  def getCcpnResonance(self) :
+    
+    return self.ccpnResonance
 

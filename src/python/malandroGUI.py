@@ -92,6 +92,8 @@ from ccpnmr.analysis.core.Util import getAnalysisDataDim
 
 from ccpnmr.analysis.core.MarkBasic import createPeakMark, createNonPeakMark
 
+from ccpnmr.analysis.core.AssignmentBasic import assignResToDim, assignSpinSystemResidue
+
 
 import ccpnmr.analysis.core.WindowBasic as WindowBasic
 from ccpnmr.analysis.core.WindowBasic import getSpectrumWindowView
@@ -1043,7 +1045,18 @@ class ViewAssignmentPopup(BasePopup):
                                       tipText='Choose the spectrum window for locating peaks or strips')
                                     
     self.windowPulldown.grid(row=0, column=1, sticky='w')
+    
+    self.assignSelectedPeaksButton = Button(buttonFrameinPeakFrame, text='Assign Resonances to Peak(s)',
+                              borderwidth=1, padx=2, pady=1,command=self.assignSelectedPeaks,
+                              tipText='Assign resonances to peak dimensions, this of course only works when the peak is found in the spectrum.')
 
+    self.assignSelectedPeaksButton.grid(row=0, column=2, sticky='ew')
+    
+    self.assignSelectedSpinSystemsToResiduesButton = Button(buttonFrameinPeakFrame, text='Assign Spinsystems to Residues',
+                              borderwidth=1, padx=2, pady=1,command=self.assignSelectedSpinSystemsToResidues,
+                              tipText='Assign spinsystems to residues')
+
+    self.assignSelectedSpinSystemsToResiduesButton.grid(row=0, column=3, sticky='ew')
 
     headingList = [ '#','spectrum','Dim1', 'Dim2','Dim3', 'c.s. dim1','c.s. dim2','c.s. dim3', 'colabelling']
     
@@ -1196,14 +1209,24 @@ class ViewAssignmentPopup(BasePopup):
       
       res = residues[resNumber-4 + number]
       spinSystem = res.solutions[solutionNumber]
-      self.updatePeakTableIntra(res, spinSystem)
+      
+      self.selectedLink = None
+      if res and spinSystem :
+        self.selectedLink = res.getIntraLink(spinSystem)
+
+      #self.updatePeakTableIntra(res, spinSystem)
       self.updateSpinSystemTable(spinSystem)
       
     elif self.selectedResidueB :
       
       res = residues[resNumber-4 + number]
       spinSystem = res.userDefinedSolution
-      self.updatePeakTableIntra(res, spinSystem)
+      
+      self.selectedLink = None
+      if res and spinSystem :
+        self.selectedLink = res.getIntraLink(spinSystem)
+      
+      #self.updatePeakTableIntra(res, spinSystem)
       self.updateSpinSystemTable(spinSystem)
        
     elif self.selectedLinkA:
@@ -1214,7 +1237,11 @@ class ViewAssignmentPopup(BasePopup):
       spinSystemA = resA.solutions[solutionNumber]
       spinSystemB = resB.solutions[solutionNumber]
       
-      self.updatePeakTable(resA, spinSystemA, spinSystemB)
+      self.selectedLink = None
+      if resA and spinSystemA and spinSystemB :
+        self.selectedLink = resA.getLink(spinSystemA,spinSystemB)
+        
+      #self.updatePeakTable(resA, spinSystemA, spinSystemB)
       
     elif self.selectedLinkB : #and resA.userDefinedSolution and resB.userDefinedSolution:  
         
@@ -1224,13 +1251,19 @@ class ViewAssignmentPopup(BasePopup):
       spinSystemA = resA.userDefinedSolution
       spinSystemB = resB.userDefinedSolution
       
-      self.updatePeakTable(resA, spinSystemA, spinSystemB)
-
+      self.selectedLink = None
+      if resA and spinSystemA and spinSystemB :
+        self.selectedLink = resA.getLink(spinSystemA,spinSystemB)
+      
+      #self.updatePeakTable(resA, spinSystemA, spinSystemB)
+      
+    self.updatePeakTable()
+    
   def emptyPeakTable(self) :
     
     self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
         
-  def updatePeakTableIntra(self, res,  spinSystem):
+  def updatePeakTableIntra(self, res,  spinSystem):                                               #TODO:remove, not used any longer
     '''
     Updates the peak table to show the peaks that are found for a sequencial pair of
     spinsystems A and B. If there is not a linkobject found for spinsystems A and B the
@@ -1316,25 +1349,23 @@ class ViewAssignmentPopup(BasePopup):
       
       self.selectedPeak = None
 
-  def updatePeakTable(self, resA,  spinSystemA,  spinSystemB):
+  def updatePeakTable(self):
     '''
     Updates the peak table to show the peaks that are found for a sequencial pair of
     spinsystems A and B. If there is not a linkobject found for spinsystems A and B the
     table is emptied. Also sets the selected peak to None.
     '''
     
-    if not resA or not spinSystemA or not spinSystemB :
-      
-      self.emptyPeakTable()
-      return
-    
-    link = resA.getLink(spinSystemA,spinSystemB)
+    link = self.selectedLink
     
     if not link :
       
       self.emptyPeakTable()
       
     else :
+      
+      resA, resB = link.getResidues()
+      spinSystemA, spinSystemB = link.getSpinSystems()
       
       data = []
       
@@ -1366,21 +1397,13 @@ class ViewAssignmentPopup(BasePopup):
 
           if resA is simulatedPeakContrib.getResidue() :
 
-            spinSystemNumber = spinSystemA.getSerial()
+            spinSystemDescription = spinSystemA.getDescription(noSerialWhenSeqCodeIsPresent=True)
 
           else :
             
-            spinSystemNumber = spinSystemB.getSerial()
+            spinSystemDescription = spinSystemB.getDescription(noSerialWhenSeqCodeIsPresent=True)
             
-          #if simulatedPeakContrib.firstOrSecondResidue == 1 :
-          #  
-          #  spinSystemNumber = spinSystemA.spinSystemNumber
-          #  
-          #elif simulatedPeakContrib.firstOrSecondResidue == 2 :
-          #  
-          #  spinSystemNumber = spinSystemB.spinSystemNumber
-            
-          oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
+          oneRow[dimNumber+1] = '%s %s' %(spinSystemDescription, atomName) #ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
           
         if realPeak :
 
@@ -1406,9 +1429,7 @@ class ViewAssignmentPopup(BasePopup):
         objectList.append(peakLink)
       
       self.displayPeakTable.update(objectList=objectList,textMatrix=data)
-      
-      
-      
+
       self.selectedPeak = None  
 
   def findPeak(self):
@@ -1501,7 +1522,54 @@ class ViewAssignmentPopup(BasePopup):
       if markPosition :  
         
         createNonPeakMark(markPosition, axisTypes)
+        
+  def assignSelectedPeaks(self) :
 
+    selectedPeakLinks = self.displayPeakTable.currentObjects
+    
+    for pl in selectedPeakLinks :
+      
+      peak = pl.getPeak()
+      
+      if peak :
+        
+        for resonance, dimension in zip(pl.getResonances(), peak.getDimensions()) :
+          
+          ccpnResonance = resonance.getCcpnResonance()
+          ccpnDimension = dimension.getCcpnDimension()
+          
+          assignResToDim(ccpnDimension, ccpnResonance)
+          
+  def assignSelectedSpinSystemsToResidues(self) :
+    
+    link = self.selectedLink
+    
+    residues = link.getResidues()
+    spinSystems = link.getSpinSystems()
+    
+    if len(set(residues)) == 1 :                          #Intra-residual
+      
+      if spinSystems[0] and residues[0] : 
+      
+        assignSpinSystemResidue(spinSystems[0].getCcpnResonanceGroup(),residues[0].getCcpnResidue())
+        
+    elif len(set(spinSystems)) == 1 :
+        
+      self.updateInfoText('Cannot assign the same spin system to 2 different residues.')
+      
+    else :
+      
+      for spinSystem, residue in zip(spinSystems, residues) :
+        
+        if spinSystem and residue:
+        
+          assignSpinSystemResidue(spinSystem.getCcpnResonanceGroup(),residue.getCcpnResidue())
+      
+    self.updateResultsTopRowButtons()    
+    self.updateResultsBottomRowButtons()
+    self.updateResultsTable()
+    self.updatePeakTable()      
+        
   def getMedianChemicalShift(self, ccpCode, atomName) :
     
     nmrRefStore = self.project.findFirstNmrReferenceStore(molType='protein',ccpCode=ccpCode)
@@ -1936,7 +2004,7 @@ class ViewAssignmentPopup(BasePopup):
       
       spinsys = res.solutions[self.selectedSolution-1]
       
-      text = spinsys.getDescription() #str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': ' + spinsys.getDescription() #self.getStringDescriptionOfSpinSystem(spinsys)
+      text = spinsys.getDescription(noSerialWhenSeqCodeIsPresent=False) #str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': ' + spinsys.getDescription() #self.getStringDescriptionOfSpinSystem(spinsys)
       
       button.config(text=text)
       
@@ -1951,7 +2019,7 @@ class ViewAssignmentPopup(BasePopup):
       if res.userDefinedSolution :
         
         selectedSpinSystem = res.userDefinedSolution
-        text = selectedSpinSystem.getDescription() #self.getStringDescriptionOfSpinSystem(selectedSpinSystem)
+        text = selectedSpinSystem.getDescription(noSerialWhenSeqCodeIsPresent=False) #self.getStringDescriptionOfSpinSystem(selectedSpinSystem)
         
         if len(selectedSpinSystem.userDefinedSolutions) > 1 :
       
@@ -2011,8 +2079,8 @@ class ViewAssignmentPopup(BasePopup):
 
     residues = self.connector.results.myChain.residues[resNumber - 3 : resNumber + 2]
   
-    return residues
-  
+    return residues 
+
   def pickColorByPercentage(self, percentage):
 
     percentage = float(percentage)

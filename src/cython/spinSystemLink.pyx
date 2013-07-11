@@ -5,6 +5,8 @@ cdef class spinSystemLink :
   
   cdef list realPeaks, simulatedPeaks
   
+  cdef aResidue residue1, residue2
+  
   cdef mySpinSystem spinSystem1, spinSystem2
   
   cdef list notFoundSimulatedPeaks
@@ -16,6 +18,8 @@ cdef class spinSystemLink :
   def __init__(self):
     
     self.score = 0
+    self.residue1 = None
+    self.residue2 = None
     self.spinSystem1 = None
     self.spinSystem2 = None
     self.simulatedPeaks = []
@@ -101,3 +105,13 @@ cdef class spinSystemLink :
     #return self.peakLinks + self.notFoundPeakLinks
     
     return self.getPeakLinks() + self.getNotFoundPeakLinks()
+  
+  def getResidues(self) :
+    
+    return (self.residue1, self.residue2)
+  
+  def getSpinSystems(self) :
+    
+    return (self.spinSystem1, self.spinSystem2)
+  
+  

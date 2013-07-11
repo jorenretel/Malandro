@@ -210,6 +210,8 @@ cdef class aResidue :
       else :
         
         linkObject = spinSystemLink()
+        linkObject.residue1 = self
+        linkObject.residue2 = self
         linkObject.spinSystem1 = spinSys1
         linkObject.spinSystem2 = spinSys2
         self.intraDict[spinSys1.spinSystemNumber] = linkObject
@@ -223,6 +225,9 @@ cdef class aResidue :
       else :
         
         linkObject = spinSystemLink()
+        
+        linkObject.residue1 = self
+        linkObject.residue2 = self.nextResidue
         linkObject.spinSystem1 = spinSys1
         linkObject.spinSystem2 = spinSys2
         self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)] = linkObject
@@ -322,3 +327,8 @@ cdef class aResidue :
   def getCcpCode(self):
     
     return self.ccpCode
+  
+  def getCcpnResidue(self) :
+    
+    return self.ccpnResidue
+
