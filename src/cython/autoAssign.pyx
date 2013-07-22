@@ -152,6 +152,8 @@ cdef class Malandro :
         
     self.updateInfoText('Simulating spectra...')
     
+    self.DataModel.setupLinks()
+    
     self.simulateSpectra()
     
     self.updateInfoText('Evaluating possible dimensional contributions to peak in real spectra...')
@@ -244,12 +246,12 @@ cdef class Malandro :
       
       dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)
     
-    print 'assigned:'
-    print len(assignedSpinSystems['Val'])
-    print assignedSpinSystems['Val']
-    for ss in assignedSpinSystems['Val'] :
+    #print 'assigned:'
+    #print len(assignedSpinSystems['Val'])
+    #print assignedSpinSystems['Val']
+    #for ss in assignedSpinSystems['Val'] :
       
-      print ss.getCcpnSeqCode()
+    #  print ss.getCcpnSeqCode()
     
     for res in DataModel.myChain.residues :
       
@@ -322,11 +324,11 @@ cdef class Malandro :
               
               listWithFittingSpinSystems.append(spinSystem)    
             
-        if ccpCode == 'Val' :
-          print '---'
-          print len(listWithSpinSystems)
-          print listWithSpinSystems
-          print listWithFittingSpinSystems       
+        #if ccpCode == 'Val' :
+          #print '---'
+          #print len(listWithSpinSystems)
+          #print listWithSpinSystems
+          #print listWithFittingSpinSystems       
         if len(listWithFittingSpinSystems) > 0 :      
           
                       

@@ -243,6 +243,7 @@ cdef class aResidue :
       linkObject.notFoundSimulatedPeaks.append(simPeak)
       #linkObject.notFoundPeakLinks.append(newPeakLink)
       
+
   cdef spinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
     
     #cdef bool joker1

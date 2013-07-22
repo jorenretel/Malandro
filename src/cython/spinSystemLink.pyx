@@ -15,13 +15,13 @@ cdef class spinSystemLink :
   
   cdef list notFoundPeakLinks
   
-  def __init__(self):
+  def __init__(self, residue1=None,residue2=None,spinSystem1=None,spinSystem2=None):
     
     self.score = 0
-    self.residue1 = None
-    self.residue2 = None
-    self.spinSystem1 = None
-    self.spinSystem2 = None
+    self.residue1 = residue1
+    self.residue2 = residue2
+    self.spinSystem1 = spinSystem1
+    self.spinSystem2 = spinSystem2
     self.simulatedPeaks = []
     self.realPeaks = []
     self.notFoundSimulatedPeaks = []

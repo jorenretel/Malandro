@@ -134,6 +134,38 @@ cdef class myDataModel :
           self.addToDictWithLists(self.untypedSpinSystems, ccpCode, newSpinSystem)
           self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
           self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+  
+  def setupLinks(self) :
+  
+    cdef aResidue resA, resB
+    cdef dict linkDict, intraDict
+    cdef str ccpCodeA, ccpCodeB
+    cdef mySpinSystem spinSystemA, spinSystemB
+    cdef list residues
+    
+    residues = self.myChain.residues
+    
+    for resA, resB in zip(residues,residues[1:]):
+
+      ccpCodeA = resA.ccpCode
+      ccpCodeB = resB.ccpCode
+      
+      linkDict = resA.linkDict
+      intraDict = resA.intraDict
+      
+      for spinSystemA in self.mySpinSystems[ccpCodeA] :
+        
+        intraDict[spinSystemA.spinSystemNumber] = spinSystemLink(residue1=resA,residue2=resA,spinSystem1=spinSystemA,spinSystem2=spinSystemA)
+        
+        for spinSystemB in self.mySpinSystems[ccpCodeB] :
+          
+          linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = spinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
+          
+          
+          
+          
+      
+      
         
   cdef void addToDictWithLists(self, dict dictToAddTo, key,value) :
     
