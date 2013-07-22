@@ -10,6 +10,8 @@ cdef class myDataModel :
   cdef Malandro auto
   
   cdef double minIsoFrac
+  
+  cdef object nmrProject, project
 
 
   def __init__(self, Malandro auto):
@@ -185,6 +187,9 @@ cdef class myDataModel :
        they can not be set again.
     '''
     
+    self.project = project
+    self.nmrProject = nmrProject
+    
     # Connect the chain, residues and atoms to the corresponding chain, residues and atoms in ccpn.
     self.myChain.connectToProject(project)
     
@@ -208,3 +213,6 @@ cdef class myDataModel :
     
     return self.mySpinSystems
   
+  def getSpectra(self) :
+    
+    return self.spectra

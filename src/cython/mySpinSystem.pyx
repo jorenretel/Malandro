@@ -439,5 +439,20 @@ cdef class mySpinSystem :
   
   def getCcpnResonanceGroup(self) :
     
-    return self.ccpnResonanceGroup
+    #return self.ccpnResonanceGroup
+  
+    if self.isJoker :
+      
+      return None
+    
+    ccpnResonanceGroup = self.DataModel.nmrProject.findFirstResonanceGroup(serial=self.spinSystemNumber)
+    
+    if ccpnResonanceGroup :
+      
+      return ccpnResonanceGroup
+    
+    else :
+      
+      print 'Error: could not find spin system %s , it possibly does not exist anylonger because it was deleted or merged with another spin-system.' %str(self.spinSystemNumber)
+      return None
   

@@ -52,15 +52,13 @@ cdef class Malandro :
   
   cdef int amountOfSteps
   
-  cdef object shiftList
+  cdef object project, shiftList
   
   cdef object nmrProject
   
   cdef double minIsoFrac
   
   cdef list selectedSpectra
-  
-  cdef object project
   
   cdef str sourceName
   
@@ -142,6 +140,9 @@ cdef class Malandro :
     self.DataModel = myDataModel(self)
         
     self.updateInfoText('Setup-up all spectra...')
+    
+    self.DataModel.project = self.project
+    self.DataModel.nmrProject = self.nmrProject
     
     self.DataModel.setupSpectra()
 
@@ -243,6 +244,13 @@ cdef class Malandro :
       
       dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)
     
+    print 'assigned:'
+    print len(assignedSpinSystems['Val'])
+    print assignedSpinSystems['Val']
+    for ss in assignedSpinSystems['Val'] :
+      
+      print ss.getCcpnSeqCode()
+    
     for res in DataModel.myChain.residues :
       
       isAssigned = False
@@ -314,8 +322,11 @@ cdef class Malandro :
               
               listWithFittingSpinSystems.append(spinSystem)    
             
-          
-              
+        if ccpCode == 'Val' :
+          print '---'
+          print len(listWithSpinSystems)
+          print listWithSpinSystems
+          print listWithFittingSpinSystems       
         if len(listWithFittingSpinSystems) > 0 :      
           
                       
@@ -329,7 +340,7 @@ cdef class Malandro :
           
           if randomSpinSystem in listWithFittingSpinSystems :
           
-            listWithFittingSpinSystems.remove(randomSpinSystem)
+            listWithSpinSystems.remove(randomSpinSystem)
             
             
           

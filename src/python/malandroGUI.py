@@ -64,7 +64,7 @@ from memops.gui.Spacer import Spacer
 from memops.gui.TabbedFrame import TabbedFrame
 from memops.gui.ToggleLabel import ToggleLabel
 from memops.gui.FileSelect import FileSelect,  FileType
-from memops.gui.MessageReporter import showWarning,  showYesNo
+from memops.gui.MessageReporter import showWarning,  showYesNo, showMulti
 from memops.gui.ScrolledGraph import ScrolledGraph
 from memops.gui.Entry import Entry
 
@@ -92,12 +92,15 @@ from ccpnmr.analysis.core.Util import getAnalysisDataDim
 
 from ccpnmr.analysis.core.MarkBasic import createPeakMark, createNonPeakMark
 
-from ccpnmr.analysis.core.AssignmentBasic import assignResToDim, assignSpinSystemResidue
+from ccpnmr.analysis.core.AssignmentBasic import assignResToDim #, assignSpinSystemResidue
 
 
 import ccpnmr.analysis.core.WindowBasic as WindowBasic
 from ccpnmr.analysis.core.WindowBasic import getSpectrumWindowView
 
+import modifiedAssignmentBasic
+reload(modifiedAssignmentBasic)
+from modifiedAssignmentBasic import assignSpinSystemstoResidues
 
 from src.cython.malandro import Malandro, myDataModel
 
@@ -110,6 +113,9 @@ from pythonStyleClasses import *
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
 
+import assignMentTransferTab
+reload(assignMentTransferTab)
+from assignMentTransferTab import AssignMentTransferTab
 
 
 class connector(object):
@@ -342,6 +348,7 @@ class connector(object):
       self.getResults()
         
       self.GUI.updateResultsTab()
+      self.GUI.assignTab.update()
     
   def checkPoint1(self):
     
@@ -673,11 +680,13 @@ class ViewAssignmentPopup(BasePopup):
     guiFrame.grid_columnconfigure(0, weight=1)
     guiFrame.grid_rowconfigure(0, weight=1)
 
-    tabbedFrame = TabbedFrame(guiFrame,options=['Spectra Properties',  'Network Anchoring',  'Results', 'Save and Load'],
+    tabbedFrame = TabbedFrame(guiFrame,options=['Spectra Properties',  'Network Anchoring',  'Results','Bulk Transfer Assignments To Project', 'Save and Load'],
                               callback=self.toggleTab, grid=(0,0))
     self.tabbedFrame = tabbedFrame
 
-    autoFrame,  NAFrame,  resultsFrame,  saveFrame = tabbedFrame.frames
+    autoFrame,  NAFrame,  resultsFrame, assignFrame, saveFrame = tabbedFrame.frames
+    
+    self.assignTab = AssignMentTransferTab(self, assignFrame)
     
     file_types = [ FileType('pyc', ['*.pyc']) ]
     self.fileselectionBox = FileSelect(saveFrame, multiSelect=False,  file_types=file_types)
@@ -1033,30 +1042,34 @@ class ViewAssignmentPopup(BasePopup):
     self.spinSysTable.grid(row=0, column=0, sticky='nsew')
     
     buttonFrameinPeakFrame = Frame(PeakFrame)
-    buttonFrameinPeakFrame.grid()
+    buttonFrameinPeakFrame.grid(sticky='ew')
 
-    self.findButton  = Button(buttonFrameinPeakFrame, text=' Find Peak ',
+    self.findButton  = Button(buttonFrameinPeakFrame, text=' Go to Peak ',
                               borderwidth=1, padx=2, pady=1,command=self.findPeak,
                               tipText='Locate the currently selected peak in the specified window')
                               
-    self.findButton.grid(row=0, column=0, sticky='ew')
+    self.findButton.grid(row=0, column=0, sticky='e')
+    
+    label = Label(buttonFrameinPeakFrame,text='in window:')
+    
+    label.grid(row=0, column=1, sticky='w')
 
     self.windowPulldown = PulldownList(buttonFrameinPeakFrame, callback=self.selectWindowPane,
                                       tipText='Choose the spectrum window for locating peaks or strips')
                                     
-    self.windowPulldown.grid(row=0, column=1, sticky='w')
+    self.windowPulldown.grid(row=0, column=2, sticky='w')
     
     self.assignSelectedPeaksButton = Button(buttonFrameinPeakFrame, text='Assign Resonances to Peak(s)',
                               borderwidth=1, padx=2, pady=1,command=self.assignSelectedPeaks,
                               tipText='Assign resonances to peak dimensions, this of course only works when the peak is found in the spectrum.')
 
-    self.assignSelectedPeaksButton.grid(row=0, column=2, sticky='ew')
+    self.assignSelectedPeaksButton.grid(row=0, column=3, sticky='ew')
     
     self.assignSelectedSpinSystemsToResiduesButton = Button(buttonFrameinPeakFrame, text='Assign Spinsystems to Residues',
                               borderwidth=1, padx=2, pady=1,command=self.assignSelectedSpinSystemsToResidues,
                               tipText='Assign spinsystems to residues')
 
-    self.assignSelectedSpinSystemsToResiduesButton.grid(row=0, column=3, sticky='ew')
+    self.assignSelectedSpinSystemsToResiduesButton.grid(row=0, column=4, sticky='ew')
 
     headingList = [ '#','spectrum','Dim1', 'Dim2','Dim3', 'c.s. dim1','c.s. dim2','c.s. dim3', 'colabelling']
     
@@ -1093,6 +1106,9 @@ class ViewAssignmentPopup(BasePopup):
     #self.displayNegPeakTable.grid(row=0, column=0, sticky='nsew')
     
     
+    
+    
+    
     self.infoLabel = Label(guiFrame,text=' ')
     
     self.infoLabel.grid(row=2, column=0, sticky='w')
@@ -1104,7 +1120,7 @@ class ViewAssignmentPopup(BasePopup):
     self.setupSpectrumSettings()
     self.updateAutoMatrix()
      
-  def getCcpnPeakForMyPeak(self,  myPeak) :
+  def getCcpnPeakForMyPeak(self,  myPeak) :                         #TODO: remove, not used any longer
     
     spectrumName = myPeak.spectrum.name
     
@@ -1262,92 +1278,6 @@ class ViewAssignmentPopup(BasePopup):
   def emptyPeakTable(self) :
     
     self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
-        
-  def updatePeakTableIntra(self, res,  spinSystem):                                               #TODO:remove, not used any longer
-    '''
-    Updates the peak table to show the peaks that are found for a sequencial pair of
-    spinsystems A and B. If there is not a linkobject found for spinsystems A and B the
-    table is emptied. Also sets the selected peak to None.
-    '''
-    
-    if not res or not spinSystem :
-      
-      self.emptyPeakTable()
-      return
-    
-    link = None
-    
-    spinSystemNumber = spinSystem.getSerial()
-    
-    #link = res.intraDict.get(spinSystemNumber)
-    
-    link = res.getIntraLink(spinSystem)
-        
-    if not link :
-      
-      self.emptyPeakTable()
-      return
-      
-    else :
-      
-      data = []
-      
-      objectList = []
-      
-      peakLinks = link.getAllPeakLinks()
-      
-      #simPeaks = link.getSimulatedPeaks()
-      #realPeaks = link.getRealPeaks()
-      
-      #for simPeak,  realPeak in zip(simPeaks, realPeaks) :
-       
-      for peakLink in peakLinks: #link.getPeakLinks() :
-        
-        realPeak = peakLink.getPeak()
-        simPeak = peakLink.getSimulatedPeak()
-      
-        oneRow = [None, None, None, None, None, None, None, None, None]
-        
-        oneRow[1] = simPeak.getSpectrum().name
-
-        oneRow[8] = simPeak.colabelling
-        
-        for simulatedPeakContrib in simPeak.getContribs() :
-          
-          atomName = simulatedPeakContrib.getAtomName()
-          
-          ccpCode = simulatedPeakContrib.getCcpCode()
-          
-          dimNumber = simulatedPeakContrib.getDimNumber()
-            
-          oneRow[dimNumber+1] = ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
-          
-        if realPeak :
-          
-          oneRow[0] = realPeak.getSerial()
-         
-          for dim in realPeak.getDimensions() :
-              
-            oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
-            
-        else :
-          
-          for resonance, simulatedPeakContrib in zip(peakLink.getResonances(), simPeak.getContribs()) :
-            
-            if resonance :
-            
-              oneRow[simulatedPeakContrib.getDimNumber()+4] = resonance.getChemicalShift()
-              
-            else :
-              
-              oneRow[simulatedPeakContrib.getDimNumber()+4] = '?'
-          
-        data.append(oneRow)
-        objectList.append(peakLink)
-      
-      self.displayPeakTable.update(objectList=objectList,textMatrix=data)
-      
-      self.selectedPeak = None
 
   def updatePeakTable(self):
     '''
@@ -1547,29 +1477,23 @@ class ViewAssignmentPopup(BasePopup):
     residues = link.getResidues()
     spinSystems = link.getSpinSystems()
     
-    if len(set(residues)) == 1 :                          #Intra-residual
+    ccpnSpinSystems = []
+    ccpnResidues = []
+    
+    for spinSys,res in zip(spinSystems, residues) :
       
-      if spinSystems[0] and residues[0] : 
-      
-        assignSpinSystemResidue(spinSystems[0].getCcpnResonanceGroup(),residues[0].getCcpnResidue())
+      if spinSys and res:
         
-    elif len(set(spinSystems)) == 1 :
-        
-      self.updateInfoText('Cannot assign the same spin system to 2 different residues.')
-      
-    else :
-      
-      for spinSystem, residue in zip(spinSystems, residues) :
-        
-        if spinSystem and residue:
-        
-          assignSpinSystemResidue(spinSystem.getCcpnResonanceGroup(),residue.getCcpnResidue())
-      
+        ccpnSpinSystems.append(spinSys.getCcpnResonanceGroup())
+        ccpnResidues.append(res.getCcpnResidue())
+    
+    assignSpinSystemstoResidues(ccpnSpinSystems, ccpnResidues, guiParent=self)
+    
     self.updateResultsTopRowButtons()    
     self.updateResultsBottomRowButtons()
     self.updateResultsTable()
-    self.updatePeakTable()      
-        
+    self.updatePeakTable() 
+
   def getMedianChemicalShift(self, ccpCode, atomName) :
     
     nmrRefStore = self.project.findFirstNmrReferenceStore(molType='protein',ccpCode=ccpCode)
@@ -1630,15 +1554,7 @@ class ViewAssignmentPopup(BasePopup):
     self.selectWindowPane(windowPane)
     
     self.windowPulldown.setup(names, windowPanes, index)
-    
-  def selectPeak(self, obj):                                      #Todo: remove not used any longer
-    
-    print self.displayPeakTable.currentObjects
-    
-    if obj != self.selectedPeak :
-      
-      self.selectedPeak = obj
-      
+     
   def selectSpinSystem(self, number, spinSystem):
     
     res = self.connector.results.myChain.residues[self.resultsResidueNumber-3 + number]

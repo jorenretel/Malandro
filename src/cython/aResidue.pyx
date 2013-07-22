@@ -331,4 +331,12 @@ cdef class aResidue :
   def getCcpnResidue(self) :
     
     return self.ccpnResidue
+  
+  def getPreviousResidue(self) :
+    
+    return self.previousResidue
+  
+  def getNextResidue(self) :
+    
+    return self.nextResidue
 
