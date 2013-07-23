@@ -44,22 +44,26 @@ class AssignMentTransferTab(object) :
     
   def body(self) :
     
+    #self.frame.expandColumn(0)
+    self.frame.expandGrid(8,0)
+    self.frame.expandGrid(8,1)
+    
     typeOfAssignmentFrame = LabelFrame(self.frame, text='type of assignment')
     typeOfAssignmentFrame.grid(row=0, column=0, sticky='nesw')
-    typeOfAssignmentFrame.expandGrid(0,5)
+    #typeOfAssignmentFrame.expandGrid(0,5)
     
     peakSelectionFrame = LabelFrame(self.frame, text='which peaks to assign')
-    peakSelectionFrame.grid(row=1, column=0, sticky='nesw')
+    peakSelectionFrame.grid(row=0, column=1, sticky='nesw',rowspan=2)
     
     spinSystemSelectionFrame = LabelFrame(self.frame, text='Which spin-systems to use')
     spinSystemSelectionFrame.grid(row=2, column=0, sticky='nesw')
     
     tipText='What to do when a residue has already a spin system assigned to it.'
     assignedResidueFrame = LabelFrame(self.frame, text='if residue already has spin-system', tipText=tipText)
-    assignedResidueFrame.grid(row=3, column=0, sticky='nesw')
+    assignedResidueFrame.grid(row=2, column=1, sticky='nesw')
     
     spectrumSelectionFrame = LabelFrame(self.frame, text='spectra')
-    spectrumSelectionFrame.grid(row=4, column=0, sticky='nesw')
+    spectrumSelectionFrame.grid(row=1, column=0, sticky='nesw')
     
     row = 0
     
@@ -138,7 +142,7 @@ class AssignMentTransferTab(object) :
     texts    = ['Transfer Assignments']
     commands = [self.transferAssignments]
     self.transferButton = ButtonList(self.frame,commands=commands, texts=texts)
-    self.transferButton.grid(row=5, column=0, sticky='nsew') 
+    self.transferButton.grid(row=5, column=0, sticky='nsew', columnspan=2) 
     
   def update(self) :
     

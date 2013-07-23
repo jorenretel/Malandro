@@ -826,7 +826,6 @@ cdef class aSpectrum :
               
           link.addPeak(closestPeak, simulatedPeak, resonances, bestScore)
 
-   
   cdef void matchIntraResidual(self):
     
     cdef myDataModel DataModel
@@ -900,7 +899,6 @@ cdef class aSpectrum :
               
           link.addPeak(closestPeak, simulatedPeak, resonances, bestScore)
 
-   
   cdef void determineSymmetry(self) :
     
     '''

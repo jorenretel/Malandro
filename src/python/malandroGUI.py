@@ -750,12 +750,14 @@ class ViewAssignmentPopup(BasePopup):
 ############################################################################################
 
 
+    NAFrame.expandGrid(11,0)
+    NAFrame.expandGrid(11,1)
     row = 0
 
     texts    = ['Calculate Assignment Suggestions']
     commands = [self.connector.runAllCalculations]
     self.startNAButton = ButtonList(NAFrame,commands=commands, texts=texts)
-    self.startNAButton.grid(row=row, column=0, sticky='nsew')
+    self.startNAButton.grid(row=row, column=0, sticky='nsew', columnspan=2)
     
     row += 1
     
@@ -831,13 +833,13 @@ class ViewAssignmentPopup(BasePopup):
     self.energyPlot = ScrolledGraph(NAFrame,symbolSize=2, width=500,
                                        height=300, title='Annealing',
                                        xLabel='time', yLabel='energy')
-    self.energyPlot.grid(row=row, column=0, columnspan=10, sticky='nsew')
+    self.energyPlot.grid(row=row, column=0, columnspan=2, sticky='nsew')
 
     
 ##############################################################################
 ############### The Results Tab###############################################
 ##############################################################################
-
+    #resultsFrame.expandGrid(2,0)
     resultsFrame.expandGrid(5,0)
 
     resultTopFrame = LabelFrame(resultsFrame, text='Which results to show')
@@ -1008,11 +1010,11 @@ class ViewAssignmentPopup(BasePopup):
     resultsThirdFrame.grid_columnconfigure(0,  weight=1) 
    
     
-    tabbedFrameB = TabbedFrame(resultsThirdFrame,options=['Spin System',  'Peaks'],
+    tabbedFrameB = TabbedFrame(resultsThirdFrame,options=['Peaks', 'Spin System'],
                               callback=self.toggleTab, grid=(0,0))
     self.tabbedFrameB = tabbedFrame
 
-    SpinSystemFrame,  PeakFrame = tabbedFrameB.frames
+    PeakFrame, SpinSystemFrame = tabbedFrameB.frames
     
 
     SpinSystemFrame.grid_rowconfigure(0, weight=1)
