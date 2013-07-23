@@ -90,11 +90,11 @@ class AssignMentTransferTab(object) :
     label = Label(peakSelectionFrame, text='Do not assign diagonal peaks', grid=(row,0)) 
     self.noDiagonalCheckButton = CheckButton(peakSelectionFrame, selected=True, grid=(row,1))
     
-    entries = ['Only Previously known ','All that have a score of at least: ','User Defined', 'Solution number:']
-    tipTexts = ['Show all atom options irrespective of assignments',
-                'Show only atom options which are assigned to NMR resonances',
-                'Show only atom options which have no resonance assignments',
-                'Show only atom options that carry tentative resonance assignments']
+    entries = ['Only assigned spin systems','All that have a score of at least: ','User Defined', 'Solution number:']
+    tipTexts = ['Only assign resonances of spin systems that already have a sequential assignment for the assignment of peak dimensions. Spin system to residue assignment is not relevant in this case.',
+                'Assign all spin systems that have a score of at least a given percentage. 50% or lower is not possible, because than spin systems might have to be assigned to more than 1 residue, which is impossible.',
+                "As defined in the lower row of buttons in the 'results' tab.",
+                'One of the single solutions of the annealing.']
     self.spinSystemTypeSelect = RadioButtons(spinSystemSelectionFrame, entries=entries, grid=(0,0),
                                      select_callback=None, direction = VERTICAL, 
                                      gridSpan=(4,1), tipTexts=tipTexts)
