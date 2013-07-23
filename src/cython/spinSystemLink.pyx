@@ -27,6 +27,17 @@ cdef class spinSystemLink :
     self.notFoundSimulatedPeaks = []
     self.peakLinks = []
     self.notFoundPeakLinks = []
+
+  cdef void addPeak(self, aPeak realPeak, simulatedPeak simPeak, list resonances, double score) :
+    
+    if realPeak is not None :
+      
+      newPeakLink = peakLink(realPeak,simPeak,resonances, score) 
+      self.peakLinks.append(newPeakLink)
+      
+    else :
+      
+      self.notFoundSimulatedPeaks.append(simPeak)
  
   def __reduce__(self) :
 
@@ -50,7 +61,7 @@ cdef class spinSystemLink :
       
     return set(resonances)  
   
-  def getAllResonances(self) :
+  def getAllResonances(self) :                        #TODO: change this, first of all it is not used and second of all self.notFoundPeakLinks is empty now.
   
     resonances = []
     
