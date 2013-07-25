@@ -119,6 +119,9 @@ from assignMentTransferTab import AssignMentTransferTab
 import spectrumSelectionTab
 reload(spectrumSelectionTab)
 from spectrumSelectionTab import SpectrumSelectionTab
+import saveLoadTab
+reload(saveLoadTab)
+from saveLoadTab import SaveLoadTab
 
 
 class connector(object):
@@ -584,16 +587,8 @@ class ViewAssignmentPopup(BasePopup):
     
     self.spectrumSelectionTab = SpectrumSelectionTab(self,autoFrame)
     self.assignTab = AssignMentTransferTab(self, assignFrame)
+    self.saveLoadTab = SaveLoadTab(self,saveFrame)
     
-    
-    file_types = [ FileType('pyc', ['*.pyc']) ]
-    self.fileselectionBox = FileSelect(saveFrame, multiSelect=False,  file_types=file_types)
-    self.fileselectionBox.grid(row=0, column=0, columnspan=6, sticky='nsew')
-    
-    texts    = ['Load',  'Save']
-    commands = [self.loadDataFromPyc, self.saveDataToPyc]
-    self.loadAndSaveButtons= ButtonList(saveFrame,commands=commands, texts=texts)
-    self.loadAndSaveButtons.grid(row=1, column=0, sticky='nsew')
     
     self.resultsResidueNumber = 1
   
@@ -605,8 +600,7 @@ class ViewAssignmentPopup(BasePopup):
 
     self.administerNotifiers(self.registerNotify)
     
-    saveFrame.grid_rowconfigure(0, weight=1)
-    saveFrame.grid_columnconfigure(0,  weight=1)
+
     
 
 ############################################################################################
@@ -967,24 +961,11 @@ class ViewAssignmentPopup(BasePopup):
     self.windowPane = 'None'
     self.updateWindows()
 
-  
   @lockUntillResults              
   def showResults(self):
       
     self.updateResultsTable()
-  
-  @lockUntillResults
-  def saveDataToPyc(self) :
-    
-    fileName = self.fileselectionBox.getFile()
-    self.connector.saveDataToPyc(fileName)
-    
-  def loadDataFromPyc(self) :
-    
-    fileName = self.fileselectionBox.getFile()
-    self.connector.loadDataFromPyc(fileName)
-    self.updateResultsTable()
-    
+   
   @lockUntillResults  
   def selectLink(self,number, topRow) :
     
