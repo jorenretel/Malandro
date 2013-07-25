@@ -116,6 +116,9 @@ AMINO_ACIDS = standardResidueCcpCodes['protein']
 import assignMentTransferTab
 reload(assignMentTransferTab)
 from assignMentTransferTab import AssignMentTransferTab
+import spectrumSelectionTab
+reload(spectrumSelectionTab)
+from spectrumSelectionTab import SpectrumSelectionTab
 
 
 class connector(object):
@@ -189,7 +192,7 @@ class connector(object):
     
     self.selectedSpectra = []
     
-    for spec in self.GUI.specConfigList :
+    for spec in self.GUI.spectrumSelectionTab.specConfigList :
       
       if spec.used :
         
@@ -568,8 +571,7 @@ class ViewAssignmentPopup(BasePopup):
     self.amountOfRepeats = 10
     self.amountOfSteps = 10000
     self.acceptanceConstantList = [0, 0.1, 0.2,0.4, 0.8,1.0, 1.1, 1.2, 1.4, 1.6,2.0, 2.4,2.8, 3.2,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0]
-
-    self.updateSpecSelection()
+    
 
     guiFrame.grid_columnconfigure(0, weight=1)
     guiFrame.grid_rowconfigure(0, weight=1)
@@ -580,7 +582,9 @@ class ViewAssignmentPopup(BasePopup):
 
     autoFrame,  NAFrame,  resultsFrame, assignFrame, saveFrame = tabbedFrame.frames
     
+    self.spectrumSelectionTab = SpectrumSelectionTab(self,autoFrame)
     self.assignTab = AssignMentTransferTab(self, assignFrame)
+    
     
     file_types = [ FileType('pyc', ['*.pyc']) ]
     self.fileselectionBox = FileSelect(saveFrame, multiSelect=False,  file_types=file_types)
@@ -604,40 +608,6 @@ class ViewAssignmentPopup(BasePopup):
     saveFrame.grid_rowconfigure(0, weight=1)
     saveFrame.grid_columnconfigure(0,  weight=1)
     
-    autoFrame.grid_rowconfigure(2, weight=1)
-    autoFrame.grid_columnconfigure(0,  weight=1)
-    
-    #texts    = ['Do all pre-callculations']
-    #commands = [self.connector.preCalculateDataModel]
-    #self.preCalcButton = ButtonList(autoFrame,commands=commands, texts=texts)
-    #self.preCalcButton.grid(row=0, column=0, sticky='nsew')
-    
-
-    headingList = ['#','Spectrum', 'Peak List','use?','labelling scheme']
-
-    tipTexts = [ 'Row number','spectrum name', 'which peak list to use',  'use this spectrum?', 'Which labelling scheme belongs to this spectrum?']
-
-
-    self.autoLabellingPulldown = PulldownList(self, self.setAutoLabellingScheme)                                            # Bit strange, why do I actively pass self as a first argument, look at this
-
-    self.autoPeakListPulldown = PulldownList(self, self.setAutoPeakList)
-
-
-    editWidgets = [None, None,self.autoPeakListPulldown,  None, self.autoLabellingPulldown]
-
-    editGetCallbacks = [None, None, self.getAutoPeakLists,  self.changeUse, self.getAutoLabellingSchemes]
-
-    editSetCallbacks = [None, None, None, None, None]
-
-    self.displayTable = ScrolledMatrix(autoFrame,headingList=headingList,
-                                       callback=self.selectAutoSpec,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
-    self.displayTable.grid(row=2, column=0, sticky='nsew')
-
-
 
 ############################################################################################
 ############################# Here the Network Anchoring tab ###############################
@@ -892,11 +862,9 @@ class ViewAssignmentPopup(BasePopup):
       
         self.sequenceButtonsB.grid_columnconfigure(n, uniform=2)  
     
-    #self.sortDisplayResultsTable()
-    
     resultsFrame.grid_rowconfigure(3, weight=2)
     
-    resultsThirdFrame = Frame(resultsFrame) #LabelFrame(resultsFrame, text='info')
+    resultsThirdFrame = Frame(resultsFrame)
     resultsThirdFrame.grid(row=3, column=0, sticky='nsew')
     
     
@@ -913,12 +881,10 @@ class ViewAssignmentPopup(BasePopup):
 
     SpinSystemFrame.grid_rowconfigure(0, weight=1)
     PeakFrame.grid_rowconfigure(1, weight=1)
-    #negPeakFrame.grid_rowconfigure(0, weight=1)
+
     SpinSystemFrame.grid_columnconfigure(0,  weight=1)    
     PeakFrame.grid_columnconfigure(0,  weight=1)    
-    #negPeakFrame.grid_columnconfigure(0,  weight=1)    
-    
-    
+        
     headingList = [ 'residue','assigned to in project','user defined sequence', 'selected annealing result','%']
     
     tipTexts = [None, None, None, None, None]
@@ -991,19 +957,6 @@ class ViewAssignmentPopup(BasePopup):
                                        editSetCallbacks=editSetCallbacks,
                                        tipTexts=tipTexts)
     self.displayPeakTable.grid(row=1, column=0, sticky='nsew')
-    #editGetCallbacks=editGetCallbacks,
-    
-    
-    #self.displayNegPeakTable = ScrolledMatrix(negPeakFrame,headingList=headingList,
-    #                                   editWidgets=editWidgets, multiSelect=False,
-    #                                   editGetCallbacks=editGetCallbacks,
-    #                                   editSetCallbacks=editSetCallbacks,
-    #                                   tipTexts=tipTexts)
-    #self.displayNegPeakTable.grid(row=0, column=0, sticky='nsew')
-    
-    
-    
-    
     
     self.infoLabel = Label(guiFrame,text=' ')
     
@@ -1013,9 +966,7 @@ class ViewAssignmentPopup(BasePopup):
 
     self.windowPane = 'None'
     self.updateWindows()
-    self.setupSpectrumSettings()
-    self.updateAutoMatrix()
-     
+
   
   @lockUntillResults              
   def showResults(self):
@@ -1938,25 +1889,17 @@ class ViewAssignmentPopup(BasePopup):
   def toggleTab(self, index):
   
     pass
-
-  def getLabellingSchemes(self):
-    
-    
-
-    
-  
-    return [True, None,] + self.project.sortedLabelingSchemes()
      
   def administerNotifiers(self, notifyFunc):
 
-    notifyFunc(self.updateAfter, 'ccp.nmr.Nmr.Experiment', 'setName')
-    notifyFunc(self.updateAfter, 'ccp.nmr.Nmr.DataSource', 'setName')
-    notifyFunc(self.updateAfter, 'ccp.nmr.Nmr.DataSource', 'delete')
-    notifyFunc(self.updateAfter, 'ccp.nmr.Nmr.DataSource', '__init__')
+    notifyFunc(self.spectrumSelectionTab.update, 'ccp.nmr.Nmr.Experiment', 'setName')
+    notifyFunc(self.spectrumSelectionTab.update, 'ccp.nmr.Nmr.DataSource', 'setName')
+    notifyFunc(self.spectrumSelectionTab.update, 'ccp.nmr.Nmr.DataSource', 'delete')
+    notifyFunc(self.spectrumSelectionTab.update, 'ccp.nmr.Nmr.DataSource', '__init__')
     
     notifyFunc(self.updateChains, 'ccp.molecule.MolSystem.Chain', 'delete')
     notifyFunc(self.updateChains, 'ccp.molecule.MolSystem.Chain', '__init__')
-    
+     
   def changeMolecule(self, chain):
   
     if chain is not self.chain:
@@ -2052,130 +1995,6 @@ class ViewAssignmentPopup(BasePopup):
       
     pass
       
-  def changeUse(self, x):
-    
-    if self.selectedAutoSpec.used == False :
-      self.selectedAutoSpec.changeSpectrumUse(True)
-    elif self.selectedAutoSpec.used == True :
-      self.selectedAutoSpec.changeSpectrumUse(False)
-      
-    self.updateAutoMatrix()
-
-  def setAutoLabellingScheme(self, scheme):
-    
-    self.selectedAutoSpec.setupLabellingScheme(scheme)
-
-    self.updateAutoMatrix()
-
-  def getAutoLabellingSchemes(self, notifyScheme=None):
-  
-    names = []
-    index = 0
-    
-    scheme = self.selectedAutoSpec.labellingScheme
-    schemes = self.getLabellingSchemes()
-
-
-    if schemes:
-      names = ['Automatic from sample','<None>'] + [sc.name for sc in schemes[2:]]
-
-      index = schemes.index(scheme)
-    
-    self.autoLabellingPulldown.setup(names, schemes,  index)
-      
-  def setAutoPeakList(self, peakList):
-    
-    self.selectedAutoSpec.setupPeakList(peakList)
-
-    self.updateAutoMatrix()
-       
-  def getAutoPeakLists(self,  notifyScheme=None):
-  
-    names = []
-    index = 0
-    
-    peakList = self.selectedAutoSpec.peakList
-    
-    peakLists = self.selectedAutoSpec.ccpnSpectrum.sortedPeakLists()
-
-
-    if peakLists:
-      names = [str(pl.serial) for pl in peakLists]
-
-      index = peakLists.index(peakList)
-    
-    self.autoPeakListPulldown.setup(names, peakLists,  index)
-    
-  def setupSpectrumSettings(self):
-    
-    self.specConfigList = []
-
-    for spectrum in self.spectra :
-
-      newSpectrumSetting = spectrumSettings()
-      
-      newSpectrumSetting.ccpnSpectrum = spectrum
-      
-      newSpectrumSetting.peakList = spectrum.getActivePeakList()
-
-      self.specConfigList.append(newSpectrumSetting)
-
-  def updateAutoMatrix(self):
-    
-    textMatrix = []
-    objectMatrix = []
-    colorMatrix = []
-    
-    spectra = self.specConfigList                                     
-    
-    i = 0
-    for spectrum in spectra :
-
-      
-      
-      dataSource = spectrum.ccpnSpectrum
-      expt = dataSource.experiment
-      
-      name = '%s:%s' % (expt.name, dataSource.name)
-      
-      peakListName = str(spectrum.peakList.serial)
-      
-
-      if spectrum.labellingScheme is None :
-        schemeName = 'None'
-        
-      elif spectrum.labellingScheme is True :
-        
-        schemeName = 'Automatic from sample'
-      
-      else :
-        
-        schemeName = spectrum.labellingScheme.name
-    
-      datum = [i+1, name, peakListName, spectrum.used and 'Yes' or 'No', schemeName]
-
-      textMatrix.append(datum)
-      
-      i = i + 1
-      
-      
-      hexColors = dataSource.analysisSpectrum.posColors
-      hexColor = hexColors[int(0.7*len(hexColors))]
-      
-      if spectrum.used :
-      
-        colorMatrix.append([hexColor,  hexColor,  hexColor,  hexColor,  hexColor])
-        
-      else :
-        
-        colorMatrix.append([hexColor,  None,  None,  None,  None])
-      
-    self.displayTable.update(textMatrix=textMatrix,objectList=spectra,  colorMatrix=colorMatrix)
-                      
-  def selectAutoSpec(self, obj, row, col):
-    
-    self.selectedAutoSpec = obj
-
   def updateStepEntry(self,  event =None):
 
     value = self.NAStepEntry.get()
