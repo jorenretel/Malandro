@@ -51,4 +51,4 @@ class SaveLoadTab(object) :
     
     fileName = self.fileselectionBox.getFile()
     self.guiParent.connector.loadDataFromPyc(fileName)
-    self.updateResultsTable()
+    self.guiParent.resultsTab.update()

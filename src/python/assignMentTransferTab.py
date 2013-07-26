@@ -347,6 +347,8 @@ class AssignMentTransferTab(object) :
               ccpnDimension = dimension.getCcpnDimension()
               
               assignResToDim(ccpnDimension, ccpnResonance)
+    
+    self.guiParent.resultsTab.update()
               
   def getAssignedSpinSystem(self, res) :
     

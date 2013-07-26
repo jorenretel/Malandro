@@ -118,8 +118,7 @@ class AnnealingSettingsTab(object) :
                                        height=300, title='Annealing',
                                        xLabel='time', yLabel='energy')
     self.energyPlot.grid(row=row, column=0, columnspan=2, sticky='nsew')
-    
-    
+     
   def getChainName(self, chain):
   
     return '%s:%s (%s)' % (chain.molSystem.code,chain.code,chain.molecule.molType)
@@ -156,14 +155,12 @@ class AnnealingSettingsTab(object) :
   
     if chain is not self.chain:
       self.chain = chain
-      
-      
+       
   def changeMolecule(self, chain):
   
     if chain is not self.chain:
       self.chain = chain
-       
-
+      
   def changeShiftList(self, shiftList):
     
     if self.shiftList is not shiftList:
@@ -193,7 +190,6 @@ class AnnealingSettingsTab(object) :
       shiftListNames.append(shiftList.name)
 
     return shiftListNames
-  
   
   def updateStepEntry(self,  event =None):
 
@@ -232,8 +228,7 @@ class AnnealingSettingsTab(object) :
     else :
       self.minIsoFrac = value
       self.minLabelEntry.set(value)
-      
-      
+       
   def updateAcceptanceConstantList(self,event=None) :
     
     acList = self.tempEntry.get()
@@ -261,8 +256,6 @@ class AnnealingSettingsTab(object) :
     
     return True
   
-  
-  
   def addEnergyPoint(self,energy,time) :
     
     point = (time,energy)
@@ -285,6 +278,3 @@ class AnnealingSettingsTab(object) :
     
     self.energyPlot.update(dataSets=self.energyDataSets, dataColors=colorList)  
   
-
-
-        
