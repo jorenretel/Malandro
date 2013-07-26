@@ -122,7 +122,9 @@ from spectrumSelectionTab import SpectrumSelectionTab
 import saveLoadTab
 reload(saveLoadTab)
 from saveLoadTab import SaveLoadTab
-
+import annealingSettingsTab
+reload(annealingSettingsTab)
+from annealingSettingsTab import AnnealingSettingsTab
 
 class connector(object):
   '''This is just a little class that contains all settings the user configures in the GUI'''
@@ -161,7 +163,7 @@ class connector(object):
     
     self.auto = Malandro()
     
-    self.addEnergyPoint = self.GUI.addEnergyPoint
+    self.addEnergyPoint = self.GUI.annealingSettingsTab.addEnergyPoint
         
   def update(self):
     
@@ -169,29 +171,29 @@ class connector(object):
     Pulls all settings out of the GUI and gives them to the assignment algorithm written in Cython
     '''
     
-    self.chain = self.GUI.chain
+    self.chain = self.GUI.annealingSettingsTab.chain
     
-    self.useAssignments =self.GUI.useAssignmentsCheck.get()
+    self.useAssignments =self.GUI.annealingSettingsTab.useAssignmentsCheck.get()
     
-    self.useTentative = self.GUI.useTentativeCheck.get()
+    self.useTentative = self.GUI.annealingSettingsTab.useTentativeCheck.get()
     
-    self.typeSpinSystems = self.GUI.typeSpinSystemsCheck.get()
+    self.typeSpinSystems = self.GUI.annealingSettingsTab.typeSpinSystemsCheck.get()
     
-    self.useDimenionalAssignments = self.GUI.useDimenionalAssignmentsCheck.get()
+    self.useDimenionalAssignments = self.GUI.annealingSettingsTab.useDimenionalAssignmentsCheck.get()
     
-    self.amountOfRepeats = self.GUI.amountOfRepeats
+    self.amountOfRepeats = self.GUI.annealingSettingsTab.amountOfRepeats
     
-    self.amountOfSteps = self.GUI.amountOfSteps
+    self.amountOfSteps = self.GUI.annealingSettingsTab.amountOfSteps
     
-    self.shiftList = self.GUI.shiftList
+    self.shiftList = self.GUI.annealingSettingsTab.shiftList
     
     self.nmrProject = self.GUI.nmrProject
     
     self.project = self.GUI.project
     
-    self.minIsoFrac = self.GUI.minIsoFrac
+    self.minIsoFrac = self.GUI.annealingSettingsTab.minIsoFrac
     
-    self.sourceName = self.GUI.sourceName
+    #self.sourceName = self.GUI.sourceName
     
     self.selectedSpectra = []
     
@@ -201,12 +203,10 @@ class connector(object):
         
         self.selectedSpectra.append(spec)
             
-    self.GUI.updateAcceptanceConstantList()
+    self.GUI.annealingSettingsTab.updateAcceptanceConstantList()
     
-    self.acceptanceConstantList = self.GUI.acceptanceConstantList
+    self.acceptanceConstantList = self.GUI.annealingSettingsTab.acceptanceConstantList
     
-    
-        
     self.auto.updateSettings(self)
     
   def runAllCalculations(self):
@@ -264,7 +264,7 @@ class connector(object):
     
     if self.ranPreCalculations :
       
-      if self.GUI.updateAcceptanceConstantList():
+      if self.GUI.annealingSettingsTab.updateAcceptanceConstantList():
         
         return True
     
@@ -588,6 +588,7 @@ class ViewAssignmentPopup(BasePopup):
     self.spectrumSelectionTab = SpectrumSelectionTab(self,autoFrame)
     self.assignTab = AssignMentTransferTab(self, assignFrame)
     self.saveLoadTab = SaveLoadTab(self,saveFrame)
+    self.annealingSettingsTab = AnnealingSettingsTab(self,NAFrame)
     
     
     self.resultsResidueNumber = 1
@@ -599,105 +600,8 @@ class ViewAssignmentPopup(BasePopup):
     self.bottomButtons.grid(row=0, column=0, sticky = 'e')
 
     self.administerNotifiers(self.registerNotify)
-    
-
-    
-
-############################################################################################
-############################# Here the Network Anchoring tab ###############################
-############################################################################################
-
-
-    NAFrame.expandGrid(11,0)
-    NAFrame.expandGrid(11,1)
-    row = 0
-
-    texts    = ['Calculate Assignment Suggestions']
-    commands = [self.connector.runAllCalculations]
-    self.startNAButton = ButtonList(NAFrame,commands=commands, texts=texts)
-    self.startNAButton.grid(row=row, column=0, sticky='nsew', columnspan=2)
-    
-    row += 1
-    
-
-    label = Label(NAFrame, text='Minimal colabelling fraction:', grid=(row,0))      
-    tipText = 'The minimal amount of colabelling the different nuclei should have in order to still give rise to a peak.'
-    self.minLabelEntry = FloatEntry(NAFrame, grid=(row,1), width=7, text=0.1,
-                                      returnCallback=self.updateMinLabelEntry,
-                                      tipText=tipText)
-    self.minLabelEntry.bind('<Leave>', self.updateMinLabelEntry, '+')
-    
-    row += 1
-
-    label = Label(NAFrame, text='Amount of attempts per temperature point in the annealling:', grid=(row,0))      
-    tipText = 'The amount of attempts to switch the position of two spinsystems in the sequence are performed for each temperature point'
-    self.NAStepEntry = IntEntry(NAFrame, grid=(row,1), width=7, text=10000,
-                                      returnCallback=self.updateStepEntry,
-                                      tipText=tipText)
-    self.NAStepEntry.bind('<Leave>', self.updateStepEntry, '+')
-    
-    row += 1
-    
-    label = Label(NAFrame, text='Repeat optimization N times, N:', grid=(row,0))      
-    tipText = 'The amount of times the whole optimization procedure is performed, each result is safed'
-    self.repeatEntry = IntEntry(NAFrame, grid=(row,1), width=7, text=10,
-                                      returnCallback=self.updateRepeatEntry,
-                                      tipText=tipText)
-    self.repeatEntry.bind('<Leave>', self.updateRepeatEntry, '+')
-    
-    row += 1
-    
-    label = Label(NAFrame, text='Temperature constants: ', grid=(row,0))   
-    self.tempEntry = Entry(NAFrame, text=map(str, self.acceptanceConstantList), width=64, grid=(row,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
-    
-    row += 1
-    
-    label = Label(NAFrame, text='Type untyped spin systems on the fly.', grid=(row,0))      
-    tipText = 'Spin system typing can be carried out so also untyped spin systems can be used. Only amino acid types that have a reasonable score (i.e. higher than the random chance) will be considered'
-
-    self.typeSpinSystemsCheck = CheckButton(NAFrame, selected=False, grid=(row,1))
-
-    row += 1
-
-    label = Label(NAFrame, text='Only use present dimensional assignments for peaks', grid=(row,0))      
-    tipText = 'If one or more dimensions of a peak is already assigned, assume that this assignment is the only option. If not the program will assume the peak can have other assignment options as well.'
-    self.useDimenionalAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(row,1))
-    
-    row += 1
-
-    label= Label(NAFrame, text = 'Use the assignment of the spin systems in the project:', grid=(row,0))
-    self.useAssignmentsCheck = CheckButton(NAFrame, selected=True, grid=(row,1))
-    
-    row += 1
-    
-    label= Label(NAFrame, text = 'Use the tentative assignment(s) for the spin systems in the project:', grid=(row,0))
-    self.useTentativeCheck = CheckButton(NAFrame, selected=True, grid=(row,1))
-
-    row += 1
-
-    self.shiftListLabel    = Label(NAFrame, text ='Shift List:', grid=(row,0), sticky='w')
-    self.shiftListPulldown = PulldownList(NAFrame, self.changeShiftList, grid=(row,1), sticky='w')
-    
-    row += 1
-    
-    label = Label(NAFrame, text='Chain:', grid=(row,0))
-    self.molPulldown = PulldownList(NAFrame, callback=self.changeMolecule, grid=(row,1))
-    self.updateChains()  
-    
-    self.updateShiftLists()
-    
-    row += 1
-    
-    self.energyPlot = ScrolledGraph(NAFrame,symbolSize=2, width=500,
-                                       height=300, title='Annealing',
-                                       xLabel='time', yLabel='energy')
-    self.energyPlot.grid(row=row, column=0, columnspan=2, sticky='nsew')
-
-    
-##############################################################################
-############### The Results Tab###############################################
-##############################################################################
-    #resultsFrame.expandGrid(2,0)
+  
+  
     resultsFrame.expandGrid(5,0)
 
     resultTopFrame = LabelFrame(resultsFrame, text='Which results to show')
@@ -1494,15 +1398,19 @@ class ViewAssignmentPopup(BasePopup):
   
   @lockUntillResults
   def resultsPrevResidue(self):
+    
+    residues = self.connector.results.myChain.residues
+    #chainLength = len(residues)
+    
     new_value = self.resultsResidueNumber
     if self.resultsSelectedCcpCode == 'residue' :
       if self.resultsResidueNumber != 3 :
         new_value = self.resultsResidueNumber - 1
     else :
-      for res in self.chain.sortedResidues() :
-        if res.seqCode == self.resultsResidueNumber :
+      for res in residues :
+        if res.getSeqCode == self.resultsResidueNumber :
           break
-        elif res.ccpCode == self.resultsSelectedCcpCode :
+        elif res.getCcpCode() == self.resultsSelectedCcpCode :
           new_value = res.seqCode
           if new_value < 3 :
             new_value = 3
@@ -1520,16 +1428,19 @@ class ViewAssignmentPopup(BasePopup):
   @lockUntillResults
   def resultsNextResidue(self):
     
+    residues = self.connector.results.myChain.residues
+    chainLength = len(residues)
+    
     new_value = self.resultsResidueNumber
     if self.resultsSelectedCcpCode == 'residue' :
-      if self.resultsResidueNumber != len(self.chain.residues)-2:
+      if self.resultsResidueNumber != chainLength-2:
         new_value = self.resultsResidueNumber + 1
     else :
-      for res in self.chain.sortedResidues()[(self.resultsResidueNumber):] :
-        if res.ccpCode == self.resultsSelectedCcpCode :
+      for res in residues[(self.resultsResidueNumber):] :
+        if res.getCcpCode() == self.resultsSelectedCcpCode :
           new_value = res.seqCode
-          if new_value > len(self.chain.residues)-2 :
-            new_value = len(self.chain.residues)-2
+          if new_value > chainLength-2 :
+            new_value = chainLength-2
           break
     if self.resultsResidueNumber != new_value :
       self.resultsResidueNumber = new_value
@@ -1855,18 +1766,7 @@ class ViewAssignmentPopup(BasePopup):
     h = div + rem
 
     return h
-  
-  def updateSpecSelection(self):
-  
-    spectra      = []
-    spectraNames = []
-    for expt in self.nmrProject.sortedExperiments():
-      for spec in expt.sortedDataSources():
-        if spec.dataType == 'processed':
-          spectra.append( spec )
-        
-    self.spectra = spectra
- 
+   
   def toggleTab(self, index):
   
     pass
@@ -1878,29 +1778,11 @@ class ViewAssignmentPopup(BasePopup):
     notifyFunc(self.spectrumSelectionTab.update, 'ccp.nmr.Nmr.DataSource', 'delete')
     notifyFunc(self.spectrumSelectionTab.update, 'ccp.nmr.Nmr.DataSource', '__init__')
     
-    notifyFunc(self.updateChains, 'ccp.molecule.MolSystem.Chain', 'delete')
-    notifyFunc(self.updateChains, 'ccp.molecule.MolSystem.Chain', '__init__')
+    notifyFunc(self.annealingSettingsTab.updateChains, 'ccp.molecule.MolSystem.Chain', 'delete')
+    notifyFunc(self.annealingSettingsTab.updateChains, 'ccp.molecule.MolSystem.Chain', '__init__')
+    
+    
      
-  def changeMolecule(self, chain):
-  
-    if chain is not self.chain:
-      self.chain = chain
-       
-  def getChainName(self, chain):
-  
-    return '%s:%s (%s)' % (chain.molSystem.code,chain.code,chain.molecule.molType)
-    
-  def getChains(self):
-  
-    chains = []
-    if self.project:
-      for molSystem in self.project.sortedMolSystems():
-        for chain in molSystem.sortedChains():
-          if chain.residues:
-            chains.append(chain)
-   
-    return chains
-    
   def updateAfter(self, *opt):
 
     if self.waiting:
@@ -1908,29 +1790,7 @@ class ViewAssignmentPopup(BasePopup):
     else:
       self.waiting = True
       self.after_idle(self.update)
-      
-  def updateChains(self, *opt):
-  
-    index  = 0
-    texts  = []
-    chains = self.getChains()
-    chain  = self.chain
-
-    if chains:
-      if chain not in chains:
-        chain = chains[0]
-
-      texts = [self.getChainName(c) for c in chains]
-      index = chains.index(chain)
-        
-    else:
-      chain = None  
-      
-    self.molPulldown.setup(texts,chains,index)
-  
-    if chain is not self.chain:
-      self.chain = chain
-  
+    
   def update(self):
     
     self.toggleTab(self.tabbedFrame.selected) 
@@ -1941,131 +1801,14 @@ class ViewAssignmentPopup(BasePopup):
     self.administerNotifiers(self.unregisterNotify)
     
     BasePopup.destroy(self)
-    
-  def changeShiftList(self, shiftList):
-    
-    if self.shiftList is not shiftList:
-      self.shiftList = shiftList
-
-  def updateShiftLists(self):
   
-    index = 0
-    shiftLists = getShiftLists(self.nmrProject) + [None,]
-    shiftListNames = self.getShiftListNames(shiftLists[:-1]) + ['None',]
-    
-    if shiftListNames:
-      self.shiftList = shiftLists[0]
-      index = 0
-      
-    else:
-      shiftList = None
-    
-    self.shiftListPulldown.setup(shiftListNames,shiftLists,index)
-
-  def getShiftListNames(self, shiftLists):
-    
-    shiftListNames = []
-    for shiftList in shiftLists:
-      if not shiftList.name:
-        shiftList.name = "ShiftList "+ str(shiftList.serial)
-      shiftListNames.append(shiftList.name)
-
-    return shiftListNames
-
   def noAction(self):
       
     pass
-      
-  def updateStepEntry(self,  event =None):
-
-    value = self.NAStepEntry.get()
-    if value == self.amountOfSteps:
-      return 
-    if value < 1:
-      self.NAStepEntry.set(1)
-      self.amountOfSteps = 1
-    else :
-      self.amountOfSteps = value
-      self.NAStepEntry.set(value)
     
-  def updateRepeatEntry(self,  event =None):
-
-    value = self.repeatEntry.get()
-
-    if value == self.amountOfRepeats:
-      return 
-    if value < 1:
-      self.repeatEntry.set(1)
-      self.amountOfRepeats = 1
-    else :
-      self.amountOfRepeats = value
-      self.repeatEntry.set(value)
-      
-  def updateMinLabelEntry(self, event=None) :
-    
-    value = self.minLabelEntry.get()
-    
-    if value == self.minIsoFrac :
-      return
-    if value < 0 :
-      self.minIsoFrac = 0.0
-      self.minLabelEntry.set(0.0)
-    else :
-      self.minIsoFrac = value
-      self.minLabelEntry.set(value)
-      
   def updateInfoText(self,string):
     
     self.infoLabel.set(string)
     
     self.infoLabel.update()
     
-  def addEnergyPoint(self,energy,time) :
-    
-    point = (time,energy)
-    
-    if len(self.energyDataSets[-1]) / len(self.acceptanceConstantList) :                # This means one run has finished
-      
-      self.energyDataSets.append([point])
-      
-    else :
-      
-      self.energyDataSets[-1].append(point)
-      
-    
-    colors = ['#993366','#000000','#FF0099','#33FF00','#003300','#999999','#FF6633','#000099','#33CCFF','#FFCC00']
-    
-    Ncolors = len(colors)
-    
-    NdataSets = len(self.energyDataSets)
-    
-    colorList = (NdataSets/Ncolors)*colors + colors[:NdataSets%Ncolors]
-    
-    self.energyPlot.update(dataSets=self.energyDataSets, dataColors=colorList)
-    
-  def updateAcceptanceConstantList(self,event=None) :
-    
-    acList = self.tempEntry.get()
-    
-    newList = []
-    
-    for constant in acList :
-      
-      try :
-        
-        number = float(constant)
-        
-        newList.append(number)
-        
-      except ValueError :
-
-        string = constant + ' in temperature constants is not a number.'
-        
-        showWarning('Not A Number', string, parent=self)
-        
-        return False
-        
-  
-    self.acceptanceConstantList = newList
-    
-    return True
