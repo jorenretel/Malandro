@@ -61,7 +61,6 @@ class ResultsTab(object) :
     
     self.body()
     
-
   def body(self) :
     
     frame = self.frame
@@ -529,7 +528,6 @@ class ResultsTab(object) :
         objectList.append(peakLink)
       
       self.displayPeakTable.update(objectList=objectList,textMatrix=data)
-
 
   def findPeak(self):
     
@@ -1088,13 +1086,11 @@ class ResultsTab(object) :
       
       label.set(text)
 
-
   def updateButtons(self) :
     
     self.updateButtonHighLights()
     self.updateResultsTopRowButtons()
     self.updateResultsBottomRowButtons()
-
 
   def updateResultsTopRowButtons(self) :
     
