@@ -314,11 +314,11 @@ class ResultsTab(object) :
 
     editSetCallbacks = [None, None, None, None, None, None, None, None, None]
     
-    self.displayPeakTable = ScrolledMatrix(PeakFrame,headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=True,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
+    self.displayPeakTable = ScrolledMatrix(PeakFrame,headingList=headingList, multiSelect=True, tipTexts=tipTexts)
+                                       #editWidgets=editWidgets, multiSelect=True,
+                                       #editGetCallbacks=editGetCallbacks,
+                                       #editSetCallbacks=editSetCallbacks,
+                                       #tipTexts=tipTexts)
     self.displayPeakTable.grid(row=1, column=0, sticky='nsew')
     
     self.windowPane = 'None'
@@ -447,7 +447,7 @@ class ResultsTab(object) :
   def emptyPeakTable(self) :
     
     self.displayPeakTable.update(objectList=[],textMatrix=[], colorMatrix=[])
-
+      
   def updatePeakTable(self):
     '''
     Updates the peak table to show the peaks that are found for a sequencial pair of
@@ -469,22 +469,26 @@ class ResultsTab(object) :
       data = []
       
       objectList = []
-      
-      #peakLinks = link.getPeakLinks()
 
       peakLinks = link.getAllPeakLinks()
+      
+      if not peakLinks :
+        
+        self.emptyPeakTable()
+        return  
+        
+      maxDimenionality = max([len(peakLink.getSimulatedPeak().getContribs()) for peakLink in peakLinks])
 
-      for peakLink in peakLinks : #link.getPeakLinks() :
+      for peakLink in peakLinks :
+        
+        serial = None
 
         realPeak = peakLink.getPeak()
 
         simPeak = peakLink.getSimulatedPeak()
         
-        oneRow = [None, None, None, None, None, None, None, None, None]
-        
-        oneRow[1] = simPeak.getSpectrum().name
-
-        oneRow[8] = simPeak.colabelling
+        atomTexts = [None] * maxDimenionality
+        chemicalShifts = [None] * maxDimenionality
 
         for simulatedPeakContrib in simPeak.getContribs() :
 
@@ -502,15 +506,15 @@ class ResultsTab(object) :
             
             spinSystemDescription = spinSystemB.getDescription(noSerialWhenSeqCodeIsPresent=True)
             
-          oneRow[dimNumber+1] = '%s %s' %(spinSystemDescription, atomName) #ccpCode + '{' + str(spinSystemNumber) +'} ' + atomName
+          atomTexts[dimNumber-1] = '%s %s' %(spinSystemDescription, atomName)
           
         if realPeak :
 
-          oneRow[0] = realPeak.getSerial()
+          serial = realPeak.getSerial()
 
           for dim in realPeak.getDimensions() :
               
-            oneRow[dim.getDimNumber()+4] =  dim.getChemicalShift()
+            chemicalShifts[dim.getDimNumber()-1] =  dim.getChemicalShift()
             
         else :
           
@@ -518,16 +522,16 @@ class ResultsTab(object) :
             
             if resonance :
             
-              oneRow[simulatedPeakContrib.getDimNumber()+4] = resonance.getChemicalShift()
+              chemicalShifts[simulatedPeakContrib.getDimNumber()-1] = resonance.getChemicalShift()
               
             else :
-              
-              oneRow[simulatedPeakContrib.getDimNumber()+4] = '?'
+
+              chemicalShifts[simulatedPeakContrib.getDimNumber()-1] = '?'
           
-        data.append(oneRow)
+        data.append([serial, simPeak.getSpectrum().name] + atomTexts + chemicalShifts  + [simPeak.colabelling])
         objectList.append(peakLink)
-      
-      self.displayPeakTable.update(objectList=objectList,textMatrix=data)
+      headingList= ['#','spectrum'] + ['dim%s' %a for a in range(1,maxDimenionality+1)] + ['c.s. dim%s' %a for a in range(1,maxDimenionality+1)] + ['colabbeling']
+      self.displayPeakTable.update(objectList=objectList,textMatrix=data, headingList=headingList)      
 
   def findPeak(self):
     
