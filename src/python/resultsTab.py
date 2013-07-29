@@ -1,4 +1,4 @@
-
+from memops.gui.ButtonList import ButtonList
 from memops.gui.Button import Button
 from memops.gui.IntEntry import IntEntry
 from memops.gui.Frame import Frame
@@ -347,7 +347,7 @@ class ResultsTab(object) :
       self.selectedLinkA = None
       self.selectedLinkB = number
       
-    self.updateButtonHighLights()
+    self.updateButtons()
     self.updateLink()
     
   @lockUntillResults  
@@ -367,7 +367,7 @@ class ResultsTab(object) :
       self.selectedLinkA = None
       self.selectedLinkB = None
       
-    self.updateButtonHighLights()
+    self.updateButtons()
     self.updateLink()
 
   def updateLink(self) :
@@ -660,8 +660,8 @@ class ResultsTab(object) :
       
       assignSpinSystemstoResidues(ccpnSpinSystems, ccpnResidues, guiParent=self)
       
-      self.updateResultsTopRowButtons()    
-      self.updateResultsBottomRowButtons()
+      self.updateButtons()    
+      self.updateButtons()
       self.updateResultsTable()
       self.updatePeakTable() 
 
@@ -742,7 +742,7 @@ class ResultsTab(object) :
     
     #self.updateSpinSystemTable(spinSystem)
     self.updateLink()
-    self.updateResultsBottomRowButtons()
+    self.updateButtons()
     
   def updateSpinSystemTable(self, spinSystem):
     
@@ -833,7 +833,7 @@ class ResultsTab(object) :
       res.userDefinedSolution = res.solutions[selectedSolution-1]
      
     self.updateLink()
-    self.updateResultsBottomRowButtons()
+    self.updateButtons()
   
   @lockUntillResults    
   def resultsPrevSolution(self):
@@ -843,7 +843,7 @@ class ResultsTab(object) :
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
       
       self.updateLink()
-      self.updateResultsTopRowButtons()
+      self.updateButtons()
  
   @lockUntillResults     
   def resultsNextSolution(self):
@@ -855,7 +855,7 @@ class ResultsTab(object) :
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
       
       self.updateLink()
-      self.updateResultsTopRowButtons()
+      self.updateButtons()
   
   @lockUntillResults
   def resultsPrevResidue(self):
@@ -881,8 +881,8 @@ class ResultsTab(object) :
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
       
       self.updateLink()
-      self.updateResultsTopRowButtons()
-      self.updateResultsBottomRowButtons()
+      self.updateButtons()
+      self.updateButtons()
       self.updateResultsTable()
       self.updateResidueLabels()
       
@@ -908,8 +908,8 @@ class ResultsTab(object) :
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
       
       self.updateLink()
-      self.updateResultsTopRowButtons()
-      self.updateResultsBottomRowButtons()
+      self.updateButtons()
+      self.updateButtons()
       self.updateResultsTable()
       self.updateResidueLabels()
   
@@ -942,8 +942,8 @@ class ResultsTab(object) :
       self.resultsResidueNumberEntry.set(self.resultsResidueNumber)
       
     self.updateLink()
-    self.updateResultsTopRowButtons()
-    self.updateResultsBottomRowButtons()
+    self.updateButtons()
+    self.updateButtons()
     self.updateResultsTable()
     self.updateResidueLabels()
 
@@ -970,15 +970,15 @@ class ResultsTab(object) :
       self.resultsSolutionNumberEntry.set(self.selectedSolution)
       
     self.updateLink()
-    self.updateResultsTopRowButtons()      
+    self.updateButtons()      
     
   def update(self) :
     
     self.updateLink()
     self.updateResidueLabels()
     self.updateResultsTable()
-    self.updateResultsTopRowButtons()
-    self.updateResultsBottomRowButtons()
+    self.updateButtons()
+    self.updateButtons()
     
   def updateResultsTable(self):
     
@@ -1088,7 +1088,16 @@ class ResultsTab(object) :
       
       label.set(text)
 
+
+  def updateButtons(self) :
+    
+    self.updateButtonHighLights()
+    self.updateResultsTopRowButtons()
+    self.updateResultsBottomRowButtons()
+
+
   def updateResultsTopRowButtons(self) :
+    
     
     resList = self.getCurrentlyDisplayedResidues()
     
@@ -1104,6 +1113,7 @@ class ResultsTab(object) :
       
   def updateResultsBottomRowButtons(self) :
     
+    
     resList = self.getCurrentlyDisplayedResidues()
       
     buttons = self.sequenceButtonsB.buttons[::2]
@@ -1113,7 +1123,7 @@ class ResultsTab(object) :
       if res.userDefinedSolution :
         
         selectedSpinSystem = res.userDefinedSolution
-        text = selectedSpinSystem.getDescription(noSerialWhenSeqCodeIsPresent=False) #self.getStringDescriptionOfSpinSystem(selectedSpinSystem)
+        text = selectedSpinSystem.getDescription(noSerialWhenSeqCodeIsPresent=False) 
         
         if len(selectedSpinSystem.userDefinedSolutions) > 1 :
       
@@ -1159,6 +1169,14 @@ class ResultsTab(object) :
     for button in self.sequenceButtons.buttons + self.sequenceButtonsB.buttons :
       
       button.config(bg='grey83')
+      
+  def setAllRedButtonsToGrey(self) :
+    
+    for button in self.sequenceButtons.buttons + self.sequenceButtonsB.buttons :
+      
+      if button.enableFg == 'red' :
+      
+        button.config(bg='grey83')
     
   def sortDisplayResultsTable(self) :                                                       # Remove: not used any longer.
     

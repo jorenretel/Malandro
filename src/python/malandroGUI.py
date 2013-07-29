@@ -28,7 +28,7 @@ from src.cython.malandro import Malandro, myDataModel
 
 
 
-AMINO_ACIDS = standardResidueCcpCodes['protein']
+#AMINO_ACIDS = standardResidueCcpCodes['protein']
 
 import assignMentTransferTab
 reload(assignMentTransferTab)
