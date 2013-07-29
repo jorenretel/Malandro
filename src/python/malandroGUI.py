@@ -12,20 +12,13 @@ def open_reference(argServer):
 
 
 import cPickle
-
 from memops.general import Implementation
-
 from memops.gui.ButtonList import UtilityButtonList
-
 from memops.gui.Label import Label
 from memops.gui.TabbedFrame import TabbedFrame
-
 from memops.gui.MessageReporter import showWarning,  showYesNo, showMulti
-
 from ccpnmr.analysis.popups.BasePopup import BasePopup
-
 from ccpnmr.analysis.macros.ArgumentServer import ArgumentServer
-
 
 import modifiedAssignmentBasic
 reload(modifiedAssignmentBasic)
@@ -518,7 +511,6 @@ class ViewAssignmentPopup(BasePopup):
 
     self.administerNotifiers(self.registerNotify)
     
-
   def toggleTab(self, index):
   
     pass
@@ -551,10 +543,6 @@ class ViewAssignmentPopup(BasePopup):
     self.administerNotifiers(self.unregisterNotify)
     
     BasePopup.destroy(self)
-  
-  def noAction(self):
-      
-    pass
     
   def updateInfoText(self,string):
     
