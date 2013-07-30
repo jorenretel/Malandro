@@ -678,7 +678,7 @@ cdef class Spectrum:
   cdef void findPossiblePeakContributions(self,useDimenionalAssignments=False) :
     
     cdef list resonances
-    cdef myResonance resonance
+    cdef Resonance resonance
     cdef Peak peak
     cdef aDimension dim
     cdef Peak firstPeak
@@ -759,7 +759,7 @@ cdef class Spectrum:
     
     cdef aDimension dim
     
-    cdef myResonance resonance
+    cdef Resonance resonance
     
     cdef Peak peak
     
@@ -846,7 +846,7 @@ cdef class Spectrum:
     
     cdef int i
     
-    cdef myResonance resonance
+    cdef Resonance resonance
     
     cdef Peak peak
     

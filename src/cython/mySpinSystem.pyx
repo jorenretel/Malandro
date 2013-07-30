@@ -104,7 +104,7 @@ cdef class SpinSystem :
           
       if resonance.assignNames :
     
-        newResonance = myResonance(self,resonance)
+        newResonance = Resonance(self,resonance)
         
         self.resonanceDict[newResonance.atomName] = newResonance
 
@@ -155,7 +155,7 @@ cdef class SpinSystem :
       
       self.allowedResidueView[resNumber] = True
       
-  cdef myResonance getResonanceForAtomName(self,str atomName) :       # Used in matchSpectrum()
+  cdef Resonance getResonanceForAtomName(self,str atomName) :       # Used in matchSpectrum()
     
     if atomName in self.resonanceDict :
                 
@@ -220,7 +220,7 @@ cdef class SpinSystem :
 
   cdef void groupResonancesByAtomSite(self) :                                 #TODO: finish
     
-    cdef myResonance resonance
+    cdef Resonance resonance
     
     resonancesByAtomSiteName = self.resonancesByAtomSiteName
     resonancesByName = self.resonanceDict

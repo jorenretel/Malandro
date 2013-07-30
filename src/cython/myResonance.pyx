@@ -1,5 +1,5 @@
 
-cdef class myResonance :
+cdef class Resonance :
   
   cdef SpinSystem spinSystem
   
