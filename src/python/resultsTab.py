@@ -1177,13 +1177,6 @@ class ResultsTab(object) :
       if button.enableFg == 'red' :
       
         button.config(bg='grey83')
-    
-  def sortDisplayResultsTable(self) :                                                       # Remove: not used any longer.
-    
-    for table in self.displayResultsTables :
-      
-      #table.sortDown = False
-      table.sortLine(1, noUpdate=True)
       
   def getCurrentlyDisplayedResidues(self) :
     

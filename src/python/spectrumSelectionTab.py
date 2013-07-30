@@ -81,17 +81,21 @@ class SpectrumSelectionTab(object) :
     
   def getAutoLabellingSchemes(self, notifyScheme=None):
   
-    names = []
-    index = 0
+    #names = []
+    #index = 0
+    #
+    #scheme = self.selectedAutoSpec.labellingScheme
+    #schemes = self.getLabellingSchemes()
+    #
+    #
+    #if schemes:
+    #  names = ['Automatic from sample','<None>'] + [sc.name for sc in schemes[2:]]
+    #
+    #  index = schemes.index(scheme)
     
-    scheme = self.selectedAutoSpec.labellingScheme
-    schemes = self.getLabellingSchemes()
-
-
-    if schemes:
-      names = ['Automatic from sample','<None>'] + [sc.name for sc in schemes[2:]]
-
-      index = schemes.index(scheme)
+    names = ['Automatic from sample']
+    schemes = [True]
+    index = 0
     
     self.autoLabellingPulldown.setup(names, schemes,  index)
     
