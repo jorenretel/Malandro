@@ -1,5 +1,5 @@
 
-cdef class myChain :
+cdef class Chain :
 
   cdef public list residues 
     

@@ -190,7 +190,7 @@ class AssignMentTransferTab(object) :
       
       return
   
-    Nsolutions = len(self.dataModel.myChain.residues[0].solutions)
+    Nsolutions = len(self.dataModel.chain.residues[0].solutions)
 
     if value is None :
       
@@ -252,7 +252,7 @@ class AssignMentTransferTab(object) :
     
     lookupSpinSystem = [self.getAssignedSpinSystem, self.getBestScoringSpinSystem, self.getUserDefinedSpinSystem, self.getSelectedSolutionSpinSystem][self.spinSystemType]
     
-    residues = self.dataModel.myChain.residues
+    residues = self.dataModel.chain.residues
     
     spinSystemSequence = [lookupSpinSystem(res) for res in residues]
     

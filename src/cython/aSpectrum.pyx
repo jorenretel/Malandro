@@ -114,7 +114,7 @@ cdef class Spectrum:
     
     minIsoFrac = DataModel.minIsoFrac
     
-    residues = DataModel.myChain.residues 
+    residues = DataModel.chain.residues 
     
     ccpnSpectrum = self.ccpnSpectrum
     
@@ -776,7 +776,7 @@ cdef class Spectrum:
     
     allSpinSystems = DataModel.spinSystems
     
-    residues = DataModel.myChain.residues
+    residues = DataModel.chain.residues
     
     symmetry = float(self.symmetry)     # preventing int division
 
@@ -863,7 +863,7 @@ cdef class Spectrum:
     
     allSpinSystems = DataModel.spinSystems
     
-    residues = DataModel.myChain.residues
+    residues = DataModel.chain.residues
 
     for res, simulatedPeakList in zip(residues,intraResidualSimulatedPeakMatrix) :
       

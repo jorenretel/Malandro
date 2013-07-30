@@ -253,7 +253,7 @@ cdef class Malandro :
       
     #  print ss.getCcpnSeqCode()
     
-    for res in DataModel.myChain.residues :
+    for res in DataModel.chain.residues :
       
       isAssigned = False
             
@@ -427,7 +427,7 @@ cdef class Malandro :
       i = 1
       matches = 0
 
-      for res in self.DataModel.myChain.residues :
+      for res in self.DataModel.chain.residues :
         
         res.solutions.append(res.currentSpinSystemAssigned)
         
@@ -447,7 +447,7 @@ cdef class Malandro :
     
     cdef myDataModel DataModel
     
-    cdef myChain chain
+    cdef Chain chain
     
     cdef list residues
     
@@ -473,7 +473,7 @@ cdef class Malandro :
     
     DataModel = self.DataModel
     
-    chain = DataModel.myChain
+    chain = DataModel.chain
     
     residues = chain.residues
     
@@ -520,7 +520,7 @@ cdef class Malandro :
   
     cdef peakLink pl
     
-    residues = self.DataModel.myChain.residues
+    residues = self.DataModel.chain.residues
       
     for res in residues :
       
@@ -570,7 +570,7 @@ cdef class Malandro :
     
     i = 1
     
-    for key in DataModel.myChain.residueTypeFrequencyDict.keys() : #DataModel.spinSystems.keys() :
+    for key in DataModel.chain.residueTypeFrequencyDict.keys() : #DataModel.spinSystems.keys() :
 
       
       amountOfAssignedSpinsystems = 0
@@ -591,9 +591,9 @@ cdef class Malandro :
       amountOfTentativeSpinSystemsWithOnlyOneCcpCode = 0
       
       
-      if key in DataModel.myChain.residueTypeFrequencyDict :
+      if key in DataModel.chain.residueTypeFrequencyDict :
         
-        amountOfResiduesOfThisType = DataModel.myChain.residueTypeFrequencyDict[key]
+        amountOfResiduesOfThisType = DataModel.chain.residueTypeFrequencyDict[key]
         
       else :
       
@@ -697,7 +697,7 @@ cdef class Malandro :
       
     DataModel = self.DataModel
 
-    residues = DataModel.myChain.residues
+    residues = DataModel.chain.residues
     
     for res in residues :
       
@@ -1164,7 +1164,7 @@ cdef class Malandro :
     
     
     
-    residues = self.DataModel.myChain.residues
+    residues = self.DataModel.chain.residues
     
     score = 0.0
     

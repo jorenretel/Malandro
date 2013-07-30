@@ -3,7 +3,7 @@ cdef class myDataModel :
 
   cdef list spectra
 
-  cdef public myChain myChain
+  cdef public Chain chain
 
   cdef dict spinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
   
@@ -20,7 +20,7 @@ cdef class myDataModel :
 
     self.spectra = []
 
-    self.myChain = None
+    self.chain = None
     
     self.spinSystems = {}
     self.previouslyAssignedSpinSystems = {}
@@ -51,7 +51,7 @@ cdef class myDataModel :
 
   def setupChain(self):
     
-    self.myChain = myChain(self.auto.chain)
+    self.chain = Chain(self.auto.chain)
         
   def setupSpectra(self):
 
@@ -73,7 +73,7 @@ cdef class myDataModel :
         
         continue
       
-      if resonanceGroup.residue and resonanceGroup.residue.chain is self.myChain.ccpnChain :                                  # SpinSystem is assigned to a residue in the selected chain
+      if resonanceGroup.residue and resonanceGroup.residue.chain is self.chain.ccpnChain :                                  # SpinSystem is assigned to a residue in the selected chain
         
         seqCode = int(resonanceGroup.residue.seqCode)
         ccpCode = getResidueCode(resonanceGroup.residue.molResidue)
@@ -97,7 +97,7 @@ cdef class myDataModel :
           seq = residue.seqCode
           resCode = residue.ccpCode
           
-          if residue.chain is self.myChain.ccpnChain :
+          if residue.chain is self.chain.ccpnChain :
   
             ccpCodes.append(resCode)                                                                   # Only consider the tentative assignments to residues in the selected chain.                                                         
             seqCodes.append(seq)
@@ -152,7 +152,7 @@ cdef class myDataModel :
     cdef SpinSystem spinSystemA, spinSystemB
     cdef list residues
     
-    residues = self.myChain.residues
+    residues = self.chain.residues
     
     for resA, resB in zip(residues,residues[1:]):
 
@@ -213,11 +213,11 @@ cdef class myDataModel :
     
   def __getstate__(self) :
 
-    return (self.spectra, self.myChain, self.spinSystems)
+    return (self.spectra, self.chain, self.spinSystems)
   
   def __setstate__(self, state) :
 
-    self.spectra, self.myChain, self.spinSystems = state
+    self.spectra, self.chain, self.spinSystems = state
     
   def connectToProject(self, project, nmrProject) :
     
@@ -232,7 +232,7 @@ cdef class myDataModel :
     self.nmrProject = nmrProject
     
     # Connect the chain, residues and atoms to the corresponding chain, residues and atoms in ccpn.
-    self.myChain.connectToProject(project)
+    self.chain.connectToProject(project)
     
     # Connect spinsystems and resonances
     spinSystems = set([spinSystem for sublist in self.spinSystems.values() for spinSystem in sublist])
@@ -248,7 +248,7 @@ cdef class myDataModel :
       
   def getChain(self) :
   
-    return self.myChain
+    return self.chain
   
   def getSpinSystems(self) :
     

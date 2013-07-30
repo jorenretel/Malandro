@@ -385,7 +385,7 @@ class ResultsTab(object) :
     
     DataModel = self.dataModel
     resNumber = self.resultsResidueNumber
-    chain = DataModel.myChain
+    chain = DataModel.chain
     residues = chain.residues    
     solutionNumber = self.selectedSolution-1
     
@@ -731,7 +731,7 @@ class ResultsTab(object) :
      
   def selectSpinSystem(self, number, spinSystem):
     
-    res = self.dataModel.myChain.residues[self.resultsResidueNumber-3 + number]
+    res = self.dataModel.chain.residues[self.resultsResidueNumber-3 + number]
     
     oldSpinSystemForResidue = res.userDefinedSolution
     
@@ -756,7 +756,7 @@ class ResultsTab(object) :
     
     DataModel = self.dataModel
     
-    residues = DataModel.myChain.residues
+    residues = DataModel.chain.residues
     
     data = []
     colorMatrix = []
@@ -831,7 +831,7 @@ class ResultsTab(object) :
     
     selectedSolution = self.selectedSolution
     
-    for res in DataModel.myChain.residues :
+    for res in DataModel.chain.residues :
       
       res.userDefinedSolution = res.solutions[selectedSolution-1]
      
@@ -851,7 +851,7 @@ class ResultsTab(object) :
   @lockUntillResults     
   def resultsNextSolution(self):
     
-    amountOfRepeats = len(self.dataModel.myChain.residues[0].solutions)
+    amountOfRepeats = len(self.dataModel.chain.residues[0].solutions)
     
     if self.selectedSolution < amountOfRepeats:
       self.selectedSolution = self.selectedSolution + 1
@@ -863,7 +863,7 @@ class ResultsTab(object) :
   @lockUntillResults
   def resultsPrevResidue(self):
     
-    residues = self.dataModel.myChain.residues
+    residues = self.dataModel.chain.residues
     #chainLength = len(residues)
     
     new_value = self.resultsResidueNumber
@@ -892,7 +892,7 @@ class ResultsTab(object) :
   @lockUntillResults
   def resultsNextResidue(self):
     
-    residues = self.dataModel.myChain.residues
+    residues = self.dataModel.chain.residues
     chainLength = len(residues)
     
     new_value = self.resultsResidueNumber
@@ -926,7 +926,7 @@ class ResultsTab(object) :
     Update for entry of residue number in strip plots
     '''
 
-    residues = self.dataModel.myChain.residues
+    residues = self.dataModel.chain.residues
 
     value = self.resultsResidueNumberEntry.get()
     if value == self.resultsResidueNumber:
@@ -956,7 +956,7 @@ class ResultsTab(object) :
     Update for entry of residue number in strip plots
     '''
   
-    Nsolutions = len(self.dataModel.myChain.residues[0].solutions)
+    Nsolutions = len(self.dataModel.chain.residues[0].solutions)
 
     value = self.resultsSolutionNumberEntry.get()
     if value == self.selectedSolution:
@@ -989,7 +989,7 @@ class ResultsTab(object) :
     
     DataModel = self.dataModel
     
-    chain = DataModel.myChain
+    chain = DataModel.chain
     
     residues = chain.residues
   
@@ -1183,7 +1183,7 @@ class ResultsTab(object) :
     
     resNumber = self.resultsResidueNumber    
 
-    residues = self.dataModel.myChain.residues[resNumber - 3 : resNumber + 2]
+    residues = self.dataModel.chain.residues[resNumber - 3 : resNumber + 2]
   
     return residues 
 

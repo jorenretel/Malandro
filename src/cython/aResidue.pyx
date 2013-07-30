@@ -9,7 +9,7 @@ cdef class aResidue :
   
   cdef public SpinSystem userDefinedSolution
   
-  cdef myChain chain
+  cdef Chain chain
   
   cdef public list solutions
   

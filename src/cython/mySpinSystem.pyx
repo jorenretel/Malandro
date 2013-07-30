@@ -111,7 +111,7 @@ cdef class SpinSystem :
   cdef void runAminoAcidTyping(self) :
     
     shiftList = self.DataModel.auto.shiftList
-    ccpnChain = self.DataModel.myChain.ccpnChain
+    ccpnChain = self.DataModel.chain.ccpnChain
     
     shifts = []
     for resonance in self.ccpnResonanceGroup.resonances:
@@ -131,7 +131,7 @@ cdef class SpinSystem :
         
       for ccpCode, score in scores.items() :
         
-        if score > 2*(float(self.DataModel.myChain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.myChain.residues)) :
+        if score > 2*(float(self.DataModel.chain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.chain.residues)) :
           
           scoreDict[ccpCode] = score
           
@@ -139,11 +139,11 @@ cdef class SpinSystem :
     
   cdef void setupAllowedResidueView(self) :
     
-    cdef myChain chain
+    cdef Chain chain
     
     cdef int resNumber
     
-    chain = self.DataModel.myChain
+    chain = self.DataModel.chain
     
     cythonArray = cvarray(shape=(len(chain.residues) + 1,), itemsize=sizeof(bint), format="i")
     
@@ -174,7 +174,7 @@ cdef class SpinSystem :
     cdef dict residuesByCcpCode
     cdef str ccpCode
     cdef aResidue res
-    residuesByCcpCode = self.DataModel.myChain.residuesByCcpCode
+    residuesByCcpCode = self.DataModel.chain.residuesByCcpCode
 
     if useAssignments and self.ccpnSeqCode :
 
