@@ -21,22 +21,31 @@ cdef class myDataModel :
     self.spectra = []
 
     self.myChain = None
-        
+    
     self.mySpinSystems = {}
-      
     self.previouslyAssignedSpinSystems = {}
-        
     self.justTypedSpinSystems = {}
-    
     self.tentativeSpinSystems = {}
-    
     self.typeProbSpinSystems = {}
-    
     self.untypedSpinSystems = {}
-    
     self.allSpinSystemsWithoutAssigned = {}
-    
     self.jokerSpinSystems = {}
+    
+    aminoAcids = ['Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu',
+                  'Gly', 'His', 'Ile', 'Leu', 'Lys', 'Met', 'Phe',
+                  'Pro', 'Ser', 'Thr', 'Trp', 'Tyr', 'Val']
+    
+    for aa in aminoAcids :
+      
+      self.mySpinSystems[aa] = []
+      self.previouslyAssignedSpinSystems[aa] = []
+      self.justTypedSpinSystems[aa] = []
+      self.tentativeSpinSystems[aa] = []
+      self.typeProbSpinSystems[aa] = []
+      self.untypedSpinSystems[aa] = []
+      self.allSpinSystemsWithoutAssigned[aa] = []
+      self.jokerSpinSystems[aa] = []
+
     
     self.minIsoFrac = auto.minIsoFrac
 

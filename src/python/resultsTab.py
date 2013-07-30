@@ -20,6 +20,7 @@ from modifiedAssignmentBasic import assignSpinSystemstoResidues
 
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
+print AMINO_ACIDS
 
 
 def lockUntillResults(function) :

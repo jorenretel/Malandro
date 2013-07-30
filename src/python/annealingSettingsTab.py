@@ -78,25 +78,25 @@ class AnnealingSettingsTab(object) :
     
     row += 1
     
-    label = Label(frame, text='Type untyped spin systems on the fly.', grid=(row,0))      
+    label = Label(frame, text='Type untyped spin systems on the fly:', grid=(row,0))      
     tipText = 'Spin system typing can be carried out so also untyped spin systems can be used. Only amino acid types that have a reasonable score (i.e. higher than the random chance) will be considered'
 
     self.typeSpinSystemsCheck = CheckButton(frame, selected=False, grid=(row,1))
 
     row += 1
 
-    label = Label(frame, text='Only use present dimensional assignments for peaks', grid=(row,0))      
+    label = Label(frame, text='If a peak dimension has resonances assigned, only consider those:', grid=(row,0))      
     tipText = 'If one or more dimensions of a peak is already assigned, assume that this assignment is the only option. If not the program will assume the peak can have other assignment options as well.'
     self.useDimenionalAssignmentsCheck = CheckButton(frame, selected=True, grid=(row,1))
     
     row += 1
 
-    label= Label(frame, text = 'Use the assignment of the spin systems in the project:', grid=(row,0))
+    label= Label(frame, text = 'Keep sequentially assigned spin systems in place:', grid=(row,0))
     self.useAssignmentsCheck = CheckButton(frame, selected=True, grid=(row,1))
     
     row += 1
     
-    label= Label(frame, text = 'Use the tentative assignment(s) for the spin systems in the project:', grid=(row,0))
+    label= Label(frame, text = 'If a spin system has tentative residue assignments, only consider those:', grid=(row,0))
     self.useTentativeCheck = CheckButton(frame, selected=True, grid=(row,1))
 
     row += 1
