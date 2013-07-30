@@ -60,7 +60,7 @@ cdef class myChain :
     there at all.
     '''
     cdef aResidue res
-    cdef mySpinSystem spinSystem
+    cdef SpinSystem spinSystem
     cdef aResidue firstResidue
     cdef aResidue lastResidue
     
@@ -68,7 +68,7 @@ cdef class myChain :
     lastResidue = self.residues[-1]
     
     res = aResidue(self,None)
-    spinSystem = mySpinSystem()
+    spinSystem = SpinSystem()
     #spinSystem.isJoker = True
     
     res.currentSpinSystemAssigned = spinSystem

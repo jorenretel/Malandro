@@ -1,7 +1,7 @@
 
 cdef class myResonance :
   
-  cdef mySpinSystem mySpinSystem
+  cdef SpinSystem mySpinSystem
   
   cdef double CS
   

@@ -65,7 +65,7 @@ cdef class myDataModel :
 
   def setupSpinSystems(self) :
     
-    cdef mySpinSystem newSpinSystem
+    cdef SpinSystem newSpinSystem
     
     for resonanceGroup in self.auto.nmrProject.resonanceGroups :   # taking all spinsystems in the project, except for the ones that have no resonances
 
@@ -78,7 +78,7 @@ cdef class myDataModel :
         seqCode = int(resonanceGroup.residue.seqCode)
         ccpCode = getResidueCode(resonanceGroup.residue.molResidue)
         
-        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpnSeqCode = seqCode, ccpCode=ccpCode)
+        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpnSeqCode = seqCode, ccpCode=ccpCode)
         
         self.addToDictWithLists(self.previouslyAssignedSpinSystems, ccpCode, newSpinSystem)
         self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
@@ -104,7 +104,7 @@ cdef class myDataModel :
             
         if seqCodes :
 
-          newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, tentativeSeqCodes = seqCodes,tentativeCcpCodes=ccpCodes)
+          newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, tentativeSeqCodes = seqCodes,tentativeCcpCodes=ccpCodes)
           
           for ccpCode in set(ccpCodes) :
           
@@ -116,7 +116,7 @@ cdef class myDataModel :
   
         ccpCode = resonanceGroup.ccpCode
         
-        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpCode=ccpCode)
+        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpCode=ccpCode)
         
         self.addToDictWithLists(self.justTypedSpinSystems, ccpCode, newSpinSystem)
         self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
@@ -126,7 +126,7 @@ cdef class myDataModel :
         
         typeProbCcpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
         
-        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup,typeProbCcpCodes=typeProbCcpCodes)
+        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup,typeProbCcpCodes=typeProbCcpCodes)
         
         for ccpCode in typeProbCcpCodes :
         
@@ -136,7 +136,7 @@ cdef class myDataModel :
         
       elif self.auto.typeSpinSystems :
         
-        newSpinSystem = mySpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, typeSpinSystem=True)
+        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, typeSpinSystem=True)
         
         for ccpCode in newSpinSystem.aminoAcidProbs.keys() :
           
@@ -149,7 +149,7 @@ cdef class myDataModel :
     cdef aResidue resA, resB
     cdef dict linkDict, intraDict
     cdef str ccpCodeA, ccpCodeB
-    cdef mySpinSystem spinSystemA, spinSystemB
+    cdef SpinSystem spinSystemA, spinSystemB
     cdef list residues
     
     residues = self.myChain.residues
@@ -188,7 +188,7 @@ cdef class myDataModel :
 
   cdef list getResonancesForAtomSiteName(self, str atomSiteName) :
     
-    cdef mySpinSystem spinSystem
+    cdef SpinSystem spinSystem
     
     resonances = []
     

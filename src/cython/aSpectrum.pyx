@@ -747,7 +747,7 @@ cdef class Spectrum:
     
     cdef dict allSpinSystems
     
-    cdef mySpinSystem spinSys1, spinSys2, spinSystem
+    cdef SpinSystem spinSys1, spinSys2, spinSystem
     
     cdef int presentPeaks, i
     
@@ -836,7 +836,7 @@ cdef class Spectrum:
     
     cdef dict allSpinSystems
     
-    cdef mySpinSystem spinSys
+    cdef SpinSystem spinSys
     
     cdef simulatedPeak simulatedPeak
     

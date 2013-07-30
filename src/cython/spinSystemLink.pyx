@@ -7,7 +7,7 @@ cdef class SpinSystemLink :
   
   cdef aResidue residue1, residue2
   
-  cdef mySpinSystem spinSystem1, spinSystem2
+  cdef SpinSystem spinSystem1, spinSystem2
   
   cdef list notFoundSimulatedPeaks
   
@@ -91,7 +91,7 @@ cdef class SpinSystemLink :
     
     cdef simulatedPeak simPeak
     cdef simulatedPeakContrib contrib
-    cdef mySpinSystem spinSystem
+    cdef SpinSystem spinSystem
 
     notFoundPeakLinks = []
     

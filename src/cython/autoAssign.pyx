@@ -204,11 +204,11 @@ cdef class Malandro :
     
     cdef list listWithSpinSystems
     
-    cdef mySpinSystem spinSystem
+    cdef SpinSystem spinSystem
     
     cdef list listWithFittingSpinSystems
     
-    cdef mySpinSystem randomSpinSystem
+    cdef SpinSystem randomSpinSystem
     
     cdef bint useAssignments, useTentative
 
@@ -463,7 +463,7 @@ cdef class Malandro :
     
     cdef list spinSystemList
     
-    cdef mySpinSystem spinSys
+    cdef SpinSystem spinSys
     
     cdef Peak peak
     
@@ -555,7 +555,7 @@ cdef class Malandro :
     
     cdef int amountOfTentativeSpinSystemsWithOnlyOneCcpCode
     
-    cdef mySpinSystem spinsys
+    cdef SpinSystem spinsys
     
     cdef int amountOfResiduesOfThisType
     
@@ -563,7 +563,7 @@ cdef class Malandro :
     
     cdef int i
     
-    cdef mySpinSystem newSpinSystem
+    cdef SpinSystem newSpinSystem
     
     DataModel = self.DataModel    
     
@@ -611,7 +611,7 @@ cdef class Malandro :
       
       for x in range(short) :
         
-        newSpinSystem = mySpinSystem(DataModel=DataModel,ccpCode=key)
+        newSpinSystem = SpinSystem(DataModel=DataModel,ccpCode=key)
         
         newSpinSystem.spinSystemNumber = i * 1000000
         
@@ -765,7 +765,7 @@ cdef class Malandro :
 
   cdef void setupSpinSystemExchange(self) :
     
-    cdef mySpinSystem spinSystem
+    cdef SpinSystem spinSystem
     
     spinSystems = self.DataModel.mySpinSystems
     
@@ -937,7 +937,7 @@ cdef class Malandro :
     
     cdef list exchangeSpinSystems, oldPeaks, newPeaks, peakSet
     
-    cdef mySpinSystem A, B, Am1, Ap1, Bm1, Bp1
+    cdef SpinSystem A, B, Am1, Ap1, Bm1, Bp1
   
     cdef aResidue currentResidueA, currentResidueB, previousResA, previousResB, nextResA, nextResB
         
@@ -958,7 +958,7 @@ cdef class Malandro :
     for aTry in xrange(amountOfStepsPerTemperature) :
       
       r = int(rand()/randMax*lengthOfListWithSpinSystems)
-      A = <mySpinSystem>listWithSpinSystems[r]
+      A = <SpinSystem>listWithSpinSystems[r]
 
       exchangeSpinSystems = A.exchangeSpinSystems
       
@@ -966,7 +966,7 @@ cdef class Malandro :
         
         r = int(rand()/randMax*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
         
-        B = <mySpinSystem>exchangeSpinSystems[r]
+        B = <SpinSystem>exchangeSpinSystems[r]
         
         
       else :

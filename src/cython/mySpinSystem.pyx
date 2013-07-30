@@ -1,5 +1,5 @@
 
-cdef class mySpinSystem :
+cdef class SpinSystem :
   
   cdef myDataModel DataModel
 
@@ -205,7 +205,7 @@ cdef class mySpinSystem :
   cdef void setupExchangeSpinSystems(self, bint useAssignments) :
     
     cdef list spinSysList
-    cdef mySpinSystem spinSys
+    cdef SpinSystem spinSys
     cdef dict spinSystemDict
     
     spinSystemDict = (useAssignments and self.DataModel.allSpinSystemsWithoutAssigned) or self.DataModel.mySpinSystems

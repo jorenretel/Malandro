@@ -7,7 +7,7 @@ cdef class aResidue :
   
   cdef public str ccpCode
   
-  cdef public mySpinSystem userDefinedSolution
+  cdef public SpinSystem userDefinedSolution
   
   cdef myChain chain
   
@@ -17,7 +17,7 @@ cdef class aResidue :
   
   cdef dict atomsByName, atomsByAtomSiteName, atomsByCcpnChemAtom, linkDict, intraDict
   
-  cdef mySpinSystem currentSpinSystemAssigned
+  cdef SpinSystem currentSpinSystemAssigned
   
   cdef int seqCode
   
@@ -149,7 +149,7 @@ cdef class aResidue :
     
     return self.atomsByAtomSiteName.get(atomSiteName, [])
       
-  cdef void addToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
+  cdef void addToLinkDict(self,SpinSystem spinSys1, SpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
   
     cdef SpinSystemLink linkObject
     
@@ -173,7 +173,7 @@ cdef class aResidue :
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
         
-  cdef void addToIntraDict(self,mySpinSystem spinSys, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
+  cdef void addToIntraDict(self,SpinSystem spinSys, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
   
     cdef SpinSystemLink linkObject
     
@@ -197,7 +197,7 @@ cdef class aResidue :
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
     
-  cdef addPeakToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2,Peak realPeak, simulatedPeak simPeak, list resonances, double score, bint isIntra) :
+  cdef addPeakToLinkDict(self,SpinSystem spinSys1, SpinSystem spinSys2,Peak realPeak, simulatedPeak simPeak, list resonances, double score, bint isIntra) :
     
     cdef SpinSystemLink linkObject
     
@@ -244,7 +244,7 @@ cdef class aResidue :
       #linkObject.notFoundPeakLinks.append(newPeakLink)
       
 
-  cdef SpinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
+  cdef SpinSystemLink getFromLinkDict(self, SpinSystem spinSystem1, SpinSystem spinSystem2) :
     
     #cdef bool joker1
     #cdef bool joker2
@@ -305,7 +305,7 @@ cdef class aResidue :
     
     return self.getFromLinkDict(spinSystem1,spinSystem2)
   
-  def getIntraLink(self, mySpinSystem spinSystem) :
+  def getIntraLink(self, SpinSystem spinSystem) :
     
     if spinSystem.isJoker :
       
