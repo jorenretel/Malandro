@@ -9,7 +9,7 @@ cdef class aDimension :
   
   cdef list possibleContributions, nonLabelledResonances
   
-  cdef aPeak peak
+  cdef Peak peak
   
   
   def __init__(self, peak, ccpnDim):

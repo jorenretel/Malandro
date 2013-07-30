@@ -151,7 +151,7 @@ cdef class aResidue :
       
   cdef void addToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
   
-    cdef spinSystemLink linkObject
+    cdef SpinSystemLink linkObject
     
     if (spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber) in self.linkDict :
 
@@ -159,7 +159,7 @@ cdef class aResidue :
       
     else :
       
-      linkObject = spinSystemLink()
+      linkObject = SpinSystemLink()
       linkObject.spinSystem1 = spinSys1
       linkObject.spinSystem2 = spinSys2
       self.linkDict[(spinSys1.spinSystemNumber*10000+spinSys2.spinSystemNumber)] = linkObject
@@ -175,7 +175,7 @@ cdef class aResidue :
         
   cdef void addToIntraDict(self,mySpinSystem spinSys, list realPeaks, list simulatedPeaks, list notFoundSimulatedPeaks, list scores) :
   
-    cdef spinSystemLink linkObject
+    cdef SpinSystemLink linkObject
     
     if spinSys.spinSystemNumber in self.intraDict :
 
@@ -183,7 +183,7 @@ cdef class aResidue :
       
     else :
       
-      linkObject = spinSystemLink()
+      linkObject = SpinSystemLink()
       linkObject.spinSystem1 = spinSys
       linkObject.spinSystem2 = spinSys
       self.intraDict[spinSys.spinSystemNumber] = linkObject
@@ -197,9 +197,9 @@ cdef class aResidue :
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
     
-  cdef addPeakToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2, aPeak realPeak, simulatedPeak simPeak, list resonances, double score, bint isIntra) :
+  cdef addPeakToLinkDict(self,mySpinSystem spinSys1, mySpinSystem spinSys2,Peak realPeak, simulatedPeak simPeak, list resonances, double score, bint isIntra) :
     
-    cdef spinSystemLink linkObject
+    cdef SpinSystemLink linkObject
     
     if isIntra is True:                   #Not correct, in the way the spectra are matched now, it might by accident happen to for instance an Ala-Ala pair
       
@@ -209,7 +209,7 @@ cdef class aResidue :
         
       else :
         
-        linkObject = spinSystemLink()
+        linkObject = SpinSystemLink()
         linkObject.residue1 = self
         linkObject.residue2 = self
         linkObject.spinSystem1 = spinSys1
@@ -224,7 +224,7 @@ cdef class aResidue :
         
       else :
         
-        linkObject = spinSystemLink()
+        linkObject = SpinSystemLink()
         
         linkObject.residue1 = self
         linkObject.residue2 = self.nextResidue
@@ -244,7 +244,7 @@ cdef class aResidue :
       #linkObject.notFoundPeakLinks.append(newPeakLink)
       
 
-  cdef spinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
+  cdef SpinSystemLink getFromLinkDict(self, mySpinSystem spinSystem1, mySpinSystem spinSystem2) :
     
     #cdef bool joker1
     #cdef bool joker2
@@ -256,13 +256,13 @@ cdef class aResidue :
       
       return emptyLink
 
-    cdef spinSystemLink link
+    cdef SpinSystemLink link
     
     cdef int hashCode
     
     hashCode = spinSystem1.spinSystemNumber*10000+spinSystem2.spinSystemNumber
     
-    link = <spinSystemLink>self.linkDict[hashCode]
+    link = <SpinSystemLink>self.linkDict[hashCode]
     
     return link #link.realPeaks, link.score
       
@@ -311,7 +311,7 @@ cdef class aResidue :
       
       return emptyLink
 
-    cdef spinSystemLink link
+    cdef SpinSystemLink link
     
     cdef int hashCode
     

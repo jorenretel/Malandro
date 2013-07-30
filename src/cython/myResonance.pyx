@@ -39,9 +39,9 @@ cdef class myResonance :
     
     self.peakDimsLibIntra = {}
     
-  cdef void addPeakToPeakDimsLib(self, aPeak peak, aDimension dim) :
+  cdef void addPeakToPeakDimsLib(self,Peak peak, aDimension dim) :
     
-    cdef aSpectrum spectrum
+    cdef Spectrum spectrum
     
     cdef dict dimsLib
     cdef dict entryForSpectrum
@@ -76,7 +76,7 @@ cdef class myResonance :
       
       dimsLib[spectrum.name] = newlib
       
-  cdef list getPeaksForSpectrumDim(self, aSpectrum spectrum, int dimNumber, intraResidual=False) :
+  cdef list getPeaksForSpectrumDim(self, Spectrum spectrum, int dimNumber, intraResidual=False) :
     
     cdef dict entryForSpectrum
     

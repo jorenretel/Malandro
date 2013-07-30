@@ -1,5 +1,5 @@
 
-cdef class aPeak :
+cdef class Peak :
 
   cdef int degeneracy
   
@@ -9,7 +9,7 @@ cdef class aPeak :
   
   cdef list dimensions
   
-  cdef aSpectrum spectrum
+  cdef Spectrum spectrum
   
   cdef int serial
   

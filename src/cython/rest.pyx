@@ -130,7 +130,7 @@ cdef dict mergeDictionariesContainingLists(list dictionaries):
     
   return newDict
 
-cdef spinSystemLink emptyLink = spinSystemLink()
+cdef SpinSystemLink emptyLink = SpinSystemLink()
 
 @cython.nonecheck(False)
 @cython.wraparound(False)
@@ -141,7 +141,7 @@ cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks)
   cdef double peakScoreNew = 0
   cdef double peakScoreOld = 0
   
-  #cdef aPeak peak
+  #cdef Peak peak
   
   cdef peakLink pl
 

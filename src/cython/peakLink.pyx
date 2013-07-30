@@ -1,7 +1,7 @@
 
 cdef class peakLink :
   
-  cdef aPeak peak
+  cdef Peak peak
   
   cdef simulatedPeak simulatedPeak
   
@@ -9,7 +9,7 @@ cdef class peakLink :
   
   cdef list resonances
   
-  def __init__(self, aPeak peak, simulatedPeak simPeak, list resonances, double score):
+  def __init__(self,Peak peak, simulatedPeak simPeak, list resonances, double score):
     
     self.peak = peak
     self.simulatedPeak = simPeak

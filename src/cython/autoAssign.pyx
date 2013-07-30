@@ -453,7 +453,7 @@ cdef class Malandro :
     
     cdef list spectra
     
-    cdef aSpectrum spectrum
+    cdef Spectrum spectrum
     
     cdef dict mySpinSystems
     
@@ -465,7 +465,7 @@ cdef class Malandro :
     
     cdef mySpinSystem spinSys
     
-    cdef aPeak peak
+    cdef Peak peak
     
     cdef aResidue res
     
@@ -514,9 +514,9 @@ cdef class Malandro :
     
     cdef aResidue res
       
-    cdef spinSystemLink link
+    cdef SpinSystemLink link
     
-    cdef aPeak peak
+    cdef Peak peak
   
     cdef peakLink pl
     
@@ -650,7 +650,7 @@ cdef class Malandro :
     
     cdef myDataModel DataModel
     
-    cdef aSpectrum spectrum
+    cdef Spectrum spectrum
     
     DataModel = self.DataModel
     
@@ -674,7 +674,7 @@ cdef class Malandro :
     
     cdef dict linkDict
     
-    cdef spinSystemLink linkObject
+    cdef SpinSystemLink linkObject
     
     cdef int NfoundPeaks
     
@@ -739,7 +739,7 @@ cdef class Malandro :
     
     self.updateInfoText('Matching real to simulated spectra.....')
     
-    cdef aSpectrum spectrum
+    cdef Spectrum spectrum
     
     DataModel = self.DataModel
     
@@ -751,7 +751,7 @@ cdef class Malandro :
 
   cdef void calculateAllPeakContributions(self):
         
-    cdef aSpectrum spectrum
+    cdef Spectrum spectrum
     
     cdef str info
 
@@ -941,9 +941,9 @@ cdef class Malandro :
   
     cdef aResidue currentResidueA, currentResidueB, previousResA, previousResB, nextResA, nextResB
         
-    cdef spinSystemLink l1, l2, l3, l4, l5, l6, l7, l8
+    cdef SpinSystemLink l1, l2, l3, l4, l5, l6, l7, l8
     
-    cdef aPeak peak
+    cdef Peak peak
     
     cdef peakLink pl
     
@@ -1152,11 +1152,11 @@ cdef class Malandro :
     
     cdef int key
     
-    cdef spinSystemLink link
+    cdef SpinSystemLink link
     
     cdef list peaks
     
-    cdef aPeak peak
+    cdef Peak peak
     
     cdef double peakScore
     

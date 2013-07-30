@@ -5,7 +5,7 @@ cdef class simulatedPeak :
   
   cdef list simulatedPeakContribs
   
-  cdef aSpectrum spectrum
+  cdef Spectrum spectrum
   
   cdef object pySimulatedPeak
   

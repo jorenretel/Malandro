@@ -57,7 +57,7 @@ cdef class myDataModel :
 
     for temporary_spectrum_object in self.auto.selectedSpectra :
 
-      newspectrum = aSpectrum(temporary_spectrum_object)
+      newspectrum = Spectrum(temporary_spectrum_object)
       
       newspectrum.DataModel = self
 
@@ -164,11 +164,11 @@ cdef class myDataModel :
       
       for spinSystemA in self.mySpinSystems[ccpCodeA] :
         
-        intraDict[spinSystemA.spinSystemNumber] = spinSystemLink(residue1=resA,residue2=resA,spinSystem1=spinSystemA,spinSystem2=spinSystemA)
+        intraDict[spinSystemA.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resA,spinSystem1=spinSystemA,spinSystem2=spinSystemA)
         
         for spinSystemB in self.mySpinSystems[ccpCodeB] :
           
-          linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = spinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
+          linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
           
           
           

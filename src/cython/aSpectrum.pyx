@@ -1,5 +1,5 @@
 
-cdef class aSpectrum :
+cdef class Spectrum:
   
   cdef public str name
   
@@ -46,7 +46,7 @@ cdef class aSpectrum :
 
     for peak in peaks:
       
-      newpeak = aPeak(self,peak)
+      newpeak =Peak(self,peak)
 
       self.peaks.append(newpeak)
 
@@ -61,7 +61,7 @@ cdef class aSpectrum :
     
     cdef list residues
     
-    cdef aSpectrum spectrum
+    cdef Spectrum spectrum
     
     cdef object ccpnSpectrum
     
@@ -679,9 +679,9 @@ cdef class aSpectrum :
     
     cdef list resonances
     cdef myResonance resonance
-    cdef aPeak peak
+    cdef Peak peak
     cdef aDimension dim
-    cdef aPeak firstPeak
+    cdef Peak firstPeak
     cdef object atomSite
     cdef dict dimAtomsDict
     cdef double ppmValue
@@ -761,13 +761,13 @@ cdef class aSpectrum :
     
     cdef myResonance resonance
     
-    cdef aPeak peak
+    cdef Peak peak
     
     cdef int hc
     
     cdef double bestScore
     
-    cdef spinSystemLink link
+    cdef SpinSystemLink link
     
     hc = 10000 #self.hc
 
@@ -848,13 +848,13 @@ cdef class aSpectrum :
     
     cdef myResonance resonance
     
-    cdef aPeak peak
+    cdef Peak peak
     
     cdef int hc
     
     cdef double bestScore
     
-    cdef spinSystemLink link
+    cdef SpinSystemLink link
     
     hc = 10000 #self.hc
 

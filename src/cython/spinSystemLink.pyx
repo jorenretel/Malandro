@@ -1,5 +1,5 @@
 
-cdef class spinSystemLink :
+cdef class SpinSystemLink :
 
   cdef int score
   
@@ -28,7 +28,7 @@ cdef class spinSystemLink :
     self.peakLinks = []
     self.notFoundPeakLinks = []
 
-  cdef void addPeak(self, aPeak realPeak, simulatedPeak simPeak, list resonances, double score) :
+  cdef void addPeak(self,Peak realPeak, simulatedPeak simPeak, list resonances, double score) :
     
     if realPeak is not None :
       
