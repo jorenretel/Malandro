@@ -1,7 +1,7 @@
 
 cdef class myResonance :
   
-  cdef SpinSystem mySpinSystem
+  cdef SpinSystem spinSystem
   
   cdef double CS
   
@@ -23,7 +23,7 @@ cdef class myResonance :
   
   def __init__(self, mySpinSystem, ccpnResonance):
 
-    self.mySpinSystem = mySpinSystem
+    self.spinSystem = mySpinSystem
     
     self.ccpnResonance = ccpnResonance
     
@@ -107,15 +107,15 @@ cdef class myResonance :
     
   def __getstate__(self) :
 
-    return (self.mySpinSystem, self.CS, self.isotopeCode, self.atomName, self.serial)
+    return (self.spinSystem, self.CS, self.isotopeCode, self.atomName, self.serial)
   
   def __setstate__(self, state) :
 
-    self.mySpinSystem, self.CS, self.isotopeCode, self.atomName, self.serial = state
+    self.spinSystem, self.CS, self.isotopeCode, self.atomName, self.serial = state
     
   def connectToProject(self) :
     
-    self.ccpnResonance = self.mySpinSystem.ccpnResonanceGroup.findFirstResonance(serial=self.serial)
+    self.ccpnResonance = self.spinSystem.ccpnResonanceGroup.findFirstResonance(serial=self.serial)
     
     if not self.ccpnResonance :
       
@@ -128,7 +128,7 @@ cdef class myResonance :
   
   def getSpinSystem(self) :
     
-    return self.mySpinSystem
+    return self.spinSystem
   
   def getAtomName(self) :
     
@@ -138,7 +138,7 @@ cdef class myResonance :
     
     #return self.ccpnResonance
     
-    ccpnResonanceGroup = self.mySpinSystem.getCcpnResonanceGroup()
+    ccpnResonanceGroup = self.spinSystem.getCcpnResonanceGroup()
     
     if ccpnResonanceGroup :
       

@@ -774,7 +774,7 @@ cdef class Spectrum:
     DataModel = self.DataModel
     simulatedPeakMatrix = self.simulatedPeakMatrix
     
-    allSpinSystems = DataModel.mySpinSystems
+    allSpinSystems = DataModel.spinSystems
     
     residues = DataModel.myChain.residues
     
@@ -861,7 +861,7 @@ cdef class Spectrum:
     DataModel = self.DataModel
     intraResidualSimulatedPeakMatrix = self.intraResidualSimulatedPeakMatrix
     
-    allSpinSystems = DataModel.mySpinSystems
+    allSpinSystems = DataModel.spinSystems
     
     residues = DataModel.myChain.residues
 

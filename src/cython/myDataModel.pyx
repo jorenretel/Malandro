@@ -5,7 +5,7 @@ cdef class myDataModel :
 
   cdef public myChain myChain
 
-  cdef dict mySpinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
+  cdef dict spinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
   
   cdef Malandro auto
   
@@ -22,7 +22,7 @@ cdef class myDataModel :
 
     self.myChain = None
     
-    self.mySpinSystems = {}
+    self.spinSystems = {}
     self.previouslyAssignedSpinSystems = {}
     self.justTypedSpinSystems = {}
     self.tentativeSpinSystems = {}
@@ -37,7 +37,7 @@ cdef class myDataModel :
     
     for aa in aminoAcids :
       
-      self.mySpinSystems[aa] = []
+      self.spinSystems[aa] = []
       self.previouslyAssignedSpinSystems[aa] = []
       self.justTypedSpinSystems[aa] = []
       self.tentativeSpinSystems[aa] = []
@@ -81,7 +81,7 @@ cdef class myDataModel :
         newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpnSeqCode = seqCode, ccpCode=ccpCode)
         
         self.addToDictWithLists(self.previouslyAssignedSpinSystems, ccpCode, newSpinSystem)
-        self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+        self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
         
       elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
         
@@ -109,7 +109,7 @@ cdef class myDataModel :
           for ccpCode in set(ccpCodes) :
           
             self.addToDictWithLists(self.tentativeSpinSystems, ccpCode, newSpinSystem)
-            self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+            self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
             self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
       
       elif resonanceGroup.ccpCode :                                                                                                              # Residue is just Typed
@@ -119,7 +119,7 @@ cdef class myDataModel :
         newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpCode=ccpCode)
         
         self.addToDictWithLists(self.justTypedSpinSystems, ccpCode, newSpinSystem)
-        self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+        self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
         self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
 
       elif resonanceGroup.residueTypeProbs :
@@ -131,7 +131,7 @@ cdef class myDataModel :
         for ccpCode in typeProbCcpCodes :
         
           self.addToDictWithLists(self.typeProbSpinSystems, ccpCode, newSpinSystem)
-          self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+          self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
           self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
         
       elif self.auto.typeSpinSystems :
@@ -141,7 +141,7 @@ cdef class myDataModel :
         for ccpCode in newSpinSystem.aminoAcidProbs.keys() :
           
           self.addToDictWithLists(self.untypedSpinSystems, ccpCode, newSpinSystem)
-          self.addToDictWithLists(self.mySpinSystems, ccpCode, newSpinSystem)
+          self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
           self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
   
   def setupLinks(self) :
@@ -162,11 +162,11 @@ cdef class myDataModel :
       linkDict = resA.linkDict
       intraDict = resA.intraDict
       
-      for spinSystemA in self.mySpinSystems[ccpCodeA] :
+      for spinSystemA in self.spinSystems[ccpCodeA] :
         
         intraDict[spinSystemA.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resA,spinSystem1=spinSystemA,spinSystem2=spinSystemA)
         
-        for spinSystemB in self.mySpinSystems[ccpCodeB] :
+        for spinSystemB in self.spinSystems[ccpCodeB] :
           
           linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
           
@@ -194,7 +194,7 @@ cdef class myDataModel :
     
     spinSystems = []
         
-    for spinSystemList in self.mySpinSystems.values() :
+    for spinSystemList in self.spinSystems.values() :
     
       spinSystems.extend(spinSystemList)
       
@@ -213,11 +213,11 @@ cdef class myDataModel :
     
   def __getstate__(self) :
 
-    return (self.spectra, self.myChain, self.mySpinSystems)
+    return (self.spectra, self.myChain, self.spinSystems)
   
   def __setstate__(self, state) :
 
-    self.spectra, self.myChain, self.mySpinSystems = state
+    self.spectra, self.myChain, self.spinSystems = state
     
   def connectToProject(self, project, nmrProject) :
     
@@ -235,7 +235,7 @@ cdef class myDataModel :
     self.myChain.connectToProject(project)
     
     # Connect spinsystems and resonances
-    spinSystems = set([spinSystem for sublist in self.mySpinSystems.values() for spinSystem in sublist])
+    spinSystems = set([spinSystem for sublist in self.spinSystems.values() for spinSystem in sublist])
 
     for spinSystem in spinSystems :
       
@@ -252,7 +252,7 @@ cdef class myDataModel :
   
   def getSpinSystems(self) :
     
-    return self.mySpinSystems
+    return self.spinSystems
   
   def getSpectra(self) :
     

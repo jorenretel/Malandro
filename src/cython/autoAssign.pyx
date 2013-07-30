@@ -225,7 +225,7 @@ cdef class Malandro :
     
     justTypedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.justTypedSpinSystems)
     
-    allSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.mySpinSystems)
+    allSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.spinSystems)
     
     jokerSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.jokerSpinSystems)
     
@@ -370,7 +370,7 @@ cdef class Malandro :
     AcceptanceConstantList = self.acceptanceConstantList
     
     justTypedSpinSystems =DataModel.justTypedSpinSystems
-    allSpinSystems = DataModel.mySpinSystems
+    allSpinSystems = DataModel.spinSystems
     tentativeSpinSystems = DataModel.tentativeSpinSystems
     allSpinSystemsWithoutAssigned = DataModel.allSpinSystemsWithoutAssigned
 
@@ -479,7 +479,7 @@ cdef class Malandro :
     
     spectra = DataModel.spectra
     
-    mySpinSystems = DataModel.mySpinSystems
+    mySpinSystems = DataModel.spinSystems
     
     tentativeSpinSystems = DataModel.tentativeSpinSystems
     
@@ -570,7 +570,7 @@ cdef class Malandro :
     
     i = 1
     
-    for key in DataModel.myChain.residueTypeFrequencyDict.keys() : #DataModel.mySpinSystems.keys() :
+    for key in DataModel.myChain.residueTypeFrequencyDict.keys() : #DataModel.spinSystems.keys() :
 
       
       amountOfAssignedSpinsystems = 0
@@ -618,13 +618,13 @@ cdef class Malandro :
         i = i + 1
         
 
-        if key in DataModel.mySpinSystems :
+        if key in DataModel.spinSystems :
         
-          DataModel.mySpinSystems[key].append(newSpinSystem)
+          DataModel.spinSystems[key].append(newSpinSystem)
           
         else :
           
-          DataModel.mySpinSystems[key] = [newSpinSystem]
+          DataModel.spinSystems[key] = [newSpinSystem]
           
           
         if key in DataModel.jokerSpinSystems:
@@ -767,7 +767,7 @@ cdef class Malandro :
     
     cdef SpinSystem spinSystem
     
-    spinSystems = self.DataModel.mySpinSystems
+    spinSystems = self.DataModel.spinSystems
     
     allSpinSystems = []
     

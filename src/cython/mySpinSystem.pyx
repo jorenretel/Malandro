@@ -208,7 +208,7 @@ cdef class SpinSystem :
     cdef SpinSystem spinSys
     cdef dict spinSystemDict
     
-    spinSystemDict = (useAssignments and self.DataModel.allSpinSystemsWithoutAssigned) or self.DataModel.mySpinSystems
+    spinSystemDict = (useAssignments and self.DataModel.allSpinSystemsWithoutAssigned) or self.DataModel.spinSystems
     
     for spinSysList in spinSystemDict.values() :
       
