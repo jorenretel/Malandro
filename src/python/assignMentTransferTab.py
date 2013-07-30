@@ -13,7 +13,7 @@ from ccpnmr.analysis.core.AssignmentBasic import assignResToDim, assignSpinSyste
 
 from Tkinter import VERTICAL
 
-from modifiedAssignmentBasic import assignSpinSystemstoResidues
+from assignmentFunctions import assignSpinSystemstoResidues
 
 class AssignMentTransferTab(object) :
 

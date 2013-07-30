@@ -16,7 +16,7 @@ from ccpnmr.analysis.core.WindowBasic import getSpectrumWindowView
 from ccp.general.Constants import standardResidueCcpCodes
 import modifiedAssignmentBasic
 reload(modifiedAssignmentBasic)
-from modifiedAssignmentBasic import assignSpinSystemstoResidues
+from assignmentFunctions import assignSpinSystemstoResidues
 
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
