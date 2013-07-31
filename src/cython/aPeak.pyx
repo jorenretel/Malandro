@@ -41,7 +41,7 @@ cdef class Peak :
     
     for dim in ccpnDims :
 
-      dimension = aDimension(self,dim)
+      dimension = PeakDimension(self,dim)
 
       self.dimensions[dimension.dimNumber - 1] = dimension
           

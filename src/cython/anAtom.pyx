@@ -1,12 +1,12 @@
 
 
-cdef class anAtom :
+cdef class Atom :
 
   cdef object ccpnAtom
 
   cdef str atomName
 
-  cdef aResidue residue
+  cdef Residue residue
 
   cdef list assignmentPossibilityDimensions
   

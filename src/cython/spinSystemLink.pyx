@@ -5,7 +5,7 @@ cdef class SpinSystemLink :
   
   cdef list realPeaks, simulatedPeaks
   
-  cdef aResidue residue1, residue2
+  cdef Residue residue1, residue2
   
   cdef SpinSystem spinSystem1, spinSystem2
   
@@ -28,11 +28,11 @@ cdef class SpinSystemLink :
     self.peakLinks = []
     self.notFoundPeakLinks = []
 
-  cdef void addPeak(self,Peak realPeak, simulatedPeak simPeak, list resonances, double score) :
+  cdef void addPeak(self,Peak realPeak, SimulatedPeak simPeak, list resonances, double score) :
     
     if realPeak is not None :
       
-      newPeakLink = peakLink(realPeak,simPeak,resonances, score) 
+      newPeakLink = PeakLink(realPeak,simPeak,resonances, score) 
       self.peakLinks.append(newPeakLink)
       
     else :
@@ -89,8 +89,8 @@ cdef class SpinSystemLink :
   
   def getNotFoundPeakLinks(self) :
     
-    cdef simulatedPeak simPeak
-    cdef simulatedPeakContrib contrib
+    cdef SimulatedPeak simPeak
+    cdef SimulatedPeakContrib contrib
     cdef SpinSystem spinSystem
 
     notFoundPeakLinks = []
@@ -107,7 +107,7 @@ cdef class SpinSystemLink :
         
         resonances.append(spinSystem.getResonanceForAtomName(contrib.atomName))
       
-      notFoundPeakLinks.append(peakLink(None, simPeak,resonances,0.0))
+      notFoundPeakLinks.append(PeakLink(None, simPeak,resonances,0.0))
     
     return notFoundPeakLinks
   

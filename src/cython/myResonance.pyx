@@ -39,7 +39,7 @@ cdef class Resonance :
     
     self.peakDimsLibIntra = {}
     
-  cdef void addPeakToPeakDimsLib(self,Peak peak, aDimension dim) :
+  cdef void addPeakToPeakDimsLib(self,Peak peak, PeakDimension dim) :
     
     cdef Spectrum spectrum
     

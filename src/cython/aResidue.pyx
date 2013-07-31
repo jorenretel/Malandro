@@ -1,7 +1,7 @@
 
-cdef class aResidue :
+cdef class Residue :
 
-  cdef aResidue previousResidue, nextResidue
+  cdef Residue previousResidue, nextResidue
   
   cdef public object ccpnResidue
   
@@ -56,7 +56,7 @@ cdef class aResidue :
     
     for atom in self.ccpnResidue.atoms :
       
-      newatom = anAtom(self,atom)
+      newatom = Atom(self,atom)
       self.atoms.append(newatom)
       self.atomsByName[atom.chemAtom.name] = newatom
       self.atomsByCcpnChemAtom[atom.chemAtom] = newatom
@@ -65,7 +65,7 @@ cdef class aResidue :
       
   cdef void groupAtomsByAtomSite(self) :
     
-    cdef anAtom atom
+    cdef Atom atom
     
     atomsByAtomSiteName = self.atomsByAtomSiteName
     atomsByName = self.atomsByName
@@ -144,7 +144,7 @@ cdef class aResidue :
           
   cdef list getAtomsForAtomSite(self, object atomSite) :
     
-    cdef anAtom atom
+    cdef Atom atom
     atomSiteName = atomSite.name
     
     return self.atomsByAtomSiteName.get(atomSiteName, [])
@@ -166,7 +166,7 @@ cdef class aResidue :
       
     for realPeak, simPeak, score in zip(realPeaks,simulatedPeaks,scores) :
       
-      newPeakLink = peakLink(realPeak,simPeak,score)
+      newPeakLink = PeakLink(realPeak,simPeak,score)
       linkObject.peakLinks.append(newPeakLink)
 
     linkObject.simulatedPeaks.extend(simulatedPeaks)
@@ -190,14 +190,14 @@ cdef class aResidue :
 
     for realPeak, simPeak, score in zip(realPeaks,simulatedPeaks,scores) :
       
-      newPeakLink = peakLink(realPeak,simPeak,score)
+      newPeakLink = PeakLink(realPeak,simPeak,score)
       linkObject.peakLinks.append(newPeakLink)
       
     linkObject.simulatedPeaks.extend(simulatedPeaks)
     linkObject.realPeaks.extend(realPeaks)
     linkObject.notFoundSimulatedPeaks.extend(notFoundSimulatedPeaks)
     
-  cdef addPeakToLinkDict(self,SpinSystem spinSys1, SpinSystem spinSys2,Peak realPeak, simulatedPeak simPeak, list resonances, double score, bint isIntra) :
+  cdef addPeakToLinkDict(self,SpinSystem spinSys1, SpinSystem spinSys2,Peak realPeak, SimulatedPeak simPeak, list resonances, double score, bint isIntra) :
     
     cdef SpinSystemLink linkObject
     
@@ -235,7 +235,7 @@ cdef class aResidue :
      
     if realPeak is not None :
       
-      newPeakLink = peakLink(realPeak,simPeak,resonances, score) 
+      newPeakLink = PeakLink(realPeak,simPeak,resonances, score) 
       linkObject.peakLinks.append(newPeakLink)
       
     else :
@@ -280,7 +280,7 @@ cdef class aResidue :
 
   def connectToProject(self) :
     
-    cdef anAtom atom
+    cdef Atom atom
     
     self.ccpnResidue = self.chain.ccpnChain.findFirstResidue(seqCode=self.seqCode)
     

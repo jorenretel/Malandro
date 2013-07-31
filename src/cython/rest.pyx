@@ -143,7 +143,7 @@ cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks)
   
   #cdef Peak peak
   
-  cdef peakLink pl
+  cdef PeakLink pl
 
   for pl in peakSet :
     
@@ -167,7 +167,7 @@ cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks)
 
 cdef inline double scorePeak(list peakDimensions,list resonances) :
   
-  cdef aDimension dim
+  cdef PeakDimension dim
   cdef Resonance resonance
   cdef double k, z, top, summation, delta, tolerance
   

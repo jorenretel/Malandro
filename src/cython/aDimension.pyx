@@ -1,5 +1,5 @@
 
-cdef class aDimension :
+cdef class PeakDimension :
   
   cdef object ccpnDim
   

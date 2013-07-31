@@ -1,5 +1,5 @@
 
-cdef class simulatedPeak :
+cdef class SimulatedPeak :
   
   cdef public double colabelling
   

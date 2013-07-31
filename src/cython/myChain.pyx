@@ -39,7 +39,7 @@ cdef class Chain :
   
     for res in self.ccpnChain.sortedResidues() :
       
-      newresidue = aResidue(self, res)
+      newresidue = Residue(self, res)
 
       self.residues.append(newresidue)
       
@@ -59,15 +59,15 @@ cdef class Chain :
     self.residues, so normally you don't even notice those dummy residues are
     there at all.
     '''
-    cdef aResidue res
+    cdef Residue res
     cdef SpinSystem spinSystem
-    cdef aResidue firstResidue
-    cdef aResidue lastResidue
+    cdef Residue firstResidue
+    cdef Residue lastResidue
     
     firstResidue = self.residues[0]
     lastResidue = self.residues[-1]
     
-    res = aResidue(self,None)
+    res = Residue(self,None)
     spinSystem = SpinSystem()
     #spinSystem.isJoker = True
     
@@ -78,7 +78,7 @@ cdef class Chain :
     
   cdef void countResidueTypeFrequency(self):
     
-    cdef aResidue res
+    cdef Residue res
     
     for res in self.residues :
       
@@ -96,9 +96,9 @@ cdef class Chain :
     
     cdef int i
     
-    cdef aResidue res
+    cdef Residue res
     
-    cdef aResidue nextResidue
+    cdef Residue nextResidue
     
     residues = self.residues
     
@@ -126,7 +126,7 @@ cdef class Chain :
     '''(Re)set the connection to the chain in the analysis project,
         i.e. set self.ccpnChain atribute.
     '''
-    cdef aResidue residue
+    cdef Residue residue
     
     molSystem = project.findFirstMolSystem(code=self.molSystemCode)
     

@@ -1,5 +1,5 @@
 
-cdef class simulatedPeakContrib:
+cdef class SimulatedPeakContrib:
   
   
   cdef str ccpCode
@@ -10,7 +10,7 @@ cdef class simulatedPeakContrib:
   
   cdef int dimNumber
   
-  cdef aResidue residue
+  cdef Residue residue
   
   cdef int firstOrSecondResidue
     

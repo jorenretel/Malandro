@@ -3,7 +3,7 @@ cdef class SpinSystem :
   
   cdef myDataModel DataModel
 
-  cdef aResidue currentResidueAssignment
+  cdef Residue currentResidueAssignment
   
   cdef int spinSystemNumber
   
@@ -173,7 +173,7 @@ cdef class SpinSystem :
     
     cdef dict residuesByCcpCode
     cdef str ccpCode
-    cdef aResidue res
+    cdef Residue res
     residuesByCcpCode = self.DataModel.chain.residuesByCcpCode
 
     if useAssignments and self.ccpnSeqCode :

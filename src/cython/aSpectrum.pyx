@@ -69,9 +69,9 @@ cdef class Spectrum:
     
     cdef list simulatedPeakMatrix
     
-    cdef aResidue resA
+    cdef Residue resA
     
-    cdef aResidue resB
+    cdef Residue resB
     
     cdef object refExperiment
     
@@ -91,7 +91,7 @@ cdef class Spectrum:
     
     cdef object atomSite
     
-    cdef anAtom atom
+    cdef Atom atom
     
     cdef list atomPathWays
     
@@ -103,7 +103,7 @@ cdef class Spectrum:
     
     cdef double minIsoFrac
     
-    cdef simulatedPeakContrib contrib
+    cdef SimulatedPeakContrib contrib
     
     cdef tuple dimNumbers
     cdef tuple stepNumbers
@@ -290,13 +290,13 @@ cdef class Spectrum:
             
           firstAtomPathWay = atomPathWayList[0]
 
-          newPeak = simulatedPeak()
+          newPeak = SimulatedPeak()
           newPeak.colabelling = colabelling
           newPeak.spectrum = self
 
           for dimNumber, stepNumber, atomSet, isotopeCode in zip(dimNumbers, stepNumbers, atomSetTuple, measuredIsotopeCodes) :
 
-            contrib = simulatedPeakContrib()
+            contrib = SimulatedPeakContrib()
 
             atom = firstAtomPathWay[stepNumber-1]
 
@@ -331,7 +331,7 @@ cdef class Spectrum:
         
     print simulatedPeakMatrix   
 
-  cdef object transferIsPossible(self, anAtom atomA, anAtom atomB, object expTransfer) :
+  cdef object transferIsPossible(self, Atom atomA, Atom atomB, object expTransfer) :
     
     if not expTransfer :
       
@@ -474,7 +474,7 @@ cdef class Spectrum:
       
   cdef void cacheLabellingInfo(self, list atomPathWays) :
     
-    cdef anAtom atom
+    cdef Atom atom
     cdef set importantAtoms
     
     molLabelFractions = self.molLabelFractions
@@ -526,7 +526,7 @@ cdef class Spectrum:
     
     cdef object scheme
     cdef object ccpnSpectrum
-    cdef aResidue x
+    cdef Residue x
     cdef list ccpnResidues
     
     cdef double colabelling
@@ -552,7 +552,7 @@ cdef class Spectrum:
     
     cdef dict residueDict
     
-    cdef anAtom atom
+    cdef Atom atom
     
     cdef double molWeightSum
     
@@ -655,7 +655,7 @@ cdef class Spectrum:
     
     cdef double labellingFraction
     
-    cdef anAtom atom
+    cdef Atom atom
     
     cdef str isotopeCode
     
@@ -680,7 +680,7 @@ cdef class Spectrum:
     cdef list resonances
     cdef Resonance resonance
     cdef Peak peak
-    cdef aDimension dim
+    cdef PeakDimension dim
     cdef Peak firstPeak
     cdef object atomSite
     cdef dict dimAtomsDict
@@ -743,7 +743,7 @@ cdef class Spectrum:
     
     cdef list simulatedPeakMatrix, residues, simulatedPeakList, spinsystemsaa1, spinsystemsaa2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores, contributions, resonances, peakLists, peaksInWindow
 
-    cdef aResidue resA, resB
+    cdef Residue resA, resB
     
     cdef dict allSpinSystems
     
@@ -753,11 +753,11 @@ cdef class Spectrum:
     
     cdef double symmetry
     
-    cdef simulatedPeak simulatedPeak
+    cdef SimulatedPeak simulatedPeak
     
-    cdef simulatedPeakContrib contrib
+    cdef SimulatedPeakContrib contrib
     
-    cdef aDimension dim
+    cdef PeakDimension dim
     
     cdef Resonance resonance
     
@@ -832,17 +832,17 @@ cdef class Spectrum:
     
     cdef list intraResidualSimulatedPeakMatrix, residues, simulatedPeakList, spinsystems, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores, contributions, resonances, peakLists, peaksInWindow
     
-    cdef aResidue res
+    cdef Residue res
     
     cdef dict allSpinSystems
     
     cdef SpinSystem spinSys
     
-    cdef simulatedPeak simulatedPeak
+    cdef SimulatedPeak simulatedPeak
     
-    cdef simulatedPeakContrib contrib
+    cdef SimulatedPeakContrib contrib
     
-    cdef aDimension dim
+    cdef PeakDimension dim
     
     cdef int i
     
@@ -914,8 +914,8 @@ cdef class Spectrum:
     cdef int symmetry, maxSymmetry
     cdef set contribSetA, contribSetB
     cdef list peaksForOneResidue
-    cdef simulatedPeak peakA, peakB
-    cdef simulatedPeakContrib contrib
+    cdef SimulatedPeak peakA, peakB
+    cdef SimulatedPeakContrib contrib
     
     maxSymmetry = 1
     

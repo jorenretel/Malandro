@@ -146,7 +146,7 @@ cdef class myDataModel :
   
   def setupLinks(self) :
   
-    cdef aResidue resA, resB
+    cdef Residue resA, resB
     cdef dict linkDict, intraDict
     cdef str ccpCodeA, ccpCodeB
     cdef SpinSystem spinSystemA, spinSystemB

@@ -190,13 +190,13 @@ cdef class Malandro :
     
     cdef dict dictio
     
-    cdef aResidue res
+    cdef Residue res
     
     cdef int i
     
-    cdef aResidue resimin1
+    cdef Residue resimin1
     
-    cdef aResidue resiplus1
+    cdef Residue resiplus1
     
     cdef str ccpCode
     
@@ -400,7 +400,7 @@ cdef class Malandro :
     
     cdef int repeat
     
-    cdef aResidue res
+    cdef Residue res
     
     cdef str info
     
@@ -467,7 +467,7 @@ cdef class Malandro :
     
     cdef Peak peak
     
-    cdef aResidue res
+    cdef Residue res
     
     
     
@@ -512,13 +512,13 @@ cdef class Malandro :
     
     cdef list residues
     
-    cdef aResidue res
+    cdef Residue res
       
     cdef SpinSystemLink link
     
     cdef Peak peak
   
-    cdef peakLink pl
+    cdef PeakLink pl
     
     residues = self.DataModel.chain.residues
       
@@ -670,7 +670,7 @@ cdef class Malandro :
     
     cdef list residues 
     
-    cdef aResidue res
+    cdef Residue res
     
     cdef dict linkDict
     
@@ -678,9 +678,9 @@ cdef class Malandro :
     
     cdef int NfoundPeaks
     
-    cdef simulatedPeak peak
+    cdef SimulatedPeak peak
     
-    cdef simulatedPeakContrib contrib
+    cdef SimulatedPeakContrib contrib
     
     cdef str atomName
     
@@ -690,7 +690,7 @@ cdef class Malandro :
     
     cdef int hc
     
-    cdef peakLink pl
+    cdef PeakLink pl
     
     hc = self.hc
     
@@ -907,7 +907,7 @@ cdef class Malandro :
       
     return fraction
 
-  cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, anAtom atom, str isotopeCode) :                # Not used at the moment
+  cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, Atom atom, str isotopeCode) :                # Not used at the moment
     
     cdef double isoWeightSum
 
@@ -939,13 +939,13 @@ cdef class Malandro :
     
     cdef SpinSystem A, B, Am1, Ap1, Bm1, Bp1
   
-    cdef aResidue currentResidueA, currentResidueB, previousResA, previousResB, nextResA, nextResB
+    cdef Residue currentResidueA, currentResidueB, previousResA, previousResB, nextResA, nextResB
         
     cdef SpinSystemLink l1, l2, l3, l4, l5, l6, l7, l8
     
     cdef Peak peak
     
-    cdef peakLink pl
+    cdef PeakLink pl
     
     cdef int path
 
@@ -1138,9 +1138,9 @@ cdef class Malandro :
     
     cdef list residues
     
-    cdef aResidue res
+    cdef Residue res
     
-    cdef aResidue nextRes
+    cdef Residue nextRes
     
     cdef double score
     
@@ -1160,7 +1160,7 @@ cdef class Malandro :
     
     cdef double peakScore
     
-    cdef peakLink pl
+    cdef PeakLink pl
     
     
     
