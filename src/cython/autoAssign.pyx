@@ -246,12 +246,6 @@ cdef class Malandro :
       
       dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)
     
-    #print 'assigned:'
-    #print len(assignedSpinSystems['Val'])
-    #print assignedSpinSystems['Val']
-    #for ss in assignedSpinSystems['Val'] :
-      
-    #  print ss.getCcpnSeqCode()
     
     for res in DataModel.chain.residues :
       
@@ -324,11 +318,7 @@ cdef class Malandro :
               
               listWithFittingSpinSystems.append(spinSystem)    
             
-        #if ccpCode == 'Val' :
-          #print '---'
-          #print len(listWithSpinSystems)
-          #print listWithSpinSystems
-          #print listWithFittingSpinSystems       
+      
         if len(listWithFittingSpinSystems) > 0 :      
           
                       
@@ -354,41 +344,23 @@ cdef class Malandro :
 
   def runAnnealling(self):
     
-
     useAssignments = self.useAssignments
     useTentative = self.useTentative    
-
     amountOfStepsPerTemperature = self.amountOfSteps
-        
+    AcceptanceConstantList = self.acceptanceConstantList
     DataModel = self.DataModel
             
-    exp = math.exp
-    cutoff = random.random
-    sample = random.choice
-    randint = random.randint
-        
-    AcceptanceConstantList = self.acceptanceConstantList
-    
-    justTypedSpinSystems =DataModel.justTypedSpinSystems
     allSpinSystems = DataModel.spinSystems
-    tentativeSpinSystems = DataModel.tentativeSpinSystems
+
     allSpinSystemsWithoutAssigned = DataModel.allSpinSystemsWithoutAssigned
 
         
     if useAssignments :                                                 # If the already made assignments are used, the dictionary will just include unassigned spinsystems and Joker spinsystems
-      dict = allSpinSystemsWithoutAssigned
+      relevantSpinSystems = allSpinSystemsWithoutAssigned
     else :                                                                       # If the already assigned are chosen to still be permutated, the dictionary will also include the ready assinged spinsystems
-      dict = allSpinSystems
+      relevantSpinSystems = allSpinSystems
       
-    listWithSpinSystems = []  
-      
-    for key in dict :
-      
-      listWithSpinSystems = listWithSpinSystems + (dict[key])
-      
-    listWithSpinSystems = list(set(listWithSpinSystems))
-      
-    score = 0
+    listWithSpinSystems = list(set([val for subl in relevantSpinSystems.values() for val in subl]))
     
     for x,AcceptanceConstant in enumerate(AcceptanceConstantList) :
       
@@ -547,102 +519,72 @@ cdef class Malandro :
     
     cdef myDataModel DataModel
     
-    cdef str key
+    cdef str ccpCode
     
-    cdef int amountOfAssignedSpinsystems
-    
-    cdef int amountOfTypedSpinSystems
-    
-    cdef int amountOfTentativeSpinSystemsWithOnlyOneCcpCode
-    
-    cdef SpinSystem spinsys
-    
-    cdef int amountOfResiduesOfThisType
-    
-    cdef int short
-    
-    cdef int i
-    
-    cdef SpinSystem newSpinSystem
+    cdef int amountOfAssignedSpinsystems, NTypedSpinSystems, NResiduesOfThisType, short, i, x
+        
+    cdef SpinSystem spinSys, newSpinSystem
     
     DataModel = self.DataModel    
     
     
     i = 1
     
-    for key in DataModel.chain.residueTypeFrequencyDict.keys() : #DataModel.spinSystems.keys() :
+    for ccpCode, NResiduesOfThisType in DataModel.chain.residueTypeFrequencyDict.items() : #DataModel.spinSystems.keys() :
+
+      NResiduesAssigned = len(set([spinSys.ccpnSeqCode for spinSys in DataModel.previouslyAssignedSpinSystems.get(ccpCode, [])]))
+      NTypedSpinSystems = len(DataModel.justTypedSpinSystems.get(ccpCode,[]))
 
       
-      amountOfAssignedSpinsystems = 0
-      
-      if key in DataModel.previouslyAssignedSpinSystems :
-      
-        amountOfAssignedSpinsystems = len(DataModel.previouslyAssignedSpinSystems[key])
-        
-        
-      amountOfTypedSpinSystems = 0
-      
-      
-      if key in DataModel.justTypedSpinSystems :
-        
-        amountOfTypedSpinSystems = len(DataModel.justTypedSpinSystems[key])
-        
-      
-      amountOfTentativeSpinSystemsWithOnlyOneCcpCode = 0
-      
-      
-      if key in DataModel.chain.residueTypeFrequencyDict :
-        
-        amountOfResiduesOfThisType = DataModel.chain.residueTypeFrequencyDict[key]
-        
-      else :
-      
-        amountOfResiduesOfThisType = 0  
-      
-      short = amountOfResiduesOfThisType- (amountOfAssignedSpinsystems + amountOfTypedSpinSystems + amountOfTentativeSpinSystemsWithOnlyOneCcpCode)
-      
+      #short = amountOfResiduesOfThisType- (amountOfAssignedSpinsystems + amountOfTypedSpinSystems + amountOfTentativeSpinSystemsWithOnlyOneCcpCode)
+      short = NResiduesOfThisType - (NResiduesAssigned + NTypedSpinSystems)
       
       
       if short < 0 :
         
-        string = 'You seem to have more ' + key + ' spin systems than residues of this type are in the sequence'
+        string = 'You seem to have more ' + ccpCode + ' spin systems than residues of this type are in the sequence'
 
         short = 0
       
       for x in range(short) :
         
-        newSpinSystem = SpinSystem(DataModel=DataModel,ccpCode=key)
+        newSpinSystem = SpinSystem(DataModel=DataModel,ccpCode=ccpCode)
         
         newSpinSystem.spinSystemNumber = i * 1000000
         
         i = i + 1
         
-
-        if key in DataModel.spinSystems :
+        DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
+        DataModel.addToDictWithLists(DataModel.jokerSpinSystems,ccpCode,newSpinSystem)
+        DataModel.addToDictWithLists(DataModel.allSpinSystemsWithoutAssigned,ccpCode,newSpinSystem)
+        DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
         
-          DataModel.spinSystems[key].append(newSpinSystem)
-          
-        else :
-          
-          DataModel.spinSystems[key] = [newSpinSystem]
-          
-          
-        if key in DataModel.jokerSpinSystems:
-          
-          DataModel.jokerSpinSystems[key].append(newSpinSystem)
-          
-        else :
-          
-          DataModel.jokerSpinSystems[key] = [newSpinSystem]
-          
-          
-        if key in DataModel.allSpinSystemsWithoutAssigned:
-          
-          DataModel.allSpinSystemsWithoutAssigned[key].append(newSpinSystem)
-          
-        else :
-          
-          DataModel.allSpinSystemsWithoutAssigned[key] = [newSpinSystem]
+
+        #if ccpCode in DataModel.spinSystems :
+        #
+        #  DataModel.spinSystems[ccpCode].append(newSpinSystem)
+        #  
+        #else :
+        #  
+        #  DataModel.spinSystems[ccpCode] = [newSpinSystem]
+        #  
+        #  
+        #if ccpCode in DataModel.jokerSpinSystems:
+        #  
+        #  DataModel.jokerSpinSystems[ccpCode].append(newSpinSystem)
+        #  
+        #else :
+        #  
+        #  DataModel.jokerSpinSystems[ccpCode] = [newSpinSystem]
+        #  
+        #  
+        #if ccpCode in DataModel.allSpinSystemsWithoutAssigned:
+        #  
+        #  DataModel.allSpinSystemsWithoutAssigned[ccpCode].append(newSpinSystem)
+        #  
+        #else :
+        #  
+        #  DataModel.allSpinSystemsWithoutAssigned[ccpCode] = [newSpinSystem]
 
     string = str(i-1) + ' joker spinsystems are used in this calculation.'    
 

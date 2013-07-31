@@ -151,14 +151,12 @@ cdef class Spectrum:
       expSteps = expSteps[:int(len(expSteps)/2.0+0.5)]
     
     atomSitePathWay = self.createAtomSitesList(expSteps)
-    print atomSitePathWay
+
     dimStepDict = self.mapExpStepToDimension(expSteps, refExperiment.sortedRefExpDims())
     dimNumbers, stepNumbers = zip(*sorted(dimStepDict.items()))
     isotopeCodes = [atomSite.isotopeCode for atomSite in atomSitePathWay]
     measuredIsotopeCodes = [isotopeCodes[stepNumber-1] for stepNumber in stepNumbers]
     
-    print dimNumbers
-    print stepNumbers
     
     #Now do get the visited atomSites and the transfers between these sites for each expGraph.
     
@@ -170,13 +168,8 @@ cdef class Spectrum:
       expTransfers = expGraph.sortedExpTransfers()
       
       expSteps = list(zip(*sorted([(expStep.stepNumber, expStep) for expStep in expGraph.sortedExpSteps()]))[1])
-      #expSteps = expGraph.sortedExpSteps()
-      #expSteps = sorted(expGraph.sortedExpSteps(), key=lambda x: x.stepNumber)
-      
-      for ES in expSteps :
+
         
-        print ES.stepNumber
-    
       if outAndBack :
 
         expSteps = expSteps[:int(len(expSteps)/2.0+0.5)]
@@ -328,8 +321,7 @@ cdef class Spectrum:
       intraResidualSimulatedPeakMatrix.append(intraResidualPeaksA)
       if isLast :
         intraResidualSimulatedPeakMatrix.append(intraResidualPeaksB)
-        
-    print simulatedPeakMatrix   
+         
 
   cdef object transferIsPossible(self, Atom atomA, Atom atomB, object expTransfer) :
     

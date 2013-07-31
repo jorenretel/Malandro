@@ -170,12 +170,6 @@ cdef class myDataModel :
           
           linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
           
-          
-          
-          
-      
-      
-        
   cdef void addToDictWithLists(self, dict dictToAddTo, key,value) :
     
     if key in dictToAddTo :       

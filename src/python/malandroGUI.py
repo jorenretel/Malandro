@@ -7,7 +7,7 @@ def open_reference(argServer):
   """
   print 'version...'
 
-  program = connector(argServer.parent)
+  program = Connector(argServer.parent)
   
 
 
@@ -46,7 +46,7 @@ import resultsTab
 reload(resultsTab)
 from resultsTab import ResultsTab
 
-class connector(object):
+class Connector(object):
   '''This is just a little class that contains all settings the user configures in the GUI'''
   
   def __init__(self, guiParent):
@@ -269,41 +269,7 @@ class connector(object):
 
       showWarning('No Residues', string,  parent=self.GUI)
       
-      return False
-    
-    #stereoCcp = set()
-    #for res in self.chain.residues :
-    #  
-    #  print res.ccpCode
-    #  
-    #  if res.seqCode == 82 :
-    #    
-    #    for atom in res.atoms :
-    #      print 'Asp 82 hereeeee'
-    #      print atom.name
-    #      print atom.atomSet.name
-    #      print atom.atomSet.atoms
-    #  
-    #  for atom in res.atoms :
-    #    
-    #    if len(atom.atomSet.atoms) > 1 :
-    #      
-    #      stereoCcp.add(res)
-    #    
-    #print 'stereo:'
-    #for res in stereoCcp :
-    #  
-    #  print res.ccpCode
-    #  
-    #  for atom in res.atoms :
-    #    
-    #    if len(atom.atomSet.atoms) > 1 :
-    #    
-    #      print '---'
-    #      print atom.name
-    #      print atom.atomSet.name
-    #      print atom.atomSet.atoms
-      
+      return False  
          
     return True
         
@@ -417,40 +383,6 @@ class connector(object):
       showWarning('No Such File', string,  parent=self.GUI)
       
     self.updateInfoText(' ')  
-
-
-class spectrumSettings(object):
-  
-  '''
-  A small class to temporarely store some info about spectra the user configures in the GUI.
-  '''
-
-  def __init__(self):
-    
-    self.ccpnSpectrum = None
-    
-    self.labellingScheme = True
-    
-    self.peakList = None
-    
-    self.used = False
-   
-  def setupLabellingScheme(self, labellingScheme):
-
-    self.labellingScheme = labellingScheme
-    
-  def setupPeakList(self,  peakList):
-  
-    self.peakList = peakList  
-    
-  def changeSpectrumUse(self,  used) :
-    
-    self.used = used
-    
-    if not self.ccpnSpectrum.experiment :
-      
-      print 'This spectrum has not been connected to a experiment type. If you want to use this spectrum, go to experiments --> experiment and configure this.'
- 
  
 class ViewAssignmentPopup(BasePopup):
   '''

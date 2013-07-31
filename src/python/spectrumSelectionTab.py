@@ -61,7 +61,7 @@ class SpectrumSelectionTab(object) :
       for spec in expt.sortedDataSources():
         if spec.dataType == 'processed' and spec not in presentSpectrumSettings :
           
-          newSpectrumSetting = spectrumSettings()
+          newSpectrumSetting = SpectrumSettings()
           
           newSpectrumSetting.ccpnSpectrum = spec
           
@@ -194,7 +194,7 @@ class SpectrumSelectionTab(object) :
     self.updateSpecSelection()
     self.updateAutoMatrix()
     
-class spectrumSettings(object):
+class SpectrumSettings(object):
   
   '''
   A small class to temporarely store some info about spectra the user configures in the GUI.

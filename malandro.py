@@ -10,4 +10,4 @@ def open_malandro(argServer):
   """
   print 'version...'
   reload(GUI)
-  program = GUI.connector(argServer.parent)
+  program = GUI.Connector(argServer.parent)
