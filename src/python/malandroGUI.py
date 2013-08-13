@@ -20,15 +20,9 @@ from memops.gui.MessageReporter import showWarning,  showYesNo, showMulti
 from ccpnmr.analysis.popups.BasePopup import BasePopup
 from ccpnmr.analysis.macros.ArgumentServer import ArgumentServer
 
-import modifiedAssignmentBasic
-reload(modifiedAssignmentBasic)
-from modifiedAssignmentBasic import assignSpinSystemstoResidues
+from assignmentFunctions import assignSpinSystemstoResidues
 
 from src.cython.malandro import Malandro, myDataModel
-
-
-
-#AMINO_ACIDS = standardResidueCcpCodes['protein']
 
 import assignMentTransferTab
 reload(assignMentTransferTab)
@@ -417,7 +411,7 @@ class ViewAssignmentPopup(BasePopup):
     guiFrame.grid_columnconfigure(0, weight=1)
     guiFrame.grid_rowconfigure(0, weight=1)
 
-    tabbedFrame = TabbedFrame(guiFrame,options=['Spectra Properties',  'Network Anchoring',  'Results','Bulk Transfer Assignments To Project', 'Save and Load'],
+    tabbedFrame = TabbedFrame(guiFrame,options=['Spectra Properties',  'Annealing',  'Results','Bulk Transfer Assignments To Project', 'Save and Load'],
                               callback=self.toggleTab, grid=(0,0))
     self.tabbedFrame = tabbedFrame
 
@@ -428,8 +422,6 @@ class ViewAssignmentPopup(BasePopup):
     self.saveLoadTab = SaveLoadTab(self,saveFrame)
     self.annealingSettingsTab = AnnealingSettingsTab(self,NAFrame)
     self.resultsTab = ResultsTab(self,resultsFrame)
-    
-
     
     self.bottomButtons = UtilityButtonList(tabbedFrame.sideFrame, helpUrl='www.google.com')
     self.bottomButtons.grid(row=0, column=0, sticky = 'e')

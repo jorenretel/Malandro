@@ -14,8 +14,6 @@ from ccpnmr.analysis.core.MarkBasic import createPeakMark, createNonPeakMark
 import ccpnmr.analysis.core.WindowBasic as WindowBasic
 from ccpnmr.analysis.core.WindowBasic import getSpectrumWindowView
 from ccp.general.Constants import standardResidueCcpCodes
-import modifiedAssignmentBasic
-reload(modifiedAssignmentBasic)
 from assignmentFunctions import assignSpinSystemstoResidues
 
 
@@ -1132,7 +1130,7 @@ class ResultsTab(object) :
           
         else :
           
-          button.config(text=text,  bg='grey83')  
+          button.config(text=text)  
         
       else :
         

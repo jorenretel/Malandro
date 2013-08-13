@@ -557,7 +557,7 @@ cdef class Malandro :
         DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
         DataModel.addToDictWithLists(DataModel.jokerSpinSystems,ccpCode,newSpinSystem)
         DataModel.addToDictWithLists(DataModel.allSpinSystemsWithoutAssigned,ccpCode,newSpinSystem)
-        DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
+
         
 
         #if ccpCode in DataModel.spinSystems :
