@@ -101,8 +101,8 @@ cdef class SpinSystem :
   cdef void setupResonances(self) :
 
     for resonance in self.ccpnResonanceGroup.resonances :
-          
-      if resonance.assignNames :
+         
+      if resonance.getAssignNames() :
     
         newResonance = Resonance(self,resonance)
         

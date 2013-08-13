@@ -411,7 +411,7 @@ class ViewAssignmentPopup(BasePopup):
     guiFrame.grid_columnconfigure(0, weight=1)
     guiFrame.grid_rowconfigure(0, weight=1)
 
-    tabbedFrame = TabbedFrame(guiFrame,options=['Spectra Properties',  'Annealing',  'Results','Bulk Transfer Assignments To Project', 'Save and Load'],
+    tabbedFrame = TabbedFrame(guiFrame,options=['Spectra',  'Annealing',  'Results','Bulk Transfer Assignments To Project', 'Save and Load'],
                               callback=self.toggleTab, grid=(0,0))
     self.tabbedFrame = tabbedFrame
 

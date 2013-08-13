@@ -64,7 +64,7 @@ class AnnealingSettingsTab(object) :
     
     row += 1
     
-    label = Label(frame, text='Repeat optimization N times, N:', grid=(row,0))      
+    label = Label(frame, text=' Perform N runs of the optimsation, N', grid=(row,0))      
     tipText = 'The amount of times the whole optimization procedure is performed, each result is safed'
     self.repeatEntry = IntEntry(frame, grid=(row,1), width=7, text=10,
                                       returnCallback=self.updateRepeatEntry,

@@ -169,6 +169,14 @@ cdef class myDataModel :
         for spinSystemB in self.spinSystems[ccpCodeB] :
           
           linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
+    
+    # Also doing the last residue here, otherwise not reached in loop.
+    
+    intraDict = resB.intraDict
+    
+    for spinSystemB in self.spinSystems[ccpCodeB] :
+    
+      intraDict[spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resB,residue2=resB,spinSystem1=spinSystemB,spinSystem2=spinSystemB)
           
   cdef void addToDictWithLists(self, dict dictToAddTo, key,value) :
     

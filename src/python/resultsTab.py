@@ -122,7 +122,7 @@ class ResultsTab(object) :
     
     
     
-    texts    = ['adopt this solution']
+    texts    = ['select this solution']
     commands = [self.adoptSolution]
     self.adoptButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
     self.adoptButton.grid(row=0, column=9, sticky='nsew')  
