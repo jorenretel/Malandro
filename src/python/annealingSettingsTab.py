@@ -78,6 +78,13 @@ class AnnealingSettingsTab(object) :
     
     row += 1
     
+    label = Label(frame, text='Re-type all typed spin systems:', grid=(row,0))      
+    tipText = 'The algorithm does not take into account any previously made assignment and re-types all spin systems, only resonance names and frequencies are used'
+
+    self.reTypeSpinSystemsCheck = CheckButton(frame, selected=False, grid=(row,1))
+     
+    row += 1
+    
     label = Label(frame, text='Type untyped spin systems on the fly:', grid=(row,0))      
     tipText = 'Spin system typing can be carried out so also untyped spin systems can be used. Only amino acid types that have a reasonable score (i.e. higher than the random chance) will be considered'
 

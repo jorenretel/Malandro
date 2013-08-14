@@ -305,7 +305,7 @@ cdef class SpinSystem :
     #Calis
     else :
       
-      for resonance in resonancesByAtomSiteName['C'] :
+      for resonance in resonancesByAtomSiteName.get('C',[]) :
         
         if 0 < resonance.CS < 100 :
         #if resonance.atomName != 'C' :

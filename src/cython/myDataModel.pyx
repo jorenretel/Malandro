@@ -66,6 +66,9 @@ cdef class myDataModel :
   def setupSpinSystems(self) :
     
     cdef SpinSystem newSpinSystem
+    cdef bint reTypeSpinSystems
+    
+    reTypeSpinSystems = self.auto.reTypeSpinSystems
     
     for resonanceGroup in self.auto.nmrProject.resonanceGroups :   # taking all spinsystems in the project, except for the ones that have no resonances
 
@@ -73,7 +76,7 @@ cdef class myDataModel :
         
         continue
       
-      if resonanceGroup.residue and resonanceGroup.residue.chain is self.chain.ccpnChain :                                  # SpinSystem is assigned to a residue in the selected chain
+      if resonanceGroup.residue and resonanceGroup.residue.chain is self.chain.ccpnChain and not reTypeSpinSystems:                                  # SpinSystem is assigned to a residue in the selected chain
         
         seqCode = int(resonanceGroup.residue.seqCode)
         ccpCode = getResidueCode(resonanceGroup.residue.molResidue)
@@ -83,7 +86,7 @@ cdef class myDataModel :
         self.addToDictWithLists(self.previouslyAssignedSpinSystems, ccpCode, newSpinSystem)
         self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
         
-      elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
+      elif resonanceGroup.residueProbs and not reTypeSpinSystems:                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
         
         ccpCodes = []
         seqCodes = []
@@ -112,7 +115,7 @@ cdef class myDataModel :
             self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
             self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
       
-      elif resonanceGroup.ccpCode :                                                                                                              # Residue is just Typed
+      elif resonanceGroup.ccpCode and not reTypeSpinSystems:                                                                                                              # Residue is just Typed
   
         ccpCode = resonanceGroup.ccpCode
         
@@ -122,7 +125,7 @@ cdef class myDataModel :
         self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
         self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
 
-      elif resonanceGroup.residueTypeProbs :
+      elif resonanceGroup.residueTypeProbs and not reTypeSpinSystems:
         
         typeProbCcpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
         
@@ -134,7 +137,7 @@ cdef class myDataModel :
           self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
           self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
         
-      elif self.auto.typeSpinSystems :
+      elif self.auto.typeSpinSystems or reTypeSpinSystems:
         
         newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, typeSpinSystem=True)
         

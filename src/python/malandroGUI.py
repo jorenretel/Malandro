@@ -91,6 +91,8 @@ class Connector(object):
     
     self.useTentative = self.GUI.annealingSettingsTab.useTentativeCheck.get()
     
+    self.reTypeSpinSystems = self.GUI.annealingSettingsTab.reTypeSpinSystemsCheck.get()
+    
     self.typeSpinSystems = self.GUI.annealingSettingsTab.typeSpinSystemsCheck.get()
     
     self.useDimenionalAssignments = self.GUI.annealingSettingsTab.useDimenionalAssignmentsCheck.get()

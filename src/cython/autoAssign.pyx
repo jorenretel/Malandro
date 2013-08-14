@@ -72,7 +72,7 @@ cdef class Malandro :
   
   cdef double score
   
-  cdef object typeSpinSystems
+  cdef object typeSpinSystems, reTypeSpinSystems
   
   cdef object useDimenionalAssignments
   
@@ -130,6 +130,8 @@ cdef class Malandro :
     self.addEnergyPoint = connector.addEnergyPoint
     
     self.typeSpinSystems = connector.typeSpinSystems
+    
+    self.reTypeSpinSystems = connector.reTypeSpinSystems
     
     self.useDimenionalAssignments = connector.useDimenionalAssignments
     
