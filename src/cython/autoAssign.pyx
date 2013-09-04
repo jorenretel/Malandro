@@ -901,14 +901,14 @@ cdef class Malandro :
     
     for aTry in xrange(amountOfStepsPerTemperature) :
       
-      r = int(rand()/randMax*lengthOfListWithSpinSystems)
+      r = int(rand()/(randMax+1)*lengthOfListWithSpinSystems)
       A = <SpinSystem>listWithSpinSystems[r]
 
       exchangeSpinSystems = A.exchangeSpinSystems
       
       if exchangeSpinSystems :
         
-        r = int(rand()/randMax*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
+        r = int(rand()/(randMax+1)*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
         
         B = <SpinSystem>exchangeSpinSystems[r]
         
