@@ -39,6 +39,9 @@ from annealingSettingsTab import AnnealingSettingsTab
 import resultsTab
 reload(resultsTab)
 from resultsTab import ResultsTab
+import benchMark
+reload(benchMark)
+from benchMark import createBenchmark
 
 class Connector(object):
   '''This is just a little class that contains all settings the user configures in the GUI'''
@@ -162,6 +165,8 @@ class Connector(object):
       self.ranAnnealling = True
       
       self.getResults()
+      
+      createBenchmark(self.results)
         
       self.GUI.resultsTab.dataModel = self.results                                  # TODO: this is not very nice
       self.GUI.resultsTab.update()
