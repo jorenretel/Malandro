@@ -22,6 +22,7 @@ class AnnealingSettingsTab(object) :
     self.nmrProject = parent.nmrProject
     
     self.minIsoFrac = 0.1
+    self.minTypeScore = 1.0
     self.chain         = None
     self.amountOfRepeats = 10
     self.amountOfSteps = 10000
@@ -50,7 +51,7 @@ class AnnealingSettingsTab(object) :
     tipText = 'The minimal amount of colabelling the different nuclei should have in order to still give rise to a peak.'
     self.minLabelEntry = FloatEntry(frame, grid=(row,1), width=7, text=0.1,
                                       returnCallback=self.updateMinLabelEntry,
-                                      tipText=tipText)
+                                      tipText=tipText, sticky= 'nsew')
     self.minLabelEntry.bind('<Leave>', self.updateMinLabelEntry, '+')
     
     row += 1
@@ -59,7 +60,7 @@ class AnnealingSettingsTab(object) :
     tipText = 'The amount of attempts to switch the position of two spinsystems in the sequence are performed for each temperature point'
     self.NAStepEntry = IntEntry(frame, grid=(row,1), width=7, text=10000,
                                       returnCallback=self.updateStepEntry,
-                                      tipText=tipText)
+                                      tipText=tipText, sticky= 'nsew')
     self.NAStepEntry.bind('<Leave>', self.updateStepEntry, '+')
     
     row += 1
@@ -68,7 +69,7 @@ class AnnealingSettingsTab(object) :
     tipText = 'The amount of times the whole optimization procedure is performed, each result is safed'
     self.repeatEntry = IntEntry(frame, grid=(row,1), width=7, text=10,
                                       returnCallback=self.updateRepeatEntry,
-                                      tipText=tipText)
+                                      tipText=tipText, sticky= 'nsew')
     self.repeatEntry.bind('<Leave>', self.updateRepeatEntry, '+')
     
     row += 1
@@ -76,6 +77,17 @@ class AnnealingSettingsTab(object) :
     label = Label(frame, text='Temperature constants: ', grid=(row,0))   
     self.tempEntry = Entry(frame, text=map(str, self.acceptanceConstantList), width=64, grid=(row,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
     
+    
+    row += 1
+    
+    label = Label(frame, text='Minmal amino acid typing score:', grid=(row,0))      
+    tipText = 'If automatic amino acid typing is selected, a cut-off value has to set. Every amino acid type that scores higher than the cut-off is taken as a possible type. This is the same score as can be found under resonance --> spin systems --> predict type. Value should be between 0 and 100'
+    self.minTypeScoreEntry = FloatEntry(frame, grid=(row,1), width=7, text=1.0,
+                                      returnCallback=self.updateMinTypeScoreEntry,
+                                      tipText=tipText, sticky= 'nsew')
+    self.minTypeScoreEntry.bind('<Leave>', self.updateMinTypeScoreEntry, '+')
+    
+
     row += 1
     
     label = Label(frame, text='Re-type all typed spin systems:', grid=(row,0))      
@@ -222,6 +234,24 @@ class AnnealingSettingsTab(object) :
     else :
       self.amountOfRepeats = value
       self.repeatEntry.set(value)
+      
+  def updateMinTypeScoreEntry(self, event = None) :
+    
+    value = self.minTypeScoreEntry.get()
+    
+    if value == self.minTypeScore :
+      return
+    if value < 0:
+      self.minTypeScoreEntry.set(0.0)
+      self.minTypeScore = 0.0
+    elif value > 100 :
+      self.minTypeScoreEntry.set(100.0)
+      self.minTypeScore = 100.0 
+    else :
+      self.minTypeScoreEntry.set(value)
+      self.minTypeScore = value
+      
+    
       
   def updateMinLabelEntry(self, event=None) :
     

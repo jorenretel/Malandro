@@ -63,7 +63,7 @@ cdef class myDataModel :
 
       self.spectra.append(newspectrum)
 
-  def setupSpinSystems(self) :
+  def setupSpinSystems(self, minTypeScore=1.0) :
     
     cdef SpinSystem newSpinSystem
     cdef bint reTypeSpinSystems
@@ -139,7 +139,7 @@ cdef class myDataModel :
         
       elif self.auto.typeSpinSystems or reTypeSpinSystems:
         
-        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, typeSpinSystem=True)
+        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, typeSpinSystem=True, minTypeScore=minTypeScore)
         
         for ccpCode in newSpinSystem.aminoAcidProbs.keys() :
           

@@ -58,6 +58,8 @@ cdef class Malandro :
   
   cdef double minIsoFrac
   
+  cdef double minTypeScore
+  
   cdef list selectedSpectra
   
   cdef str sourceName
@@ -118,6 +120,8 @@ cdef class Malandro :
     self.project = connector.project
     
     self.minIsoFrac = connector.minIsoFrac
+    
+    self.minTypeScore = connector.minTypeScore
     
     self.selectedSpectra = connector.selectedSpectra
     
@@ -608,7 +612,7 @@ cdef class Malandro :
 
   cdef void createSpinSytemsAndResonances(self):
     
-    self.DataModel.setupSpinSystems()
+    self.DataModel.setupSpinSystems(minTypeScore=self.minTypeScore)
 
   cdef void scoreAllLinks(self):
     

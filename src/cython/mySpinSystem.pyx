@@ -41,7 +41,7 @@ cdef class SpinSystem :
   
 
   def __init__(self, DataModel=None, ccpnResonanceGroup=None, ccpnSeqCode = 0, ccpCode=None,
-               tentativeSeqCodes = [],tentativeCcpCodes=[] , typeProbCcpCodes=[], typeSpinSystem=False) :
+               tentativeSeqCodes = [],tentativeCcpCodes=[] , typeProbCcpCodes=[], typeSpinSystem=False, minTypeScore=1.0) :
     
     self.DataModel = DataModel
     self.ccpnResonanceGroup = ccpnResonanceGroup
@@ -80,7 +80,7 @@ cdef class SpinSystem :
       
     if typeSpinSystem : 
 
-      self.runAminoAcidTyping()
+      self.runAminoAcidTyping(minTypeScore)
  
     self.setupResonances()
 
@@ -108,7 +108,7 @@ cdef class SpinSystem :
         
         self.resonanceDict[newResonance.atomName] = newResonance
 
-  cdef void runAminoAcidTyping(self) :
+  cdef void runAminoAcidTyping(self, double minTypeScore) :
     
     shiftList = self.DataModel.auto.shiftList
     ccpnChain = self.DataModel.chain.ccpnChain
@@ -122,8 +122,6 @@ cdef class SpinSystem :
   
     scores = getShiftsChainProbabilities(shifts, ccpnChain)
     total = sum(scores.values())
-
-    scoreList = []
     
     scoreDict = {}
     
@@ -131,9 +129,11 @@ cdef class SpinSystem :
         
       for ccpCode, score in scores.items() :
         
-        if score > 2*(float(self.DataModel.chain.residueTypeFrequencyDict[ccpCode])/len(self.DataModel.chain.residues)) :
+        relativeScore = score/total * 100.0         # minTypeScore is a percentage, therefor so should relativeScore 
+        
+        if relativeScore >= minTypeScore :
           
-          scoreDict[ccpCode] = score
+          scoreDict[ccpCode] = relativeScore
           
     self.aminoAcidProbs = scoreDict
     

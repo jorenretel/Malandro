@@ -104,6 +104,8 @@ class Connector(object):
     
     self.amountOfSteps = self.GUI.annealingSettingsTab.amountOfSteps
     
+    self.minTypeScore = self.GUI.annealingSettingsTab.minTypeScore
+    
     self.shiftList = self.GUI.annealingSettingsTab.shiftList
     
     self.nmrProject = self.GUI.nmrProject
