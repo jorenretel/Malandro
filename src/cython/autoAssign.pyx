@@ -372,6 +372,8 @@ cdef class Malandro :
       
       self.annealingSub(AcceptanceConstant,amountOfStepsPerTemperature,listWithSpinSystems)
       
+      self.scoreInitialAssignment()
+      
       self.addEnergyPoint(self.score,x)
  
   def startMonteCarlo(self):

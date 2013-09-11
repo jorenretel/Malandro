@@ -104,7 +104,7 @@ def calculatePercentages(res):
       
     if spinSys :
         
-      if spinSys.getCcpnSeqCode() == resSeqCode :
+      if spinsys.getCcpnResonanceGroup().residue.seqCode == resSeqCode : #spinSys.getCcpnSeqCode() == resSeqCode :
             
         agreePercentage = percent  
         
@@ -126,7 +126,7 @@ def calculatePercentages(res):
             
         goodJoker = percent
           
-  return [resSeqCode,agreePercentage, bestWrongPercentage, goodJoker, badJoker]      
+  return [resSeqCode,agreePercentage, bestWrongPercentage*-1, goodJoker, badJoker*-1]      
     
 
 
