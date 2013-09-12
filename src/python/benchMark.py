@@ -103,8 +103,10 @@ def calculatePercentages(res):
   for percent, spinSys in data:
       
     if spinSys :
-        
-      if spinsys.getCcpnResonanceGroup().residue.seqCode == resSeqCode : #spinSys.getCcpnSeqCode() == resSeqCode :
+      #print '----'  
+      #print spinSys.getCcpnResonanceGroup().residue.seqCode
+      #print resSeqCode
+      if spinSys.getCcpnResonanceGroup().residue.seqCode == resSeqCode : #spinSys.getCcpnSeqCode() == resSeqCode :
             
         agreePercentage = percent  
         
