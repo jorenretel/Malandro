@@ -26,7 +26,8 @@ class AnnealingSettingsTab(object) :
     self.chain         = None
     self.amountOfRepeats = 10
     self.amountOfSteps = 10000
-    self.acceptanceConstantList = [0, 0.1, 0.2,0.4, 0.8,1.0, 1.1, 1.2, 1.4, 1.6,2.0, 2.4,2.8, 3.2,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0]
+    #self.acceptanceConstantList = [0, 0.1, 0.2,0.4, 0.8,1.0, 1.1, 1.2, 1.4, 1.6,2.0, 2.4,2.8, 3.2,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0]
+    self.acceptanceConstantList = [0.0, 0.01, 0.015, 0.022, 0.033, 0.050, 0.075, 0.113, 0.170, 0.256, 0.384, 0.576, 0.864, 1.297, 1.946, 2.919, 4.378, 6.568, 9.852, 14.77, 22.16, 33.25]
     self.energyDataSets = [[]]
     
     self.body()

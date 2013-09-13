@@ -176,6 +176,8 @@ cdef class Malandro :
     
     self.scoreAllLinks()
     
+    self.multiplyPeakScoresWithLinkScores()
+    
     self.updateInfoText('Precalculations have finished...')
 
   cdef void doRandomAssignment(self):
@@ -958,7 +960,7 @@ cdef class Malandro :
           l5 = previousResA.getFromLinkDict(Am1,B)
           l6 = currentResidueB.getFromLinkDict(A,Bp1)
           
-          deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
+          #deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
           oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks
           newPeaks = l4.peakLinks + l5.peakLinks + l6.peakLinks
           peakSet = oldPeaks + newPeaks
@@ -975,7 +977,7 @@ cdef class Malandro :
           l5 = previousResB.getFromLinkDict(Bm1,A)
           l6 = currentResidueA.getFromLinkDict(B,Ap1)
           
-          deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
+          #deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
           oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks
           newPeaks = l4.peakLinks + l5.peakLinks + l6.peakLinks
           peakSet = oldPeaks + newPeaks
@@ -996,7 +998,7 @@ cdef class Malandro :
           l7 = previousResB.getFromLinkDict(Bm1,A)
           l8 = currentResidueB.getFromLinkDict(A,Bp1)
           
-          deltaLinkScore = l5.score + l6.score + l7.score + l8.score - (l1.score + l2.score + l3.score + l4.score)
+          #deltaLinkScore = l5.score + l6.score + l7.score + l8.score - (l1.score + l2.score + l3.score + l4.score)
           oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks + l4.peakLinks
           newPeaks = l5.peakLinks + l6.peakLinks + l7.peakLinks + l8.peakLinks
           peakSet = oldPeaks + newPeaks
@@ -1022,7 +1024,7 @@ cdef class Malandro :
         l3  = previousResA.getFromLinkDict(Am1,B)
         l4  = currentResidueA.getFromLinkDict(B,Ap1)
         
-        deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
+        #deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
         oldPeaks = l1.peakLinks + l2.peakLinks
         newPeaks = l3.peakLinks + l4.peakLinks
         peakSet = oldPeaks+newPeaks
@@ -1047,7 +1049,7 @@ cdef class Malandro :
         l3  = previousResB.getFromLinkDict(Bm1,A)
         l4  = currentResidueB.getFromLinkDict(A,Bp1)
 
-        deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
+        #deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
         oldPeaks = l1.peakLinks + l2.peakLinks
         newPeaks = l3.peakLinks + l4.peakLinks
         peakSet = oldPeaks+newPeaks
@@ -1056,7 +1058,7 @@ cdef class Malandro :
         
         continue
       
-      DeltaScore = CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) + deltaLinkScore
+      DeltaScore = CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) #+ deltaLinkScore
       
       if DeltaScore >= 0 or exp(AcceptanceConstant*DeltaScore) > rand()/randMax :
         
@@ -1157,4 +1159,35 @@ cdef class Malandro :
     #      score += peakScore + link.score
     #        
     #self.score = score
-  
+  cdef multiplyPeakScoresWithLinkScores(self) :
+    
+    cdef list residues, spinSystemLinks, peakLinks
+    cdef Residue res
+    cdef dict linkDict
+    cdef SpinSystemLink spinSystemLink
+    cdef int spinSystemLinkScore
+    cdef PeakLink peakLink
+    
+    residues = self.DataModel.chain.residues
+    
+    for res in residues :
+      
+      linkDict = res.linkDict
+      
+      spinSystemLinks = linkDict.values()
+      
+      for spinSystemLink in spinSystemLinks :
+        
+        spinSystemLinkScore = spinSystemLink.score
+        
+        peakLinks = spinSystemLink.peakLinks
+        
+        for peakLink in peakLinks:
+          
+          peakLink.score *= spinSystemLinkScore
+        
+        
+        
+      
+    
+    
