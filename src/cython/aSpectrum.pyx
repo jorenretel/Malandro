@@ -322,7 +322,6 @@ cdef class Spectrum:
       if isLast :
         intraResidualSimulatedPeakMatrix.append(intraResidualPeaksB)
          
-
   cdef object transferIsPossible(self, Atom atomA, Atom atomB, object expTransfer) :
     
     if not expTransfer :
@@ -939,7 +938,21 @@ cdef class Spectrum:
         
     self.symmetry = maxSymmetry
     return
+   
+  def getRandomSubSetofPeaks(self, fraction):
+    ''' To avoid a lot of false-positives, it is possible to leave out a
+        a sub-set of the peaks in each spectrum. These sub-sets can be changed
+        every run so the results will show more variability.
+        
+        input: float fraction
+        output: list of peaks
+    '''
     
+    randomPeakList = self.peaks[:]
+    random.shuffle(randomPeakList)
+    
+    return randomPeakList[0:int(fraction*len(randomPeakList)+0.5)]
+        
   def __reduce__(self) :
 
     return (generalFactory, (type(self),), self.__getstate__())

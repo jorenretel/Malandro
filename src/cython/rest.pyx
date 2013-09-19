@@ -152,7 +152,7 @@ cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks)
   for pl in oldPeaks :
     
     deg = pl.peak.degeneracy
-    peakScoreOld = peakScoreOld + 1.0/pl.peak.degeneracy * pl.score
+    peakScoreOld = peakScoreOld + 1.0/pl.peak.degeneracy * pl.preMultipliedScore
     pl.peak.degeneracyTemp -= 1
 
   for pl in newPeaks :
@@ -161,7 +161,7 @@ cdef inline double CcalcDeltaPeakScore(list peakSet,list oldPeaks,list newPeaks)
     
   for pl in newPeaks : 
     
-    peakScoreNew += 1.0/pl.peak.degeneracyTemp * pl.score
+    peakScoreNew += 1.0/pl.peak.degeneracyTemp * pl.preMultipliedScore
     
   return peakScoreNew - peakScoreOld
 

@@ -22,6 +22,7 @@ class AnnealingSettingsTab(object) :
     self.nmrProject = parent.nmrProject
     
     self.minIsoFrac = 0.1
+    self.leavePeaksOutFraction = 0.0
     self.minTypeScore = 1.0
     self.chain         = None
     self.amountOfRepeats = 10
@@ -36,8 +37,8 @@ class AnnealingSettingsTab(object) :
   
     frame = self.frame
 
-    frame.expandGrid(11,0)
-    frame.expandGrid(11,1)
+    frame.expandGrid(13,0)
+    frame.expandGrid(13,1)
     row = 0
 
     texts    = ['Calculate Assignment Suggestions']
@@ -78,6 +79,14 @@ class AnnealingSettingsTab(object) :
     label = Label(frame, text='Temperature constants: ', grid=(row,0))   
     self.tempEntry = Entry(frame, text=map(str, self.acceptanceConstantList), width=64, grid=(row,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
     
+    row += 1
+    
+    label = Label(frame, text='Fraction of peaks to leave out:', grid=(row,0))      
+    tipText = 'In each run a fraction of the peaks can be left out of the optimization, thereby increasing the variability in the outcome and reducing false negatives. In each run this will be different randomly chosen sub-set of all peaks. 0.1 (10%) can be a good value.'
+    self.leaveOutPeaksEntry = FloatEntry(frame, grid=(row,1), width=7, text=0.0,
+                                      returnCallback=self.updateLeavePeaksOutEntry,
+                                      tipText=tipText, sticky= 'nsew')
+    self.leaveOutPeaksEntry.bind('<Leave>', self.updateLeavePeaksOutEntry , '+')
     
     row += 1
     
@@ -263,9 +272,29 @@ class AnnealingSettingsTab(object) :
     if value < 0 :
       self.minIsoFrac = 0.0
       self.minLabelEntry.set(0.0)
+    elif value > 1 :
+      self.minIsoFrac = 1.0
+      self.minLabelEntry.set(1.0)
     else :
       self.minIsoFrac = value
       self.minLabelEntry.set(value)
+      
+  def updateLeavePeaksOutEntry(self, event=None) :
+    
+    value = self.leaveOutPeaksEntry.get()
+    
+    if value == self.leavePeaksOutFraction :
+      return
+    if value < 0 :
+      self.leavePeaksOutFraction = 0.0
+      self.leaveOutPeaksEntry.set(0.0)
+    elif value > 1 :
+      self.leavePeaksOutFraction = 1.0
+      self.leaveOutPeaksEntry.set(1.0)
+    else :
+      self.leavePeaksOutFraction = value
+      self.leaveOutPeaksEntry.set(value)  
+    
        
   def updateAcceptanceConstantList(self,event=None) :
     

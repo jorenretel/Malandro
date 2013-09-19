@@ -13,6 +13,8 @@ cdef class SpinSystemLink :
   
   cdef list peakLinks
   
+  cdef list activePeakLinks
+  
   cdef list notFoundPeakLinks
   
   def __init__(self, residue1=None,residue2=None,spinSystem1=None,spinSystem2=None):
@@ -52,15 +54,52 @@ cdef class SpinSystemLink :
     self.peakLinks, self.notFoundSimulatedPeaks, self.spinSystem1, self.spinSystem2 = state # , self.notFoundPeakLinks = state #self.notFoundPeakLinks
     
   def getContributingResonances(self) :
-    
+    '''Return the resonances that contribute to dimensions
+       of peaks of all peakLinks.
+       
+    '''    
+
     resonances = []
     
     for pl in self.peakLinks :
       
       resonances.extend(pl.getResonances())
       
-    return set(resonances)  
+    return set(resonances)
   
+  def getResonancesContributingToActivePeakLinks(self):
+    '''Return the resonances that contribute to the activePeakLinks.
+       Because a percentage of the peaks, and thereby a percentage of
+       peakLinks might be left out in a run of the annealing, this
+       function returns only those resonance contributing to dimensions
+       of the used (active) peaks.
+       
+    '''
+
+    resonances = []
+    
+    for pl in self.activePeakLinks :
+      
+      resonances.extend(pl.getResonances())
+      
+    return set(resonances)
+  
+  def determineScore(self):
+    '''Sets self.score to the amount of resonances contributing
+       to the link. Also sets peakLink.preMultipliedScore so
+       that does not have to be done during the annealing any longer.
+       
+    '''
+    
+    cdef PeakLink peakLink
+    
+    self.score = len(self.getContributingResonances())
+    activeScore = len(self.getResonancesContributingToActivePeakLinks())
+    
+    for peakLink in self.activePeakLinks:
+      
+      peakLink.preMultipliedScore = peakLink.score * activeScore
+      
   def getAllResonances(self) :                        #TODO: change this, first of all it is not used and second of all self.notFoundPeakLinks is empty now.
   
     resonances = []

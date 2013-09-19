@@ -106,6 +106,8 @@ class Connector(object):
     
     self.minTypeScore = self.GUI.annealingSettingsTab.minTypeScore
     
+    self.leavePeaksOutFraction = self.GUI.annealingSettingsTab.leavePeaksOutFraction
+    
     self.shiftList = self.GUI.annealingSettingsTab.shiftList
     
     self.nmrProject = self.GUI.nmrProject

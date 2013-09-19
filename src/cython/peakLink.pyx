@@ -5,7 +5,7 @@ cdef class PeakLink :
   
   cdef SimulatedPeak simulatedPeak
   
-  cdef double score
+  cdef double score, preMultipliedScore
   
   cdef list resonances
   
@@ -14,6 +14,7 @@ cdef class PeakLink :
     self.peak = peak
     self.simulatedPeak = simPeak
     self.score = score
+    self.preMultipliedScore = score
     self.resonances = resonances
 
   def __reduce__(self) :

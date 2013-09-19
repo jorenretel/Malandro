@@ -58,7 +58,7 @@ cdef class Malandro :
   
   cdef double minIsoFrac
   
-  cdef double minTypeScore
+  cdef double minTypeScore, leavePeaksOutFraction
   
   cdef list selectedSpectra
   
@@ -121,6 +121,8 @@ cdef class Malandro :
     
     self.minIsoFrac = connector.minIsoFrac
     
+    self.leavePeaksOutFraction = connector.leavePeaksOutFraction
+    
     self.minTypeScore = connector.minTypeScore
     
     self.selectedSpectra = connector.selectedSpectra
@@ -174,9 +176,9 @@ cdef class Malandro :
     
     self.updateInfoText('Scoring links between spin systems...')
     
-    self.scoreAllLinks()
+    #self.scoreAllLinks()
     
-    self.multiplyPeakScoresWithLinkScores()
+    #self.multiplyPeakScoresWithLinkScores()
     
     self.updateInfoText('Precalculations have finished...')
 
@@ -395,6 +397,10 @@ cdef class Malandro :
     for x in range(repeat) :
       
       self.cleanAssignments()
+      
+      self.leaveOutSubSetOfPeaks(self.leavePeaksOutFraction)
+      
+      self.scoreAllLinks()
 
       self.doRandomAssignment()
 
@@ -621,32 +627,10 @@ cdef class Malandro :
   cdef void scoreAllLinks(self):
     
     cdef list residues 
-    
     cdef Residue res
-    
     cdef dict linkDict
-    
     cdef SpinSystemLink linkObject
-    
-    cdef int NfoundPeaks
-    
-    cdef SimulatedPeak peak
-    
-    cdef SimulatedPeakContrib contrib
-    
-    cdef str atomName
-    
-    cdef list atomsUsed
-    
-    cdef int NatomsUsed
-    
-    cdef int hc
-    
-    cdef PeakLink pl
-    
-    hc = self.hc
-    
-      
+
     DataModel = self.DataModel
 
     residues = DataModel.chain.residues
@@ -655,38 +639,56 @@ cdef class Malandro :
       
       linkDict = res.linkDict
       
-      for key,  linkObject in linkDict.items() :
+      for linkObject in linkDict.values() :
         
-        NresonancesUsed = len(linkObject.getContributingResonances())
+        linkObject.determineScore()
+             
+  def leaveOutSubSetOfPeaks(self, fraction):
+    
+    cdef Spectrum spectrum
+    cdef Residue residue
+    cdef SpinSystemLink spinSystemLink
+    cdef PeakLink peakLink
+    cdef set peaksToLeaveOut
+    cdef list peaksToLeaveOutList
+    
+    DataModel = self.DataModel
+    residues = DataModel.chain.residues
+    spectra = DataModel.spectra
+    
+    if fraction == 0.0 :
+      
+      for residue in residues :
+      
+        for spinSystemLink in residue.linkDict.values():
+          
+          spinSystemLink.activePeakLinks = spinSystemLink.peakLinks
+      
+    else :
+    
+      peaksToLeaveOutList = []
+      
+      for spectrum in spectra:
         
-        linkObject.score = NresonancesUsed
+        peaksToLeaveOutList.extend(spectrum.getRandomSubSetofPeaks(fraction))
         
-        #allResonances
-        #
-        #for pl in link.peakLinks :
-        #  
-        #  
-        #
-        #len(set([pl.resonances pl in link.peakLinks]))
-        #
-        ##NfoundPeaks = len(linkObject.realPeaks)                                                                                          # These are the simulated peaks where a real peak was found for in the spectra during the matching procedure
-        #
-        ##atomsUsed = []
-        #
-        ##for peak in linkObject.simulatedPeaks :                                                                                                              # These are the simulated variant of the 'realPeaks'.
-        #    
-        #  for contrib in peak.simulatedPeakContribs :
-        #        
-        #    atomName = contrib.atomName
-        #    
-        #    if atomName not in atomsUsed :
-        #        
-        #        atomsUsed.append(atomName)
-        #        
-        #NatomsUsed = len(atomsUsed)
-        #
-        #linkObject.score = NatomsUsed #NfoundPeaks + NatomsUsed
-
+        
+      peaksToLeaveOut = set(peaksToLeaveOutList)
+      
+      for residue in residues :
+        
+        for spinSystemLink in residue.linkDict.values():
+          
+          activePeakLinks = []
+          
+          for peakLink in spinSystemLink.peakLinks:
+            
+            if not peakLink.peak in peaksToLeaveOut :
+              
+              activePeakLinks.append(peakLink)
+          
+          spinSystemLink.activePeakLinks = activePeakLinks
+      
   cdef void matchSimulatedWithRealSpectra(self):
     
     self.updateInfoText('Matching real to simulated spectra.....')
@@ -1114,8 +1116,6 @@ cdef class Malandro :
     
     cdef PeakLink pl
     
-    
-    
     residues = self.DataModel.chain.residues
     
     score = 0.0
@@ -1126,40 +1126,11 @@ cdef class Malandro :
         
       link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
       
-      #keyA = res.currentSpinSystemAssigned.spinSystemNumber
-      #keyB = nextRes.currentSpinSystemAssigned.spinSystemNumber
-      
-      #key = keyA*self.hc + keyB
-      
-      #linkDict = res.linkDict
-      #peakScore = 0.0
-      score += sum([1.0/pl.peak.degeneracy for pl in link.peakLinks]) + link.score
-      #peakScore = sum([1.0/pl.peak.degeneracy for pl in link.peakLinks])
-      
-      #for pl in link.peakLinks :
-        
-      #  peakScore += 1.0/pl.peak.degeneracy
-      
-      #score += peakScore + link.score    
+      score += sum([1.0/pl.peak.degeneracy for pl in link.peakLinks]) + link.score  
           
     self.score = score      
           
-    #    if key in linkDict :
-    #      
-    #      link = linkDict[key]
-    #      
-    #      peaks = link.realPeaks
-    #      
-    #      peakScore = 0.0
-    #      
-    #      for peak in peaks :
-    #        
-    #        peakScore = peakScore + 1.0/peak.degeneracy
-    #        
-    #      score += peakScore + link.score
-    #        
-    #self.score = score
-  cdef multiplyPeakScoresWithLinkScores(self) :
+  cdef multiplyPeakScoresWithLinkScores(self) : # Not used, already happens during spinSystemLink.determineScore()
     
     cdef list residues, spinSystemLinks, peakLinks
     cdef Residue res
@@ -1185,9 +1156,4 @@ cdef class Malandro :
         for peakLink in peakLinks:
           
           peakLink.score *= spinSystemLinkScore
-        
-        
-        
-      
-    
-    
+ 
