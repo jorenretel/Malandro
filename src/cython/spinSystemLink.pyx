@@ -28,6 +28,7 @@ cdef class SpinSystemLink :
     self.realPeaks = []
     self.notFoundSimulatedPeaks = []
     self.peakLinks = []
+    self.activePeakLinks = []
     self.notFoundPeakLinks = []
 
   cdef void addPeak(self,Peak realPeak, SimulatedPeak simPeak, list resonances, double score) :

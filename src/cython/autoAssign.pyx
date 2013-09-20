@@ -516,7 +516,7 @@ cdef class Malandro :
       
       link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
  
-      for pl in link.peakLinks :
+      for pl in link.activePeakLinks :
         
         pl.peak.degeneracy += 1
       
