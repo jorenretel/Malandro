@@ -1126,7 +1126,7 @@ cdef class Malandro :
         
       link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
       
-      score += sum([1.0/pl.peak.degeneracy for pl in link.activePeakLinks]) #+ link.score  
+      score += sum([1.0/pl.peak.degeneracy * pl.preMultipliedScore for pl in link.activePeakLinks]) #+ link.score  
           
     self.score = score      
           
