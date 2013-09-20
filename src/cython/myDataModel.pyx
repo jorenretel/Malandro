@@ -1,5 +1,12 @@
 
 cdef class myDataModel :
+  '''Root of the  model for Malandro. Most objects in the model are bascically
+     wrappers around objects from CCPN. This is done like this, so features can
+     be added to the objects without changing the original object.
+     This class does not contain much more than references to spectra, spin systems,
+     and the chain. Most methods are involved in setting up these objects.
+     
+  '''
 
   cdef list spectra
 
@@ -50,11 +57,13 @@ cdef class myDataModel :
     self.minIsoFrac = auto.minIsoFrac
 
   def setupChain(self):
+    '''Generates new Chain by based on a chain object from CCPN.'''
     
     self.chain = Chain(self.auto.chain)
         
   def setupSpectra(self):
-
+    '''Sets up spectra objects for all selected spectra.'''
+    
     for temporary_spectrum_object in self.auto.selectedSpectra :
 
       newspectrum = Spectrum(temporary_spectrum_object)
@@ -64,6 +73,17 @@ cdef class myDataModel :
       self.spectra.append(newspectrum)
 
   def setupSpinSystems(self, minTypeScore=1.0) :
+    '''Sets up spin system objects based on CCPN resonanceGroup.
+       kwarg: minTypeScore can be passed. This is used when the possible
+              residue types of the spin system has to be determined. The residue
+              typing algorithm of CCPN analysis is used for this. The minTypeScore
+              is a percentage (i.e. 0-100). All residue types scoring higher than
+              this cut-off will be consider possible.
+       Spin systems can have different levels of assignment. Depending on their
+       assignment state they are sorted into different dicts, to be easily accessible
+       later.
+       
+    '''
     
     cdef SpinSystem newSpinSystem
     cdef bint reTypeSpinSystems
@@ -148,7 +168,14 @@ cdef class myDataModel :
           self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
   
   def setupLinks(self) :
-  
+    '''Setup all links between spin systems. Two dicts are created.
+       One intraDict for intra-residual links, which contains intra-residual
+       peaks (or peak links, to be exact). In this case the key in the
+       dict is just the serial of the spin system. The linkDict contains
+       sequential links between spin system. Very simple keys are created
+       from both spin system serials.
+       
+    '''
     cdef Residue resA, resB
     cdef dict linkDict, intraDict
     cdef str ccpCodeA, ccpCodeB
@@ -174,7 +201,6 @@ cdef class myDataModel :
           linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
     
     # Also doing the last residue here, otherwise not reached in loop.
-    
     intraDict = resB.intraDict
     
     for spinSystemB in self.spinSystems[ccpCodeB] :
@@ -192,6 +218,10 @@ cdef class myDataModel :
       dictToAddTo[key] = [value]
 
   cdef list getResonancesForAtomSiteName(self, str atomSiteName) :
+    '''Return all resonances of all spin systems in the model
+       that fit the atomSite described by the atomSiteName.
+       
+    '''
     
     cdef SpinSystem spinSystem
     
@@ -226,11 +256,12 @@ cdef class myDataModel :
     
   def connectToProject(self, project, nmrProject) :
     
-    '''This method can be called after a unpickling from file. Because not the whole ccpn analysis project
+    '''This method can be called after an unpickling from file. Because not the whole ccpn analysis project
        should be pickled (it would also not be possible), the link between the malandro objects and the analysis
        objects is lost. By running this method, the attributes that link to objects in the ccpn project are
-       set again. Of course when the project has changed a lot in the mean time and objects have been removed,
+       set again. Of course when the project has changed and objects have been removed,
        they can not be set again.
+       
     '''
     
     self.project = project
@@ -252,13 +283,15 @@ cdef class myDataModel :
       spectrum.connectToProject(nmrProject)
       
   def getChain(self) :
+    '''Resturn chain.'''
   
     return self.chain
   
   def getSpinSystems(self) :
+    '''Return spin systems in dict, keys are three-letter amino acid codes'''
     
     return self.spinSystems
   
   def getSpectra(self) :
-    
+    '''Return list with spectra.'''
     return self.spectra

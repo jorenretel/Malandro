@@ -1,5 +1,6 @@
 
 cdef class SpinSystem :
+  '''Wrapper around resonceGroup object in CCPN'''
   
   cdef myDataModel DataModel
 
@@ -42,7 +43,24 @@ cdef class SpinSystem :
 
   def __init__(self, DataModel=None, ccpnResonanceGroup=None, ccpnSeqCode = 0, ccpCode=None,
                tentativeSeqCodes = [],tentativeCcpCodes=[] , typeProbCcpCodes=[], typeSpinSystem=False, minTypeScore=1.0) :
-    
+    '''kwargs: DataModel, parent, root of the model
+               ccpnResonanceGroup:  resonanceGroup this spin system corresponds to in CCPN.
+               ccpnSeqCode:         if resonanceGroup in assigned to residue. Position of
+                                    residue in the sequence.
+               ccpCode:             if resonanceGroup has a residue type assigned, three-letter
+                                    amino acid code.
+               tentativeSeqCodes:   if resonanceGroup has tentative assignments to residues,
+                                    residue number of these residues.
+               tentativeCcpCodes:   three-letter amino acid codes belonging to tentative
+                                    residue assignments.
+               typeProbCcpCodes:    if resonanceGroup has residueTypeProbs set, three-letter
+                                    amino acid codes belonging to these.
+              typeSpinSystem:       Bool, if True, residue typing is carried out.
+              minTypeScore:         cutt-off value for residue typing. This score is a percentage.
+                                    If a score is higher than cut-off, the residue type is considered
+                                    a possibility.
+                                    
+    '''
     self.DataModel = DataModel
     self.ccpnResonanceGroup = ccpnResonanceGroup
     self.ccpCode = ccpCode
@@ -87,7 +105,10 @@ cdef class SpinSystem :
     self.groupResonancesByAtomSite()
 
   cdef set getCcpCodes(self) :
+    '''Return three-letter amino acid code this spin system could
+      be assigned to.
     
+    '''
     if self.ccpCode :
       
       ccpCodes = [self.ccpCode]
@@ -99,7 +120,11 @@ cdef class SpinSystem :
     return set(ccpCodes)  
       
   cdef void setupResonances(self) :
-
+    '''Sets up all resonances belonging in the spin system based on
+       the resonances in the resonanceGroup in CCPN. Resonances are
+       stored by their atomName in a dict.
+       
+    '''
     for resonance in self.ccpnResonanceGroup.resonances :
          
       if resonance.getAssignNames() :
@@ -109,7 +134,13 @@ cdef class SpinSystem :
         self.resonanceDict[newResonance.atomName] = newResonance
 
   cdef void runAminoAcidTyping(self, double minTypeScore) :
-    
+    '''Find all residue types the spin system could be assigned to.
+       The algorithm in CCPN analysis is used for this task.
+       kwargs:  minTypeScore: cut-off value (percentage). Everything
+                             scoring higher is consider a possible
+                             residue type assignment.
+       
+    '''
     shiftList = self.DataModel.auto.shiftList
     ccpnChain = self.DataModel.chain.ccpnChain
     
@@ -138,6 +169,11 @@ cdef class SpinSystem :
     self.aminoAcidProbs = scoreDict
     
   cdef void setupAllowedResidueView(self) :
+    ''' Sets up a memory view containing bints. Every bint corresponts to
+        a residue in the sequence. If the spin system could, based on its
+        residue type, be assigned to this residue the bint is set to True.
+    
+    '''
     
     cdef Chain chain
     
@@ -156,6 +192,10 @@ cdef class SpinSystem :
       self.allowedResidueView[resNumber] = True
       
   cdef Resonance getResonanceForAtomName(self,str atomName) :       # Used in matchSpectrum()
+    '''Returns a resonace for a atomName.
+       kwargs: atomName: name of the atom, for instance 'CA'.
+
+    '''
     
     if atomName in self.resonanceDict :
                 
@@ -166,11 +206,18 @@ cdef class SpinSystem :
       return None
     
   cdef list getResonancesForAtomSiteName(self, str atomSiteName) :
+    '''Returns resonances for AtomSiteName.
+       kwargs: atomSiteName: string describing atomSite, for instance Cali.
+
+    '''
     
     return self.resonancesByAtomSiteName.get(atomSiteName, [])
 
   cdef void setupAllowedResidues(self, bint useAssignments, bint useTentative) :
-    
+    '''Find out which residues this spin system can be assigned to based on
+       residue type and possibly by using previous assignments.
+
+    '''
     cdef dict residuesByCcpCode
     cdef str ccpCode
     cdef Residue res
@@ -203,7 +250,12 @@ cdef class SpinSystem :
           self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[ccpCode]])
           
   cdef void setupExchangeSpinSystems(self, bint useAssignments) :
+    '''Sets up a list of all spin system this spin system could possibly
+       swap out residue assignment with during the Monte Carlo procedure.
+       This list is later used in the Monte Carlo procedure to pull a random
+       member out off, to attempt a switch of residue assignment.
     
+    '''
     cdef list spinSysList
     cdef SpinSystem spinSys
     cdef dict spinSystemDict
@@ -219,7 +271,12 @@ cdef class SpinSystem :
           self.exchangeSpinSystems.append(spinSys)
 
   cdef void groupResonancesByAtomSite(self) :                                 #TODO: finish
-    
+    ''' Sets up resonancesByAtomSiteName dict. AtomSites are used in
+        CCPN in de description of magnetization transfer pathways.
+        Used later to find possibly correlated resonances in an experiment,
+        so the corresponding spectrum can be searched for peaks.
+        
+    '''
     cdef Resonance resonance
     
     resonancesByAtomSiteName = self.resonancesByAtomSiteName
@@ -331,6 +388,9 @@ cdef class SpinSystem :
     self.DataModel, self.spinSystemNumber, self.ccpCode, self.ccpnSeqCode, self.isJoker, self.resonanceDict, self.tentativeCcpCodes, self.tentativeSeqCodes, self.allowedResidues, self.typeProbCcpCodes, self.aminoAcidProbs, self.solutions, self.userDefinedSolutions = state
 
   def connectToProject(self, nmrProject) :
+    ''' Connect the spin system to the correct resonanceGroup in CCPN.
+        Can be ran after upickling.
+    '''
     
     if self.isJoker :
       
@@ -348,6 +408,12 @@ cdef class SpinSystem :
       resonance.connectToProject()
       
   def getDescription(self, noSerialWhenSeqCodeIsPresent=False) :
+    '''Return a string describing the spin system, for instance
+      '{22} Asp 100'. Depends on assignment status.
+      kwargs: noSerialWhenSeqCodeIsPresent: if set to True, the
+                                            serial will not be
+                                            part of the string.
+    '''
     
     if self.isJoker :
       
@@ -414,31 +480,40 @@ cdef class SpinSystem :
       return '{%s}' %resonanceGroup.serial
     
   def getIsJoker(self) :
+    '''Returns Bool indicating whether spin system is a joker.'''
     
     return self.isJoker
   
   def getSeqCode(self) :
+    '''Returns sequence code if resonanceGroup had a sequential assignment.'''
     
     return self.ccpnSeqCode
   
   def getCcpCode(self) :
+    '''Returns three-letter amino acid code if residue type was set on resonanceGroup'''
     
     return self.ccpCode
   
   def getTentativeCcpCodes(self) :
+    '''Returns three-letter amino acid codes if resonanceGroup has tentative residue assignments'''
     
     return self.tentativeCcpCodes
   
   def getSerial(self) :
+    '''Returns serial. Serial of spin system is equal to serial of resonanceGroup in CCPN'''
     
     return self.spinSystemNumber
   
   def getCcpnSeqCode(self) :
+    '''Synonym to getSeqCode.'''
     
     return self.ccpnSeqCode
   
   def getCcpnResonanceGroup(self) :
-    
+    '''Returns corresponding resonanceGroup. This is determined every time from scratch
+       because during the assignment process the resonanceGroup might have been removed.
+       
+    '''
     #return self.ccpnResonanceGroup
   
     if self.isJoker :
