@@ -963,8 +963,8 @@ cdef class Malandro :
           l6 = currentResidueB.getFromLinkDict(A,Bp1)
           
           #deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
-          oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks
-          newPeaks = l4.peakLinks + l5.peakLinks + l6.peakLinks
+          oldPeaks = l1.activePeakLinks + l2.activePeakLinks + l3.activePeakLinks
+          newPeaks = l4.activePeakLinks + l5.activePeakLinks + l6.activePeakLinks
           peakSet = oldPeaks + newPeaks
           
         elif currentResidueB is previousResA :                                                                                    # sequential pair BA
@@ -980,8 +980,8 @@ cdef class Malandro :
           l6 = currentResidueA.getFromLinkDict(B,Ap1)
           
           #deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
-          oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks
-          newPeaks = l4.peakLinks + l5.peakLinks + l6.peakLinks
+          oldPeaks = l1.activePeakLinks + l2.activePeakLinks + l3.activePeakLinks
+          newPeaks = l4.activePeakLinks + l5.activePeakLinks + l6.activePeakLinks
           peakSet = oldPeaks + newPeaks
 
         else :                                                                                                            # A and B are not sequential
@@ -1001,8 +1001,8 @@ cdef class Malandro :
           l8 = currentResidueB.getFromLinkDict(A,Bp1)
           
           #deltaLinkScore = l5.score + l6.score + l7.score + l8.score - (l1.score + l2.score + l3.score + l4.score)
-          oldPeaks = l1.peakLinks + l2.peakLinks + l3.peakLinks + l4.peakLinks
-          newPeaks = l5.peakLinks + l6.peakLinks + l7.peakLinks + l8.peakLinks
+          oldPeaks = l1.activePeakLinks + l2.activePeakLinks + l3.activePeakLinks + l4.activePeakLinks
+          newPeaks = l5.activePeakLinks + l6.activePeakLinks + l7.activePeakLinks + l8.activePeakLinks
           peakSet = oldPeaks + newPeaks
           
       elif not currentResidueA is None :                                                                      # spin system B is not assigned to any residue
@@ -1027,8 +1027,8 @@ cdef class Malandro :
         l4  = currentResidueA.getFromLinkDict(B,Ap1)
         
         #deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
-        oldPeaks = l1.peakLinks + l2.peakLinks
-        newPeaks = l3.peakLinks + l4.peakLinks
+        oldPeaks = l1.activePeakLinks + l2.activePeakLinks
+        newPeaks = l3.activePeakLinks + l4.activePeakLinks
         peakSet = oldPeaks+newPeaks
   
       elif not currentResidueB is None :                                                                      # spin system A is not assigned to any residue
@@ -1052,8 +1052,8 @@ cdef class Malandro :
         l4  = currentResidueB.getFromLinkDict(A,Bp1)
 
         #deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
-        oldPeaks = l1.peakLinks + l2.peakLinks
-        newPeaks = l3.peakLinks + l4.peakLinks
+        oldPeaks = l1.activePeakLinks + l2.activePeakLinks
+        newPeaks = l3.activePeakLinks + l4.activePeakLinks
         peakSet = oldPeaks+newPeaks
 
       else :
@@ -1126,7 +1126,7 @@ cdef class Malandro :
         
       link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
       
-      score += sum([1.0/pl.peak.degeneracy for pl in link.peakLinks]) + link.score  
+      score += sum([1.0/pl.peak.degeneracy for pl in link.activePeakLinks]) #+ link.score  
           
     self.score = score      
           
