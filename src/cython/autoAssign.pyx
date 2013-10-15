@@ -142,6 +142,13 @@ cdef class Malandro :
     self.useDimenionalAssignments = connector.useDimenionalAssignments
     
   def preCalculateDataModel(self)  :
+    '''Creates the data model for the calculations and sequentially
+       sets up everything that is needed to run the annealing later,
+       like simulating the spectra, finding out which resonances could
+       contribute to which peak dimensions. Matching the simulated
+       with the real spectra and introducing joker spin systems.
+       
+    '''
     
     self.updateInfoText('Setting up model for calculations...')
     
@@ -183,7 +190,10 @@ cdef class Malandro :
     self.updateInfoText('Precalculations have finished...')
 
   cdef void doRandomAssignment(self):
-    
+    '''Performs a random assignment that is consistent in
+       terms of amino acid types.
+       
+    '''
     self.updateInfoText('Making a random assignment...')
     
     cdef myDataModel DataModel
@@ -353,7 +363,11 @@ cdef class Malandro :
         print res.ccpCode
 
   def runAnnealling(self):
-    
+    '''Runs one full annealling by going through a list
+       of temperature constants and calling annealingSub
+       with it.
+       
+    '''
     useAssignments = self.useAssignments
     useTentative = self.useTentative    
     amountOfStepsPerTemperature = self.amountOfSteps
@@ -381,6 +395,10 @@ cdef class Malandro :
       self.addEnergyPoint(self.score,x)
  
   def startMonteCarlo(self):
+    '''Run the optimization for a number of times
+       as defined in self.amountOfRepeats.
+    
+    '''
     
     cdef int repeat
     
@@ -432,6 +450,10 @@ cdef class Malandro :
     self.updateInfoText('Done')
 
   cdef void cleanAssignments(self) :
+    '''Cleans all assignment information generated
+       by previous runs of the annealing.
+       
+    '''
     
     cdef myDataModel DataModel
     
@@ -497,6 +519,12 @@ cdef class Malandro :
         peak.degeneracy = 0
 
   cdef void setupPeakInformationForRandomAssignment(self):
+    '''Sets the degeneracy property of each peak to
+       the correct value. This value will later on be
+       updated whenever a change is made during the
+       annealing.
+       
+    '''
     
     cdef list residues
     
@@ -605,6 +633,10 @@ cdef class Malandro :
     string = str(i-1) + ' joker spinsystems are used in this calculation.'    
 
   cdef void simulateSpectra(self) :
+    '''Simulates all spectra, in the sense that
+       a list with simulated peaks is created.
+    
+    '''
     
     cdef myDataModel DataModel
     
@@ -621,10 +653,14 @@ cdef class Malandro :
       spectrum.determineSymmetry()
 
   cdef void createSpinSytemsAndResonances(self):
+    '''Sets up all spin systems and resonances in the model.
+    '''
     
     self.DataModel.setupSpinSystems(minTypeScore=self.minTypeScore)
 
   cdef void scoreAllLinks(self):
+    '''Scores every link in the model.
+    '''
     
     cdef list residues 
     cdef Residue res
@@ -644,6 +680,12 @@ cdef class Malandro :
         linkObject.determineScore()
              
   def leaveOutSubSetOfPeaks(self, fraction):
+    '''Can be ran before the anneling to leave out
+       a random subset of the peaks. This can be used to
+       generate more heterogeneous results over multiple
+       runs.
+       
+    '''
     
     cdef Spectrum spectrum
     cdef Residue residue
@@ -690,6 +732,9 @@ cdef class Malandro :
           spinSystemLink.activePeakLinks = activePeakLinks
       
   cdef void matchSimulatedWithRealSpectra(self):
+    '''Combine lists of simulated peaks with resonances
+       of each two spin
+    '''
     
     self.updateInfoText('Matching real to simulated spectra.....')
     
