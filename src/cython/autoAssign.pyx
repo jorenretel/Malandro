@@ -1,7 +1,7 @@
 
 import math
 from numpy.random import randint,random_sample
-import random
+import random as pyrandom
 import math
 import cython
 
@@ -12,6 +12,8 @@ from cython.view cimport array as cvarray
 #from cpython cimport bool
 
 #from libcpp cimport bool
+
+from time import time
 
 from ccpnmr.analysis.core.ChemicalShiftBasic import getShiftsChainProbabilities
 
@@ -28,9 +30,12 @@ cdef extern from "math.h":
   double exp(double x)
   
 
-from libc.stdlib cimport rand, RAND_MAX
+from libc.stdlib cimport rand, srand, RAND_MAX
 
-cdef double randMax = float(RAND_MAX) 
+
+#cdef double randMax = float(RAND_MAX)
+
+from randomGenerator.cyrandom cimport Random
 
 
 
@@ -237,7 +242,7 @@ cdef class Malandro :
     
     DataModel = self.DataModel
     
-    sample = random.choice
+    sample = pyrandom.choice
 
     assignedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.previouslyAssignedSpinSystems)
     
@@ -368,6 +373,8 @@ cdef class Malandro :
        with it.
        
     '''
+    cdef Random rng
+    
     useAssignments = self.useAssignments
     useTentative = self.useTentative    
     amountOfStepsPerTemperature = self.amountOfSteps
@@ -386,9 +393,17 @@ cdef class Malandro :
       
     listWithSpinSystems = list(set([val for subl in relevantSpinSystems.values() for val in subl]))
     
+    # For every annealing I create a new instance of the mersenne twister random number generator.
+    # As a seed I use a number from the linear congruential generator present in the c standard
+    # library.
+    
+    rng = Random()
+    
     for x,AcceptanceConstant in enumerate(AcceptanceConstantList) :
       
-      self.annealingSub(AcceptanceConstant,amountOfStepsPerTemperature,listWithSpinSystems)
+      rng.seed(rand())
+      
+      self.annealingSub(AcceptanceConstant,amountOfStepsPerTemperature,listWithSpinSystems, rng)
       
       self.scoreInitialAssignment()
       
@@ -411,6 +426,8 @@ cdef class Malandro :
     info = 'Running annealing number %s out of ' + str(repeat) + '...'
     
     self.setupSpinSystemExchange()
+    
+    srand(int(time.time()*1000))        # Seeding the linear congruential pseudo-random number generator
 
     for x in range(repeat) :
       
@@ -928,7 +945,7 @@ cdef class Malandro :
   @cython.boundscheck(False)
   @cython.cdivision(True)
   @cython.nonecheck(False)
-  cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems):
+  cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems, Random rng):
      
     cdef int improvements, equals, worse, r, seqCodeA, seqCodeB, deltaLinkScore, lengthOfListWithSpinSystems
     
@@ -956,15 +973,16 @@ cdef class Malandro :
     
     for aTry in xrange(amountOfStepsPerTemperature) :
       
-      r = int(rand()/(randMax+1)*lengthOfListWithSpinSystems)
+      r = rng.cy_randrange(0,lengthOfListWithSpinSystems,1) #int(rand()/(randMax+1)*lengthOfListWithSpinSystems)
       A = <SpinSystem>listWithSpinSystems[r]
 
       exchangeSpinSystems = A.exchangeSpinSystems
       
       if exchangeSpinSystems :
         
-        r = int(rand()/(randMax+1)*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
+        #r = int(rand()/(randMax+1)*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
         
+        r = rng.cy_randrange(0,len(exchangeSpinSystems),1)
         B = <SpinSystem>exchangeSpinSystems[r]
         
         
@@ -1107,7 +1125,7 @@ cdef class Malandro :
       
       DeltaScore = CcalcDeltaPeakScore(peakSet,oldPeaks,newPeaks) #+ deltaLinkScore
       
-      if DeltaScore >= 0 or exp(AcceptanceConstant*DeltaScore) > rand()/randMax :
+      if DeltaScore >= 0 or exp(AcceptanceConstant*DeltaScore) > rng.random() :
         
         score += DeltaScore
         

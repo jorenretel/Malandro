@@ -949,7 +949,7 @@ cdef class Spectrum:
     '''
     
     randomPeakList = self.peaks[:]
-    random.shuffle(randomPeakList)
+    pyrandom.shuffle(randomPeakList)
     
     return randomPeakList[0:int(fraction*len(randomPeakList)+0.5)]
         
