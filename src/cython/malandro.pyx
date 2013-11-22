@@ -1,4 +1,6 @@
 
+from src.cython.randomGenerator.cyrandom cimport Random
+
 include "autoAssign.pyx"
 include "myDataModel.pyx"
 include "myChain.pyx"

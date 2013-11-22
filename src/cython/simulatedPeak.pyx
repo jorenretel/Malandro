@@ -9,7 +9,7 @@ cdef class SimulatedPeak :
   
   cdef object pySimulatedPeak
   
-  cdef int N
+  #cdef int N
   
   def __init__(self):
 
