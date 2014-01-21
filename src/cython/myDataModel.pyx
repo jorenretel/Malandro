@@ -9,26 +9,17 @@ cdef class myDataModel :
   '''
 
   cdef list spectra
-
   cdef public Chain chain
-
   cdef dict spinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
-  
-  cdef Malandro auto
-  
+  cdef Malandro auto  
   cdef double minIsoFrac
-  
   cdef object nmrProject, project
-
 
   def __init__(self, Malandro auto):
     
     self.auto = auto
-
     self.spectra = []
-
     self.chain = None
-    
     self.spinSystems = {}
     self.previouslyAssignedSpinSystems = {}
     self.justTypedSpinSystems = {}

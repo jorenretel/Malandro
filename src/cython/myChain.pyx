@@ -14,6 +14,10 @@ cdef class Chain :
   cdef str ccpnChainCode, molSystemCode
   
   def __init__(self, ccpnChain):
+    '''Init chain. Creates a wrapper around the ccpn chain.
+       kwargs: ccpn chain instance
+    
+    '''
     
     self.ccpnChain = ccpnChain
     
@@ -23,19 +27,24 @@ cdef class Chain :
 
     self.residues = []
     
-    self.residueTypeFrequencyDict = {}
+    self.residueTypeFrequencyDict = {}    #Not used
     
     self.residuesByCcpCode = {}
 
     self.setupResidues()
     
-    self.countResidueTypeFrequency()
+    #self.countResidueTypeFrequency()
     
     self.linkResiduesTogether()
     
     self.addDummyResiduesAtEnds()
     
   cdef void setupResidues(self):
+    '''Sets up all residues in the chain and stores them in self.residues
+       and in a dictionary self.residuesByCcpCode, where the keys are
+       ccpCodes and the values lists with residues.
+    
+    '''
   
     for res in self.ccpnChain.sortedResidues() :
       
@@ -52,12 +61,12 @@ cdef class Chain :
         self.residuesByCcpCode[res.ccpCode] = [newresidue]
         
   cdef void addDummyResiduesAtEnds(self) :
-    '''
-    Put a residue before the beginning and after the end. Why do this:
-    this saves a lot of checks during the annealing procedure for not getting
-    a None-type object for .previousResidue or .nextResidue. It is not added to
-    self.residues, so normally you don't even notice those dummy residues are
-    there at all.
+    '''Put a residue before the beginning and after the end. Why do this:
+       this saves a lot of checks during the annealing procedure for not getting
+       a None-type object for .previousResidue or .nextResidue. It is not added to
+       self.residues, so normally you don't even notice those dummy residues are
+       there at all.
+    
     '''
     cdef Residue res
     cdef SpinSystem spinSystem
@@ -76,7 +85,10 @@ cdef class Chain :
     firstResidue.previousResidue = res
     lastResidue.nextResidue = res
     
-  cdef void countResidueTypeFrequency(self):
+  cdef void countResidueTypeFrequency(self):  #Not used
+    '''Not used.
+    
+    '''
     
     cdef Residue res
     
@@ -91,7 +103,10 @@ cdef class Chain :
         self.residueTypeFrequencyDict[res.ccpCode] = 1
         
   cdef void linkResiduesTogether(self):
+    '''This sets up the links between a residues and its neighbors in the
+       chain in the instance variables 'nextResidue' and 'previousResidue'.
     
+    '''
     cdef list residues
     
     cdef int i
@@ -150,5 +165,8 @@ cdef class Chain :
       
     
   def getResidues(self) :
+    '''Returns the list of residues. Necessary for access from python.
     
+    '''
+
     return self.residues

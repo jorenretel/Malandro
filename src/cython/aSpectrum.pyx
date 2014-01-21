@@ -939,40 +939,23 @@ cdef class Spectrum:
                 
     '''
     cdef myDataModel DataModel
-    
     cdef list intraResidualSimulatedPeakMatrix, residues, simulatedPeakList, spinsystems, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores, contributions, resonances, peakLists, peaksInWindow
-    
     cdef Residue res
-    
     cdef dict allSpinSystems
-    
     cdef SpinSystem spinSys
-    
     cdef SimulatedPeak simulatedPeak
-    
     cdef SimulatedPeakContrib contrib
-    
     cdef PeakDimension dim
-    
-    cdef int i
-    
+    cdef int i, hc
     cdef Resonance resonance
-    
     cdef Peak peak
-    
-    cdef int hc
-    
     cdef double bestScore
-    
     cdef SpinSystemLink link
     
     hc = 10000 #self.hc
-
     DataModel = self.DataModel
     intraResidualSimulatedPeakMatrix = self.intraResidualSimulatedPeakMatrix
-    
     allSpinSystems = DataModel.spinSystems
-    
     residues = DataModel.chain.residues
 
     for res, simulatedPeakList in zip(residues,intraResidualSimulatedPeakMatrix) :

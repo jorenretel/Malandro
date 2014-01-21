@@ -156,42 +156,24 @@ cdef class Malandro :
     '''
     
     self.updateInfoText('Setting up model for calculations...')
-    
     self.DataModel = myDataModel(self)
-        
     self.updateInfoText('Setup-up all spectra...')
-    
     self.DataModel.project = self.project
     self.DataModel.nmrProject = self.nmrProject
-    
     self.DataModel.setupSpectra()
-
     self.DataModel.setupChain()
-
     self.createSpinSytemsAndResonances()
-        
     self.updateInfoText('Simulating spectra...')
-    
     self.DataModel.setupLinks()
-    
     self.simulateSpectra()
-    
     self.updateInfoText('Evaluating possible dimensional contributions to peak in real spectra...')
-    
     self.calculateAllPeakContributions()
-    
     self.updateInfoText('Matching simulated with real spectra...')
-        
     self.matchSimulatedWithRealSpectra()
-
     self.createJokerSpinSystems()
-    
     self.updateInfoText('Scoring links between spin systems...')
-    
     #self.scoreAllLinks()
-    
     #self.multiplyPeakScoresWithLinkScores()
-    
     self.updateInfoText('Precalculations have finished...')
 
   cdef void doRandomAssignment(self):
@@ -202,58 +184,25 @@ cdef class Malandro :
     self.updateInfoText('Making a random assignment...')
     
     cdef myDataModel DataModel
-    
-    cdef dict assignedSpinSystems
-    
-    cdef dict tentativeSpinSystems
-    
-    cdef dict justTypedSpinSystems
-    
-    cdef dict allSpinSystems 
-    
-    cdef dict jokerSpinSystems 
-    
-    cdef dict dictio
-    
-    cdef Residue res
-    
-    cdef int i
-    
-    cdef Residue resimin1
-    
-    cdef Residue resiplus1
-    
+    cdef dict assignedSpinSystems, tentativeSpinSystems, justTypedSpinSystems, allSpinSystems, jokerSpinSystems, dictio
+    cdef Residue res, resimin1, resiplus1
+    cdef int i, seqCode
     cdef str ccpCode
-    
-    cdef int seqCode
-    
-    cdef list listWithSpinSystems
-    
-    cdef SpinSystem spinSystem
-    
-    cdef list listWithFittingSpinSystems
-    
-    cdef SpinSystem randomSpinSystem
-    
+    cdef list listWithSpinSystems, listWithFittingSpinSystems
+    cdef SpinSystem spinSystem, randomSpinSystem
     cdef bint useAssignments, useTentative
 
     useAssignments = self.useAssignments
     useTentative = self.useTentative
-    
     DataModel = self.DataModel
     
     sample = pyrandom.choice
 
     assignedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.previouslyAssignedSpinSystems)
-    
     tentativeSpinSystems =  makePrivateCopyOfDictContainingLists(DataModel.tentativeSpinSystems)
-    
     justTypedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.justTypedSpinSystems)
-    
     allSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.spinSystems)
-    
     jokerSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.jokerSpinSystems)
-    
     
     if useAssignments and useTentative:
       
@@ -271,11 +220,9 @@ cdef class Malandro :
       
       dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)
     
-    
     for res in DataModel.chain.residues :
       
-      isAssigned = False
-            
+      isAssigned = False     
       ccpCode = res.ccpCode
       seqCode = res.seqCode
       
@@ -288,20 +235,14 @@ cdef class Malandro :
           if spinSystem.ccpnSeqCode == seqCode :
              
             spinSystem.currentResidueAssignment = res
-            
             res.currentSpinSystemAssigned = spinSystem
-            
             isAssigned = True
-            
             listWithSpinSystems.remove(spinSystem)
-            
             break
-            
             
       if not isAssigned and useTentative and (ccpCode in tentativeSpinSystems) :                            # If wanted by the user: try to put a tenitative assigned spin system on this position
         
         listWithSpinSystems = tentativeSpinSystems[ccpCode]
-        
         listWithFittingSpinSystems = []
         
         for spinSystem in listWithSpinSystems :
@@ -312,20 +253,11 @@ cdef class Malandro :
             
         if len(listWithFittingSpinSystems) > 0 :  
             
-            
-          randomSpinSystem =  sample(listWithFittingSpinSystems)                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))]                   # get a random element out of the list
-            
+          randomSpinSystem =  sample(listWithFittingSpinSystems)                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))]                   # get a random element out of the list 
           randomSpinSystem.currentResidueAssignment = res
-          
-          
           res.currentSpinSystemAssigned = randomSpinSystem 
-          
           isAssigned = True
-          
           listWithSpinSystems.remove(randomSpinSystem)
-            
-          
-
             
       if not isAssigned :                                                                                                                                                           # If no spin system is assigned to the residue by now, assign some unassigned spinsystem (or whatever random spinsystem, when the user-made assignment should be ignored)
         
@@ -347,12 +279,9 @@ cdef class Malandro :
         if len(listWithFittingSpinSystems) > 0 :      
           
                       
-          randomSpinSystem = sample( listWithFittingSpinSystems)                                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))] 
-             
+          randomSpinSystem = sample(listWithFittingSpinSystems)                                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))] 
           randomSpinSystem.currentResidueAssignment = res
-          
           res.currentSpinSystemAssigned = randomSpinSystem 
-          
           isAssigned = True
           
           if randomSpinSystem in listWithFittingSpinSystems :
@@ -382,7 +311,6 @@ cdef class Malandro :
     DataModel = self.DataModel
             
     allSpinSystems = DataModel.spinSystems
-
     allSpinSystemsWithoutAssigned = DataModel.allSpinSystemsWithoutAssigned
 
         
@@ -402,11 +330,8 @@ cdef class Malandro :
     for x,AcceptanceConstant in enumerate(AcceptanceConstantList) :
       
       rng.seed(rand())
-      
       self.annealingSub(AcceptanceConstant,amountOfStepsPerTemperature,listWithSpinSystems,rng)
-      
       self.scoreInitialAssignment()
-      
       self.addEnergyPoint(self.score,x)
  
   def startMonteCarlo(self):
@@ -473,66 +398,35 @@ cdef class Malandro :
     '''
     
     cdef myDataModel DataModel
-    
     cdef Chain chain
-    
-    cdef list residues
-    
-    cdef list spectra
-    
     cdef Spectrum spectrum
-    
-    cdef dict mySpinSystems
-    
-    cdef dict tentativeSpinSystems
-    
+    cdef SpinSystem spinSys
+    cdef Peak peak
+    cdef Residue res
+    cdef list residues, spectra, spinSystemList
+    cdef dict mySpinSystems, tentativeSpinSystems
     cdef str key
     
-    cdef list spinSystemList
-    
-    cdef SpinSystem spinSys
-    
-    cdef Peak peak
-    
-    cdef Residue res
-    
-    
-    
     DataModel = self.DataModel
-    
     chain = DataModel.chain
-    
     residues = chain.residues
-    
     spectra = DataModel.spectra
-    
     mySpinSystems = DataModel.spinSystems
-    
     tentativeSpinSystems = DataModel.tentativeSpinSystems
     
     for key,  spinSystemList in mySpinSystems.items() :                                 # de-assigning residues from spinsystems
-      
       for spinSys in spinSystemList :
-
         spinSys.currentResidueAssignment = None
-        
-        
+
     for key,  spinSystemList in tentativeSpinSystems.items() :                                 # also de-assigning residues from tentative assigned spinsystems
-      
       for spinSys in spinSystemList :
-
         spinSys.currentResidueAssignment = None
-          
-        
+
     for res in residues :                                                                       # de-assigning spinsystems from residues
-      
       res.currentSpinSystemAssigned = None
-      
-      
+
     for spectrum in spectra :                                                               # Setting all peak-degeneracies back to 0
-      
       for peak in spectrum.peaks :
-        
         peak.degeneracy = 0
 
   cdef void setupPeakInformationForRandomAssignment(self):
@@ -544,13 +438,9 @@ cdef class Malandro :
     '''
     
     cdef list residues
-    
     cdef Residue res
-      
     cdef SpinSystemLink link
-    
     cdef Peak peak
-  
     cdef PeakLink pl
     
     residues = self.DataModel.chain.residues
@@ -558,16 +448,11 @@ cdef class Malandro :
     for res in residues :
       
       nextRes = res.nextResidue
-      
       link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
  
       for pl in link.activePeakLinks :
         
         pl.peak.degeneracy += 1
-      
-        #for peak in link.realPeaks :
-        
-        #  peak.degeneracy += 1
 
   cdef void createJokerSpinSystems(self):
     
@@ -579,73 +464,37 @@ cdef class Malandro :
     '''
     
     cdef myDataModel DataModel
-    
     cdef str ccpCode
-    
     cdef int amountOfAssignedSpinsystems, NTypedSpinSystems, NResiduesOfThisType, short, i, x
-        
     cdef SpinSystem spinSys, newSpinSystem
     
     DataModel = self.DataModel    
     
-    
+    #for ccpCode, NResiduesOfThisType in DataModel.chain.residueTypeFrequencyDict.items() : #DataModel.spinSystems.keys() :
     i = 1
-    
-    for ccpCode, NResiduesOfThisType in DataModel.chain.residueTypeFrequencyDict.items() : #DataModel.spinSystems.keys() :
-
+    for ccpCode,residues in DataModel.chain.residuesByCcpCode.items():
+      
+      NResiduesOfThisType = len(residues)
       NResiduesAssigned = len(set([spinSys.ccpnSeqCode for spinSys in DataModel.previouslyAssignedSpinSystems.get(ccpCode, [])]))
       NTypedSpinSystems = len(DataModel.justTypedSpinSystems.get(ccpCode,[]))
 
-      
       #short = amountOfResiduesOfThisType- (amountOfAssignedSpinsystems + amountOfTypedSpinSystems + amountOfTentativeSpinSystemsWithOnlyOneCcpCode)
       short = NResiduesOfThisType - (NResiduesAssigned + NTypedSpinSystems)
-      
       
       if short < 0 :
         
         string = 'You seem to have more ' + ccpCode + ' spin systems than residues of this type are in the sequence'
-
         short = 0
+        return
       
       for x in range(short) :
         
         newSpinSystem = SpinSystem(DataModel=DataModel,ccpCode=ccpCode)
-        
         newSpinSystem.spinSystemNumber = i * 1000000
-        
         i = i + 1
-        
         DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
         DataModel.addToDictWithLists(DataModel.jokerSpinSystems,ccpCode,newSpinSystem)
         DataModel.addToDictWithLists(DataModel.allSpinSystemsWithoutAssigned,ccpCode,newSpinSystem)
-
-        
-
-        #if ccpCode in DataModel.spinSystems :
-        #
-        #  DataModel.spinSystems[ccpCode].append(newSpinSystem)
-        #  
-        #else :
-        #  
-        #  DataModel.spinSystems[ccpCode] = [newSpinSystem]
-        #  
-        #  
-        #if ccpCode in DataModel.jokerSpinSystems:
-        #  
-        #  DataModel.jokerSpinSystems[ccpCode].append(newSpinSystem)
-        #  
-        #else :
-        #  
-        #  DataModel.jokerSpinSystems[ccpCode] = [newSpinSystem]
-        #  
-        #  
-        #if ccpCode in DataModel.allSpinSystemsWithoutAssigned:
-        #  
-        #  DataModel.allSpinSystemsWithoutAssigned[ccpCode].append(newSpinSystem)
-        #  
-        #else :
-        #  
-        #  DataModel.allSpinSystemsWithoutAssigned[ccpCode] = [newSpinSystem]
 
     string = str(i-1) + ' joker spinsystems are used in this calculation.'    
 
@@ -656,7 +505,6 @@ cdef class Malandro :
     '''
     
     cdef myDataModel DataModel
-    
     cdef Spectrum spectrum
     
     DataModel = self.DataModel
@@ -664,9 +512,7 @@ cdef class Malandro :
     for spectrum in DataModel.spectra:                 
       
       self.updateInfoText('Simulating ' + spectrum.name)
-      
       spectrum.simulate()
-      
       spectrum.determineSymmetry()
 
   cdef void createSpinSytemsAndResonances(self):
@@ -685,15 +531,11 @@ cdef class Malandro :
     cdef SpinSystemLink linkObject
 
     DataModel = self.DataModel
-
     residues = DataModel.chain.residues
     
     for res in residues :
-      
       linkDict = res.linkDict
-      
       for linkObject in linkDict.values() :
-        
         linkObject.determineScore()
              
   def leaveOutSubSetOfPeaks(self, fraction):
@@ -718,7 +560,7 @@ cdef class Malandro :
     if fraction == 0.0 :
       
       for residue in residues :
-      
+        
         for spinSystemLink in residue.linkDict.values():
           
           spinSystemLink.activePeakLinks = spinSystemLink.peakLinks
@@ -753,8 +595,6 @@ cdef class Malandro :
        of each two spin
     '''
     
-    self.updateInfoText('Matching real to simulated spectra.....')
-    
     cdef Spectrum spectrum
     
     DataModel = self.DataModel
@@ -768,7 +608,6 @@ cdef class Malandro :
   cdef void calculateAllPeakContributions(self):
         
     cdef Spectrum spectrum
-    
     cdef str info
 
     for spectrum in self.DataModel.spectra:                 # Determine for each dimension of every peak in all (used) spectra, which resonances can contribute to the peak
@@ -784,7 +623,6 @@ cdef class Malandro :
     cdef SpinSystem spinSystem
     
     spinSystems = self.DataModel.spinSystems
-    
     allSpinSystems = []
     
     for spinSystemList in spinSystems.values() :
@@ -947,23 +785,14 @@ cdef class Malandro :
   @cython.nonecheck(False)
   cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems, Random rng):
      
-    cdef int improvements, equals, worse, r, seqCodeA, seqCodeB, deltaLinkScore, lengthOfListWithSpinSystems
-    
+    cdef int improvements, equals, worse, r, seqCodeA, seqCodeB, deltaLinkScore, lengthOfListWithSpinSystems, path
     cdef double score, DeltaScore
-    
     cdef list exchangeSpinSystems, oldPeaks, newPeaks, peakSet
-    
     cdef SpinSystem A, B, Am1, Ap1, Bm1, Bp1
-  
     cdef Residue currentResidueA, currentResidueB, previousResA, previousResB, nextResA, nextResB
-        
     cdef SpinSystemLink l1, l2, l3, l4, l5, l6, l7, l8
-    
     cdef Peak peak
-    
     cdef PeakLink pl
-    
-    cdef int path
 
     lengthOfListWithSpinSystems = len(listWithSpinSystems)
     score = self.score
@@ -1155,47 +984,38 @@ cdef class Malandro :
   cdef void scoreInitialAssignment(self) :
     
     cdef list residues
-    
     cdef Residue res
-    
     cdef Residue nextRes
-    
     cdef double score
-    
-    cdef dict linkDict
-    
-    cdef int keyA
-    
-    cdef int keyB
-    
-    cdef int key
-    
     cdef SpinSystemLink link
-    
-    cdef list peaks
-    
-    cdef Peak peak
-    
-    cdef double peakScore
-    
     cdef PeakLink pl
+    #cdef dict linkDict
+    #cdef int keyA
+    #cdef int keyB
+    #cdef int key
+    #cdef list peaks
+    #cdef Peak peak
+    #cdef double peakScore
     
     residues = self.DataModel.chain.residues
-    
     score = 0.0
     
     for res in residues :
       
       nextRes = res.nextResidue
-        
       link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
-      
       score += sum([1.0/pl.peak.degeneracy * pl.preMultipliedScore for pl in link.activePeakLinks]) #+ link.score  
           
     self.score = score      
           
   cdef multiplyPeakScoresWithLinkScores(self) : # Not used, already happens during spinSystemLink.determineScore()
+    '''To save time during the annealing the score of the scores
+       of peaks are multiplied by the score of the link.
+       Instead of doing (a+b+c)*A during the annealing, we do
+       a*A, b*A and c*A now already.
+       This alsomakes the implementation of the annealing simpler.
     
+    '''
     cdef list residues, spinSystemLinks, peakLinks
     cdef Residue res
     cdef dict linkDict
@@ -1208,13 +1028,11 @@ cdef class Malandro :
     for res in residues :
       
       linkDict = res.linkDict
-      
       spinSystemLinks = linkDict.values()
       
       for spinSystemLink in spinSystemLinks :
         
         spinSystemLinkScore = spinSystemLink.score
-        
         peakLinks = spinSystemLink.peakLinks
         
         for peakLink in peakLinks:
