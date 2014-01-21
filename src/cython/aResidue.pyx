@@ -422,7 +422,7 @@ cdef class Residue :
     
     return self.getFromLinkDict(spinSystem1,spinSystem2)
   
-  def getIntraLink(self, spinSystem) :
+  def getIntraLink(self, SpinSystem spinSystem) :
     '''Returns a link object that contains the mapping
        between expected and real intra-residual peaks
        for 'spinSystem' being assigned to this residue.
