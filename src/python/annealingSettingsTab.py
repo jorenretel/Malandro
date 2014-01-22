@@ -343,5 +343,12 @@ class AnnealingSettingsTab(object) :
     
     colorList = (NdataSets/Ncolors)*colors + colors[:NdataSets%Ncolors]
     
-    self.energyPlot.update(dataSets=self.energyDataSets, dataColors=colorList)  
+    self.energyPlot.update(dataSets=self.energyDataSets, dataColors=colorList)
+    
+    # Forcing the graph to draw, eventhough calculations
+    # are still running. Only do this with high numbers of
+    # steps, otherwise drawing takes longer than annealling.
+    if self.amountOfSteps >= 100000 :
+      
+      self.energyPlot.draw()
   

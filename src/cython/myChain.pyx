@@ -2,15 +2,8 @@
 cdef class Chain :
 
   cdef public list residues 
-    
   cdef dict residuesByCcpCode
-  
-  cdef dict residueTypeFrequencyDict
-
   cdef object ccpnChain 
-  
-  cdef object pyChain
-  
   cdef str ccpnChainCode, molSystemCode
   
   def __init__(self, ccpnChain):
@@ -20,23 +13,12 @@ cdef class Chain :
     '''
     
     self.ccpnChain = ccpnChain
-    
     self.ccpnChainCode = ccpnChain.code
-    
     self.molSystemCode = ccpnChain.molSystem.code
-
     self.residues = []
-    
-    self.residueTypeFrequencyDict = {}    #Not used
-    
     self.residuesByCcpCode = {}
-
     self.setupResidues()
-    
-    #self.countResidueTypeFrequency()
-    
     self.linkResiduesTogether()
-    
     self.addDummyResiduesAtEnds()
     
   cdef void setupResidues(self):
@@ -84,24 +66,7 @@ cdef class Chain :
     
     firstResidue.previousResidue = res
     lastResidue.nextResidue = res
-    
-  cdef void countResidueTypeFrequency(self):  #Not used
-    '''Not used.
-    
-    '''
-    
-    cdef Residue res
-    
-    for res in self.residues :
-      
-      if res.ccpCode in self.residueTypeFrequencyDict:
-        
-        self.residueTypeFrequencyDict[res.ccpCode] = (self.residueTypeFrequencyDict[res.ccpCode] + 1)
-        
-      else :
-        
-        self.residueTypeFrequencyDict[res.ccpCode] = 1
-        
+     
   cdef void linkResiduesTogether(self):
     '''This sets up the links between a residues and its neighbors in the
        chain in the instance variables 'nextResidue' and 'previousResidue'.
@@ -162,8 +127,6 @@ cdef class Chain :
       
       residue.connectToProject()
       
-      
-    
   def getResidues(self) :
     '''Returns the list of residues. Necessary for access from python.
     

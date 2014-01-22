@@ -62,31 +62,20 @@ cdef class Residue :
     '''
 
     self.chain = chain    # Parent link
-
     self.atoms = []
-    
     self.solutions = []
-    
     self.linkDict = {}
-    
     self.intraDict = {}
-    
     self.atomsByName = {}
-    
     #self.atomsByCcpnChemAtom = {}  #Not used
-    
     self.atomsByAtomSiteName = {}
-    
     self.userDefinedSolution = None
     
     if ccpnResidue :
     
       self.ccpnResidue = ccpnResidue
-  
       self.ccpCode = ccpnResidue.ccpCode
-      
       self.seqCode = ccpnResidue.seqCode
-      
       self.setupAtoms()
 
   def setupAtoms(self):

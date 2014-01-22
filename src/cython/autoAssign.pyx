@@ -14,80 +14,44 @@ from cython.view cimport array as cvarray
 #from libcpp cimport bool
 
 from time import time
-
 from ccpnmr.analysis.core.ChemicalShiftBasic import getShiftsChainProbabilities
-
 from ccpnmr.analysis.core.MoleculeBasic import getResidueCode
-
 from ccp.util.LabeledMolecule import getIsotopomerSingleAtomFractions, getIsotopomerAtomPairFractions,  atomPairFrac,  atomPairFractions
-
 from ccpnmr.analysis.core.Util import getAnalysisDataDim
-
 from generalFactory import generalFactory
 
 cdef extern from "math.h":
 
   double exp(double x)
   
-
 from libc.stdlib cimport rand, srand, RAND_MAX
 
 
 cdef double randMax = float(RAND_MAX)
 
-
-
-
-
-
-
+acceptanceConstants = [0.0, 0.01, 0.015, 0.022, 0.033,
+                       0.050, 0.075, 0.113, 0.170, 0.256,
+                       0.384, 0.576, 0.864, 1.297, 1.946,
+                       2.919, 4.378, 6.568, 9.852, 14.77,
+                       22.16, 33.25]
 
 cdef class Malandro :
   
-  
-  cdef object chain
-  
   cdef public myDataModel DataModel
-  
-  cdef bint useAssignments
-  
-  cdef bint useTentative
-  
-  cdef int amountOfRepeats
-  
-  cdef int amountOfSteps
-  
-  cdef object project, shiftList
-  
-  cdef object nmrProject
-  
-  cdef double minIsoFrac
-  
-  cdef double minTypeScore, leavePeaksOutFraction
-  
+  cdef bint useAssignments, useTentative
+  cdef object project, shiftList, nmrProject, chain
+  cdef double minTypeScore, leavePeaksOutFraction, minIsoFrac
   cdef list selectedSpectra
-  
   cdef str sourceName
-  
   cdef int hc
-  
-  cdef object updateInfoText
-  
-  cdef object addEnergyPoint
-  
-  cdef list acceptanceConstantList
-  
   cdef double score
-  
-  cdef object typeSpinSystems, reTypeSpinSystems
-  
-  cdef object useDimenionalAssignments
-  
-  
+  cdef object typeSpinSystems, reTypeSpinSystems, useDimenionalAssignments, textObservers, energyObservers
   
   def __init__(self):
     
     self.hc = 10000
+    self.energyObservers = []
+    self.textObservers = []
     
   def getResults(self):
     
@@ -109,41 +73,18 @@ cdef class Malandro :
     '''
     
     self.chain = connector.chain
-    
     self.useAssignments =connector.useAssignments
-    
     self.useTentative = connector.useTentative
-    
-    self.amountOfRepeats = connector.amountOfRepeats
-    
-    self.amountOfSteps = connector.amountOfSteps
-    
     self.shiftList = connector.shiftList
-    
     self.nmrProject = connector.nmrProject
-    
-    self.project = connector.project
-    
+    self.project = connector.project          #Not really used, nmrProject is sufficient
     self.minIsoFrac = connector.minIsoFrac
-    
     self.leavePeaksOutFraction = connector.leavePeaksOutFraction
-    
     self.minTypeScore = connector.minTypeScore
-    
     self.selectedSpectra = connector.selectedSpectra
-    
     self.sourceName = connector.sourceName                                # Not used
-    
-    self.updateInfoText = connector.updateInfoText
-    
-    self.acceptanceConstantList = connector.acceptanceConstantList
-    
-    self.addEnergyPoint = connector.addEnergyPoint
-    
     self.typeSpinSystems = connector.typeSpinSystems
-    
     self.reTypeSpinSystems = connector.reTypeSpinSystems
-    
     self.useDimenionalAssignments = connector.useDimenionalAssignments
     
   def preCalculateDataModel(self)  :
@@ -154,34 +95,35 @@ cdef class Malandro :
        with the real spectra and introducing joker spin systems.
        
     '''
+    sendText = self.notifyTextObservers
     
-    self.updateInfoText('Setting up model for calculations...')
+    sendText('Setting up model for calculations...')
     self.DataModel = myDataModel(self)
-    self.updateInfoText('Setup-up all spectra...')
+    sendText('Setup-up all spectra...')
     self.DataModel.project = self.project
     self.DataModel.nmrProject = self.nmrProject
     self.DataModel.setupSpectra()
     self.DataModel.setupChain()
     self.createSpinSytemsAndResonances()
-    self.updateInfoText('Simulating spectra...')
+    sendText('Simulating spectra...')
     self.DataModel.setupLinks()
     self.simulateSpectra()
-    self.updateInfoText('Evaluating possible dimensional contributions to peak in real spectra...')
+    sendText('Evaluating possible dimensional contributions to peak in real spectra...')
     self.calculateAllPeakContributions()
-    self.updateInfoText('Matching simulated with real spectra...')
+    sendText('Matching simulated with real spectra...')
     self.matchSimulatedWithRealSpectra()
     self.createJokerSpinSystems()
-    self.updateInfoText('Scoring links between spin systems...')
+    sendText('Scoring links between spin systems...')
     #self.scoreAllLinks()
     #self.multiplyPeakScoresWithLinkScores()
-    self.updateInfoText('Precalculations have finished...')
+    sendText('Precalculations have finished...')
 
-  cdef void doRandomAssignment(self):
+  def doRandomAssignment(self):
     '''Performs a random assignment that is consistent in
        terms of amino acid types.
        
     '''
-    self.updateInfoText('Making a random assignment...')
+    self.notifyTextObservers('Making a random assignment...')
     
     cdef myDataModel DataModel
     cdef dict assignedSpinSystems, tentativeSpinSystems, justTypedSpinSystems, allSpinSystems, jokerSpinSystems, dictio
@@ -296,24 +238,21 @@ cdef class Malandro :
         print res.seqCode
         print res.ccpCode
 
-  def runAnnealling(self):
+  def runAnnealling(self, stepsPerTemperature=10000, acceptanceConstants=acceptanceConstants):
     '''Runs one full annealling by going through a list
        of temperature constants and calling annealingSub
        with it.
        
     '''
-    #cdef Random rng
     
+    cdef Residue res
+
     useAssignments = self.useAssignments
-    useTentative = self.useTentative    
-    amountOfStepsPerTemperature = self.amountOfSteps
-    AcceptanceConstantList = self.acceptanceConstantList
-    DataModel = self.DataModel
-            
+    useTentative = self.useTentative
+    DataModel = self.DataModel      
     allSpinSystems = DataModel.spinSystems
     allSpinSystemsWithoutAssigned = DataModel.allSpinSystemsWithoutAssigned
 
-        
     if useAssignments :                                                 # If the already made assignments are used, the dictionary will just include unassigned spinsystems and Joker spinsystems
       relevantSpinSystems = allSpinSystemsWithoutAssigned
     else :                                                                       # If the already assigned are chosen to still be permutated, the dictionary will also include the ready assinged spinsystems
@@ -327,69 +266,44 @@ cdef class Malandro :
     
     rng = Random() #randomGenerator.cyrandom.Random()
     
-    for x,AcceptanceConstant in enumerate(AcceptanceConstantList) :
+    # doing one annealing
+    for x,acceptanceConstant in enumerate(acceptanceConstants) :
       
       rng.seed(rand())
-      self.annealingSub(AcceptanceConstant,amountOfStepsPerTemperature,listWithSpinSystems,rng)
+      self.annealingSub(acceptanceConstant,stepsPerTemperature,listWithSpinSystems,rng)
       self.scoreInitialAssignment()
-      self.addEnergyPoint(self.score,x)
- 
-  def startMonteCarlo(self):
+      self.notifyEnergyObservers(self.score,x)
+    
+    # storing the result  
+    for res in self.DataModel.chain.residues :
+
+      res.solutions.append(res.currentSpinSystemAssigned)
+      res.currentSpinSystemAssigned.solutions.append(res.seqCode)
+      
+  def startMonteCarlo(self, amountOfRuns=1, stepsPerTemperature=10000, acceptanceConstants=acceptanceConstants):
     '''Run the optimization for a number of times
-       as defined in self.amountOfRepeats.
+       as defined in amountOfRuns.
     
     '''
     
-    cdef int repeat
-    
-    cdef Residue res
-    
-    cdef str info
-    
-    repeat = self.amountOfRepeats
-    
-    info = 'Running annealing number %s out of ' + str(repeat) + '...'
+    info = 'Running annealing number %s out of ' + str(amountOfRuns) + '...'
     
     self.setupSpinSystemExchange()
     
     srand(int(time()*1000000%10000000))        # Seeding the linear congruential pseudo-random number generator
 
-    for x in range(repeat) :
+    for run in range(amountOfRuns) :
       
       self.cleanAssignments()
-      
       self.leaveOutSubSetOfPeaks(self.leavePeaksOutFraction)
-      
       self.scoreAllLinks()
-
       self.doRandomAssignment()
-
       self.setupPeakInformationForRandomAssignment()
-
       self.scoreInitialAssignment()
-
-      self.updateInfoText(info %str(x+1))
-
-      self.runAnnealling()
-      
-      i = 1
-      matches = 0
-
-      for res in self.DataModel.chain.residues :
-        
-        res.solutions.append(res.currentSpinSystemAssigned)
-        
-        res.currentSpinSystemAssigned.solutions.append(res.seqCode)
-        
-        
-        if res.ccpnResidue.findFirstResonanceGroup() :
-
-          if res.currentSpinSystemAssigned.spinSystemNumber == res.ccpnResidue.findFirstResonanceGroup().serial :
-
-            matches = matches + 1
-        i = i + 1
-    
-    self.updateInfoText('Done')
+      self.notifyTextObservers(info %str(run+1))
+      self.runAnnealling(stepsPerTemperature=stepsPerTemperature,acceptanceConstants=acceptanceConstants)
+ 
+    self.notifyTextObservers('Done')
 
   cdef void cleanAssignments(self) :
     '''Cleans all assignment information generated
@@ -511,7 +425,7 @@ cdef class Malandro :
     
     for spectrum in DataModel.spectra:                 
       
-      self.updateInfoText('Simulating ' + spectrum.name)
+      self.notifyTextObservers('Simulating ' + spectrum.name)
       spectrum.simulate()
       spectrum.determineSymmetry()
 
@@ -601,7 +515,7 @@ cdef class Malandro :
     
     for spectrum in DataModel.spectra :
       
-      self.updateInfoText('Match simulated with real spectrum: ' + spectrum.name)
+      self.notifyTextObservers('Match simulated with real spectrum: ' + spectrum.name)
       
       spectrum.match()
 
@@ -614,7 +528,7 @@ cdef class Malandro :
               
       info = 'Evaluating dimensional contributions to peaks: ' + spectrum.name
       
-      self.updateInfoText(info)
+      self.notifyTextObservers(info)
       
       spectrum.findPossiblePeakContributions(self.useDimenionalAssignments)
 
@@ -640,150 +554,11 @@ cdef class Malandro :
     
       spinSystem.setupExchangeSpinSystems(self.useAssignments)
 
-  cdef double getAtomLabellingFraction(self,str molType, str ccpCode, str atomName, object labellingScheme):
-    """
-    Get the fraction of labelling for a given atom in a given amino acid.
-
-    .. describe:: Input
-  
-    Nmr.Resonance
-  
-    .. describe:: Output
-  
-    Float
-    """
-
-
-    if labellingScheme == None :
-      fraction = 1.0 # When no specific labelling scheme is chosen.
-  
-
-    else :
-
-      chemCompLabel = labellingScheme.findFirstChemCompLabel(ccpCode=ccpCode,
-                                                             molType=molType)
- 
-      if not chemCompLabel:
-        natAbun = self.NatAbun #resonance.root.findFirstLabelingScheme(name='NatAbun')
- 
-        if natAbun:
-          chemCompLabel = natAbun.findFirstChemCompLabel(ccpCode=ccpCode,
-                                                         molType=molType)
- 
-      if chemCompLabel:
-        isotopomers = chemCompLabel.isotopomers
-        if atomName[0] == 'H':
-          isotope = '1H'
-        elif atomName[0] == 'C':
-          isotope = '13C'
-        elif atomName[0] == 'N':
-          isotope = '15N'
-        elif atomName[0] == 'P':
-          isotope = '31P'
- 
-        fracDict = getIsotopomerSingleAtomFractions(isotopomers,
-                                                      atomName, 1)
-
-        fraction = fracDict.get(isotope, 1.0)
- 
-
-          
-    return fraction
-
-  cdef double getAtomPairLabellingFraction_intra(self,str molType, str ccpCode, str atomNameA, str atomNameB, object labellingScheme):
-    """
-    Get the fraction of a pair of atoms both being labelled
-    given a labelling scheme. Considers individual isotopomers if
-    the resonances are within the same residue.
-
-    .. describe:: Input
-  
- 
-  
-    .. describe:: Output
-  
-    Float
-    """
-  
-    if labellingScheme == None :
-      fraction = 1.0 # When no specific labelling scheme is chosen.  
-
-
-
-
-    else:
-      findFirstChemCompLabel = labellingScheme.findFirstChemCompLabel
-  
-      chemCompLabel = findFirstChemCompLabel(ccpCode=ccpCode,
-                                             molType=molType)
- 
-      if not chemCompLabel:
-        natAbun = self.NatAbun #resonanceA.root.findFirstLabelingScheme(name='NatAbun')
- 
-        if natAbun:
-          chemCompLabel = natAbun.findFirstChemCompLabel(ccpCode=ccpCode,
-                                                         molType=molType)
-
- 
-      if chemCompLabel:
-        isotopomers  = chemCompLabel.isotopomers
-        if atomNameA[0] == 'H':
-          isotope = '1H'
-        elif atomNameA[0] == 'C':
-          isotope = '13C'
-        elif atomNameA[0] == 'N':
-          isotope = '15N'
-        elif atomNameA[0] == 'P':
-          isotope = '31P'
-
-        if atomNameB[0] == 'H':
-          isotope_2 = '1H'
-        elif atomNameB[0] == 'C':
-          isotope_2 = '13C'
-        elif atomNameB[0] == 'N':
-          isotope_2 = '15N'
-        elif atomNameB[0] == 'P':
-          isotope_2 = '31P'
-
-        atomNames = (atomNameA, atomNameB)
-        isotopes = (isotope, isotope_2)
-
-        pairDict  = getIsotopomerAtomPairFractions(isotopomers, atomNames, (1,1))
-        fraction = pairDict.get(isotopes, 1.0)
-
-      
-    return fraction
-
-  cdef double getAtomPairLabellingFraction_inter(self,str molType, str ccpCodeA, str ccpCodeB, str atomNameA, str atomNameB, object labellingScheme):
-    fractionA = self.getAtomLabellingFraction(molType, ccpCodeA, atomNameA, labellingScheme)
-    fractionB = self.getAtomLabellingFraction(molType, ccpCodeB, atomNameB, labellingScheme)
-    fraction = fractionA * fractionB
-      
-    return fraction
-
-  cdef double getIsotopomerSingleAtomFractionsForAtom(self, set isotopomers, Atom atom, str isotopeCode) :                # Not used at the moment
-    
-    cdef double isoWeightSum
-
-    cdef object isotopomer
-    
-    cdef double labellingFraction
-    
-    labellingFraction = 0.0
-    
-    isoWeightSum =  float(sum([isotopomer.weight for isotopomer in isotopomers]))
-
-    for isotopomer in isotopomers :
-      
-      labellingFraction += atom.labelInfoTemp[isotopomer][isotopeCode] * isotopomer.weight / isoWeightSum
-    
-    return labellingFraction 
-
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.cdivision(True)
   @cython.nonecheck(False)
-  cdef void annealingSub(self, double AcceptanceConstant,int amountOfStepsPerTemperature,list listWithSpinSystems, Random rng):
+  cdef void annealingSub(self, double AcceptanceConstant,int stepsPerTemperature,list listWithSpinSystems, Random rng):
      
     cdef int improvements, equals, worse, r, seqCodeA, seqCodeB, deltaLinkScore, lengthOfListWithSpinSystems, path
     cdef double score, DeltaScore
@@ -800,7 +575,7 @@ cdef class Malandro :
     equals = 0
     worse = 0
     
-    for aTry in xrange(amountOfStepsPerTemperature) :
+    for aTry in xrange(stepsPerTemperature) :
       
       r = rng.cy_randrange(0,lengthOfListWithSpinSystems,1)
       #r = int(rand()/(randMax+1)*lengthOfListWithSpinSystems)
@@ -1006,36 +781,53 @@ cdef class Malandro :
       link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
       score += sum([1.0/pl.peak.degeneracy * pl.preMultipliedScore for pl in link.activePeakLinks]) #+ link.score  
           
-    self.score = score      
-          
-  cdef multiplyPeakScoresWithLinkScores(self) : # Not used, already happens during spinSystemLink.determineScore()
-    '''To save time during the annealing the score of the scores
-       of peaks are multiplied by the score of the link.
-       Instead of doing (a+b+c)*A during the annealing, we do
-       a*A, b*A and c*A now already.
-       This alsomakes the implementation of the annealing simpler.
+    self.score = score
     
+  def registerTextObserver(self,observerFunction):
+    '''Register functions that get text information
+       during the procedure.
+       kwargs:  observerFunction:  function that is called
+                                to send a text message.
+                                This function receives
+                                one argument which is
+                                a string.
     '''
-    cdef list residues, spinSystemLinks, peakLinks
-    cdef Residue res
-    cdef dict linkDict
-    cdef SpinSystemLink spinSystemLink
-    cdef int spinSystemLinkScore
-    cdef PeakLink peakLink
     
-    residues = self.DataModel.chain.residues
+    self.textObservers.append(observerFunction)
     
-    for res in residues :
+  def unRegisterTextObserver(self,observerFunction):
+    '''Unregister notifier function.'''
+    
+    self.textObservers.remove(observerFunction)
+    
+  def notifyTextObservers(self, text):
+    '''Call all listener functions.'''
+    for observerFunction in self.textObservers:
       
-      linkDict = res.linkDict
-      spinSystemLinks = linkDict.values()
+      observerFunction(text)
+    
+  def registerEnergyObserver(self,observerFunction):
+    '''Register functions that get information
+       about the energy during the annealling.
+       kwargs:  observerFunction: function that is called
+                                to send a text message.
+                                This function receives
+                                two arguments, the energy
+                                and a which point in the
+                                annealing it corresponds to.
+    '''
+    
+    self.energyObservers.append(observerFunction)
+    
+  def unRegisterEnergyObserver(self,observerFunction):
+    '''Unregister notifier function.'''
+    
+    self.energyObservers.remove(observerFunction)
+    
+  def notifyEnergyObservers(self, energy, pointNumber):
+    '''Call all listener functions.'''
+    for observerFunction in self.energyObservers:
       
-      for spinSystemLink in spinSystemLinks :
-        
-        spinSystemLinkScore = spinSystemLink.score
-        peakLinks = spinSystemLink.peakLinks
-        
-        for peakLink in peakLinks:
+      observerFunction(energy, pointNumber)
+  
           
-          peakLink.score *= spinSystemLinkScore
- 

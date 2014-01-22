@@ -49,38 +49,27 @@ class Connector(object):
   def __init__(self, guiParent):
     
     self.chain = None
-    
     self.useAssignments = True
-    
     self.useTentative = True
-    
     self.selectedSpectra = None
-    
     self.amountOfSteps = 0
-    
     self.amountOfRepeats = 0
-    
     self.shiftList = None
-    
     self.nmrProject = None
-    
     self.project = None
-    
     self.minIsoFrac = None
-    
     self.sourceName = None
-    
     self.ranAnnealling = False
-    
     self.ranPreCalculations = False
-    
     self.results = None
-    
     self.GUI = ViewAssignmentPopup(guiParent, self)
-    
     self.auto = Malandro()
     
-    self.addEnergyPoint = self.GUI.annealingSettingsTab.addEnergyPoint
+    #self.addEnergyPoint = self.GUI.annealingSettingsTab.addEnergyPoint
+    
+    self.auto.registerTextObserver(self.updateInfoText)
+    self.auto.registerEnergyObserver(self.GUI.annealingSettingsTab.addEnergyPoint)
+    
         
   def update(self):
     
@@ -89,31 +78,18 @@ class Connector(object):
     '''
     
     self.chain = self.GUI.annealingSettingsTab.chain
-    
     self.useAssignments =self.GUI.annealingSettingsTab.useAssignmentsCheck.get()
-    
     self.useTentative = self.GUI.annealingSettingsTab.useTentativeCheck.get()
-    
     self.reTypeSpinSystems = self.GUI.annealingSettingsTab.reTypeSpinSystemsCheck.get()
-    
     self.typeSpinSystems = self.GUI.annealingSettingsTab.typeSpinSystemsCheck.get()
-    
     self.useDimenionalAssignments = self.GUI.annealingSettingsTab.useDimenionalAssignmentsCheck.get()
-    
     self.amountOfRepeats = self.GUI.annealingSettingsTab.amountOfRepeats
-    
     self.amountOfSteps = self.GUI.annealingSettingsTab.amountOfSteps
-    
     self.minTypeScore = self.GUI.annealingSettingsTab.minTypeScore
-    
     self.leavePeaksOutFraction = self.GUI.annealingSettingsTab.leavePeaksOutFraction
-    
     self.shiftList = self.GUI.annealingSettingsTab.shiftList
-    
     self.nmrProject = self.GUI.nmrProject
-    
     self.project = self.GUI.project
-    
     self.minIsoFrac = self.GUI.annealingSettingsTab.minIsoFrac
     
     #self.sourceName = self.GUI.sourceName
@@ -127,16 +103,12 @@ class Connector(object):
         self.selectedSpectra.append(spec)
             
     self.GUI.annealingSettingsTab.updateAcceptanceConstantList()
-    
     self.acceptanceConstantList = self.GUI.annealingSettingsTab.acceptanceConstantList
-    
     self.auto.updateSettings(self)
     
   def runAllCalculations(self):
     
     self.update()
-    
-    
     self.preCalculateDataModel()
     self.startAnnealing()
     
@@ -164,7 +136,7 @@ class Connector(object):
 
       self.update()
       
-      self.auto.startMonteCarlo()
+      self.auto.startMonteCarlo(amountOfRuns=self.amountOfRepeats, stepsPerTemperature=self.amountOfSteps, acceptanceConstants=self.acceptanceConstantList)
     
       self.ranAnnealling = True
       
@@ -287,11 +259,11 @@ class Connector(object):
 
       self.results = self.auto.getResults()
       
-  def updateInfoText(self,string):
+  def updateInfoText(self,text):
     
-    print string
+    print text
     
-    self.GUI.updateInfoText(string)
+    self.GUI.updateInfoText(text)
     
   def saveDataToPyc(self, fileName):
     
