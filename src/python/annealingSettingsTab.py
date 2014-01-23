@@ -143,8 +143,8 @@ class AnnealingSettingsTab(object) :
     
     row += 1
     
-    self.energyPlot = ScrolledGraph(frame,symbolSize=2, width=500,
-                                       height=300, title='Annealing',
+    self.energyPlot = ScrolledGraph(frame,symbolSize=2, width=600,
+                                       height=200, title='Annealing',
                                        xLabel='time', yLabel='energy')
     self.energyPlot.grid(row=row, column=0, columnspan=2, sticky='nsew')
      
@@ -325,7 +325,7 @@ class AnnealingSettingsTab(object) :
   
   def addEnergyPoint(self,energy,time) :
     
-    point = (time,energy)
+    point = (time,energy*-1)
     
     if len(self.energyDataSets[-1]) / len(self.acceptanceConstantList) :                # This means one run has finished
       

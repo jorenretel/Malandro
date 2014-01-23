@@ -82,7 +82,7 @@ class ResultsTab(object) :
     self.resultsResidueNumberEntry = IntEntry(resultTopFrame, grid=(0,2), width=7, text=3,
                                       returnCallback=self.resultsUpdateAfterEntry,
                                       tipText=tipText)
-    self.resultsResidueNumberEntry.bind('<Leave>', self.resultsUpdateAfterEntry, '+')
+    #self.resultsResidueNumberEntry.bind('<Leave>', self.resultsUpdateAfterEntry, '+')
     
     
     texts    = [' > ']
@@ -112,24 +112,18 @@ class ResultsTab(object) :
     self.resultsSolutionNumberEntry = IntEntry(resultTopFrame, grid=(0,7), width=7, text=1,
                                       returnCallback=self.solutionUpdateAfterEntry,
                                       tipText=tipText)
-    self.resultsSolutionNumberEntry.bind('<Leave>', self.solutionUpdateAfterEntry, '+')
+    #self.resultsSolutionNumberEntry.bind('<Leave>', self.solutionUpdateAfterEntry, '+')
     
     
     texts    = [' > ']
     commands = [self.resultsNextSolution]
     self.resultsNextSolutionButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
     self.resultsNextSolutionButton.grid(row=0, column=8, sticky='nsew')   
-    
-    
-    
+        
     texts    = ['select this solution']
     commands = [self.adoptSolution]
     self.adoptButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
     self.adoptButton.grid(row=0, column=9, sticky='nsew')  
-    
-
-    
-    
     
     resultsSecondFrame = Frame(frame)#LabelFrame(frame, text='Spin Systems')
     resultsSecondFrame.grid(row=2, column=0, sticky='nsew')

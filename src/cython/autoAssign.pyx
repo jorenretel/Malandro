@@ -62,9 +62,7 @@ cdef class Malandro :
     return self.DataModel #.pyDataModel
 
   def updateSettings(self,  connector):
-    
-    ''''
-    This method is used to fetch all important parameters from the 'connector'
+    ''''This method is used to fetch all important parameters from the 'connector'
     class, that stores all connects the GUI to the algorithm. All important settings
     are fetched from the GUI by the connector and passed on to the algorithm.
     This to prevent mixing the GUI and the algorithm, which might be unhandy when
@@ -87,7 +85,7 @@ cdef class Malandro :
     self.reTypeSpinSystems = connector.reTypeSpinSystems
     self.useDimenionalAssignments = connector.useDimenionalAssignments
     
-  def preCalculateDataModel(self)  :
+  def preCalculateDataModel(self):
     '''Creates the data model for the calculations and sequentially
        sets up everything that is needed to run the annealing later,
        like simulating the spectra, finding out which resonances could
@@ -305,7 +303,7 @@ cdef class Malandro :
  
     self.notifyTextObservers('Done')
 
-  cdef void cleanAssignments(self) :
+  cdef void cleanAssignments(self):
     '''Cleans all assignment information generated
        by previous runs of the annealing.
        
@@ -532,7 +530,7 @@ cdef class Malandro :
       
       spectrum.findPossiblePeakContributions(self.useDimenionalAssignments)
 
-  cdef void setupSpinSystemExchange(self) :
+  cdef void setupSpinSystemExchange(self):
     
     cdef SpinSystem spinSystem
     
@@ -756,7 +754,7 @@ cdef class Malandro :
           
     self.score = score
 
-  cdef void scoreInitialAssignment(self) :
+  cdef void scoreInitialAssignment(self):
     
     cdef list residues
     cdef Residue res

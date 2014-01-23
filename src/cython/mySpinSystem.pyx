@@ -3,41 +3,15 @@ cdef class SpinSystem :
   '''Wrapper around resonceGroup object in CCPN'''
   
   cdef myDataModel DataModel
-
   cdef Residue currentResidueAssignment
-  
-  cdef int spinSystemNumber
-  
+  cdef int spinSystemNumber, ccpnSeqCode
   cdef list exchangeSpinSystems
-  
   cdef str ccpCode
-  
-  cdef dict resonanceDict
-  
   cdef object ccpnResonanceGroup
-  
-  cdef int ccpnSeqCode
-  
   cdef bint isJoker
-  
-  cdef public list solutions
-  
-  #cdef list userDefinedSolutions
-  
-  cdef list tentativeCcpCodes
-  
-  cdef list tentativeSeqCodes
-  
-  cdef list typeProbCcpCodes
-  
-  cdef public list userDefinedSolutions
-  
+  cdef public list solutions, tentativeCcpCodes, tentativeSeqCodes, typeProbCcpCodes, userDefinedSolutions
   cdef public set allowedResidues
-  
-  cdef dict aminoAcidProbs
-  
-  cdef dict resonancesByAtomSiteName
-  
+  cdef dict resonanceDict, aminoAcidProbs, resonancesByAtomSiteName
   cdef bint [:] allowedResidueView
   
 
