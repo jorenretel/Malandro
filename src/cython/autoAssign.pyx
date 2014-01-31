@@ -4,15 +4,7 @@ import math
 import random as pyrandom
 import math
 import cython
-
 from cython.view cimport array as cvarray
-
-#import cProfile
-
-#from cpython cimport bool
-
-#from libcpp cimport bool
-
 from time import time
 from ccpnmr.analysis.core.ChemicalShiftBasic import getShiftsChainProbabilities
 from ccpnmr.analysis.core.MoleculeBasic import getResidueCode
@@ -26,7 +18,6 @@ cdef extern from "math.h":
   
 from libc.stdlib cimport rand, srand, RAND_MAX
 
-
 cdef double randMax = float(RAND_MAX)
 
 acceptanceConstants = [0.0, 0.01, 0.015, 0.022, 0.033,
@@ -38,14 +29,13 @@ acceptanceConstants = [0.0, 0.01, 0.015, 0.022, 0.033,
 cdef class Malandro :
   
   cdef public myDataModel DataModel
-  cdef bint useAssignments, useTentative
+  cdef bint useAssignments, useTentative, typeSpinSystems, reTypeSpinSystems, useDimenionalAssignments
   cdef object project, shiftList, nmrProject, chain
   cdef double minTypeScore, leavePeaksOutFraction, minIsoFrac
   cdef list selectedSpectra
-  cdef str sourceName
   cdef int hc
   cdef double score
-  cdef object typeSpinSystems, reTypeSpinSystems, useDimenionalAssignments, textObservers, energyObservers
+  cdef object textObservers, energyObservers
   
   def __init__(self):
     
@@ -59,7 +49,7 @@ cdef class Malandro :
 
   cdef object getResultsC(self):
     
-    return self.DataModel #.pyDataModel
+    return self.DataModel
 
   def updateSettings(self,  connector):
     ''''This method is used to fetch all important parameters from the 'connector'
@@ -80,7 +70,6 @@ cdef class Malandro :
     self.leavePeaksOutFraction = connector.leavePeaksOutFraction
     self.minTypeScore = connector.minTypeScore
     self.selectedSpectra = connector.selectedSpectra
-    self.sourceName = connector.sourceName                                # Not used
     self.typeSpinSystems = connector.typeSpinSystems
     self.reTypeSpinSystems = connector.reTypeSpinSystems
     self.useDimenionalAssignments = connector.useDimenionalAssignments
@@ -266,50 +255,6 @@ cdef class Malandro :
         
         pl.peak.degeneracy += 1
 
-  #cdef void createJokerSpinSystems(self):
-  #  
-  #  '''
-  #  When there are less spin systems that are typed to a
-  #  certain amino acid type than there are residues of that
-  #  type in the sequence, some Jokers have to be introduced. 
-  #  
-  #  '''
-  #  
-  #  cdef myDataModel DataModel
-  #  cdef str ccpCode
-  #  cdef int amountOfAssignedSpinsystems, NTypedSpinSystems, NResiduesOfThisType, short, i, x
-  #  cdef SpinSystem spinSys, newSpinSystem
-  #  
-  #  DataModel = self.DataModel    
-  #  
-  #  #for ccpCode, NResiduesOfThisType in DataModel.chain.residueTypeFrequencyDict.items() : #DataModel.spinSystems.keys() :
-  #  i = 1
-  #  for ccpCode,residues in DataModel.chain.residuesByCcpCode.items():
-  #    
-  #    NResiduesOfThisType = len(residues)
-  #    NResiduesAssigned = len(set([spinSys.ccpnSeqCode for spinSys in DataModel.previouslyAssignedSpinSystems.get(ccpCode, [])]))
-  #    NTypedSpinSystems = len(DataModel.justTypedSpinSystems.get(ccpCode,[]))
-  #
-  #    #short = amountOfResiduesOfThisType- (amountOfAssignedSpinsystems + amountOfTypedSpinSystems + amountOfTentativeSpinSystemsWithOnlyOneCcpCode)
-  #    short = NResiduesOfThisType - (NResiduesAssigned + NTypedSpinSystems)
-  #    
-  #    if short < 0 :
-  #      
-  #      string = 'You seem to have more ' + ccpCode + ' spin systems than residues of this type are in the sequence'
-  #      short = 0
-  #      return
-  #    
-  #    for x in range(short) :
-  #      
-  #      newSpinSystem = SpinSystem(DataModel=DataModel,ccpCode=ccpCode)
-  #      newSpinSystem.spinSystemNumber = i * 1000000
-  #      i = i + 1
-  #      DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
-  #      DataModel.addToDictWithLists(DataModel.jokerSpinSystems,ccpCode,newSpinSystem)
-  #      DataModel.addToDictWithLists(DataModel.allSpinSystemsWithoutAssigned,ccpCode,newSpinSystem)
-  #
-  #  string = str(i-1) + ' joker spinsystems are used in this calculation.'    
-
   def simulateSpectra(self, minIsoFrac=0.0) :
     '''Simulates all spectra, in the sense that
        a list with simulated peaks is created.
@@ -324,12 +269,6 @@ cdef class Malandro :
       self.notifyTextObservers('Simulating ' + spectrum.name)
       spectrum.simulate(minIsoFrac=minIsoFrac)
       spectrum.determineSymmetry()
-
-  #cdef void createSpinSytemsAndResonances(self):
-  #  '''Sets up all spin systems and resonances in the model.
-  #  '''
-  #  
-  #  self.DataModel.setupSpinSystems(minTypeScore=self.minTypeScore)
 
   cdef void scoreAllLinks(self):
     '''Scores every link in the model.
@@ -451,21 +390,10 @@ cdef class Malandro :
       r = rng.cy_randrange(0,lengthOfListWithSpinSystems,1)
       #r = int(rand()/(randMax+1)*lengthOfListWithSpinSystems)
       A = <SpinSystem>listWithSpinSystems[r]
-
       exchangeSpinSystems = A.exchangeSpinSystems
-      
-      if exchangeSpinSystems :
-        
-        #r = int(rand()/(randMax+1)*len(exchangeSpinSystems)) #int(rand()/(RAND_MAX*len(exchangeSpinSystems)))
-        
-        r = rng.cy_randrange(0,len(exchangeSpinSystems),1)
-        B = <SpinSystem>exchangeSpinSystems[r]
-        
-        
-      else :
-      
-        continue
-      
+      r = rng.cy_randrange(0,len(exchangeSpinSystems),1)
+      B = <SpinSystem>exchangeSpinSystems[r]
+
       currentResidueA = A.currentResidueAssignment
       currentResidueB = B.currentResidueAssignment
       
