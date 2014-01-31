@@ -8,7 +8,7 @@ cdef class SpinSystem :
   cdef list exchangeSpinSystems
   cdef object ccpnResonanceGroup
   cdef bint isJoker
-  cdef public list solutions
+  cdef public list solutions, userDefinedSolutions
   cdef public set allowedResidues, ccpCodes
   cdef dict resonanceDict, aminoAcidProbs, resonancesByAtomSiteName
   cdef bint [:] allowedResidueView
@@ -45,15 +45,14 @@ cdef class SpinSystem :
     self.aminoAcidProbs = {}
     self.exchangeSpinSystems = []
     self.resonancesByAtomSiteName = {}
-
+    self.setupAllowedResidueView()
     if not ccpnResonanceGroup :
       self.isJoker = True
       return
-    
     self.spinSystemNumber = ccpnResonanceGroup.serial
     self.setupResonances()
     self.groupResonancesByAtomSite()
-    self.setupAllowedResidueView()
+
 
   cdef set getCcpCodes(self) :
     '''Return three-letter amino acid code this spin system could
@@ -96,6 +95,10 @@ cdef class SpinSystem :
     cdef int resNumber
     cdef Residue residue
     
+    if not self.DataModel or not self.DataModel.chain:
+      
+      return
+      
     chain = self.DataModel.chain
     cythonArray = cvarray(shape=(len(chain.residues) + 1,), itemsize=sizeof(bint), format="i")
     self.allowedResidueView = cythonArray
@@ -128,7 +131,7 @@ cdef class SpinSystem :
     
     return self.resonancesByAtomSiteName.get(atomSiteName, [])
 
-  cdef void setupAllowedResidues(self, bint useAssignments, bint useTentative) :
+  cdef void setupAllowedResidues(self, bint useAssignments, bint useTentative) :      #Not used any longer
     '''Find out which residues this spin system can be assigned to based on
        residue type and possibly by using previous assignments.
 
@@ -164,26 +167,22 @@ cdef class SpinSystem :
 
           self.allowedResidues |= set([res.seqCode for res in residuesByCcpCode[ccpCode]])
           
-  cdef void setupExchangeSpinSystems(self, bint useAssignments) :
+  cdef void setupExchangeSpinSystems(self) :
     '''Sets up a list of all spin system this spin system could possibly
        swap out residue assignment with during the Monte Carlo procedure.
        This list is later used in the Monte Carlo procedure to pull a random
        member out off, to attempt a switch of residue assignment.
     
     '''
-    cdef list spinSysList
+
     cdef SpinSystem spinSys
     cdef dict spinSystemDict
     
-    spinSystemDict = (useAssignments and self.DataModel.allSpinSystemsWithoutAssigned) or self.DataModel.spinSystems
-    
-    for spinSysList in spinSystemDict.values() :
+    spinSystems = self.DataModel.getSpinSystemSet()
       
-      for spinSys in spinSysList :
-        
-        if not spinSys is self and not ( self.isJoker and spinSys.isJoker ) and  self.allowedResidues & spinSys.allowedResidues :
-          
-          self.exchangeSpinSystems.append(spinSys)
+    for spinSys in spinSystems :
+      if not spinSys is self and not ( self.isJoker and spinSys.isJoker ) and  self.allowedResidues & spinSys.allowedResidues :
+        self.exchangeSpinSystems.append(spinSys)
 
   cdef void groupResonancesByAtomSite(self) :                                 #TODO: finish
     ''' Sets up resonancesByAtomSiteName dict. AtomSites are used in
@@ -336,7 +335,7 @@ cdef class SpinSystem :
     
     info = []
     
-    resonanceGroup = self.ccpnResonanceGroup
+    resonanceGroup = self.getCcpnResonanceGroup()
     
     if resonanceGroup.residue :
       

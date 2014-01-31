@@ -327,7 +327,7 @@ class AnnealingSettingsTab(object) :
     
     point = (time,energy*-1)
     
-    if len(self.energyDataSets[-1]) / len(self.acceptanceConstantList) :                # This means one run has finished
+    if len(self.energyDataSets[-1]) / (len(self.acceptanceConstantList) + 1) :                # This means one run has finished
       
       self.energyDataSets.append([point])
       

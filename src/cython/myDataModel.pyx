@@ -10,14 +10,11 @@ cdef class myDataModel :
 
   cdef list spectra
   cdef public Chain chain
-  cdef dict spinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
-  cdef Malandro auto  
-  #cdef double minIsoFrac
+  cdef dict spinSystems
   cdef object nmrProject, project
 
-  def __init__(self, Malandro auto):
-    
-    self.auto = auto
+  def __init__(self):
+
     self.spectra = []
     self.chain = None
     self.spinSystems = {}
@@ -31,7 +28,6 @@ cdef class myDataModel :
       
       self.spinSystems[aa] = []
 
-    #self.minIsoFrac = auto.minIsoFrac
 
   def setupChain(self, ccpnChain):
     '''Generates new Chain by based on a chain object from CCPN.'''
@@ -49,7 +45,7 @@ cdef class myDataModel :
 
       self.spectra.append(newspectrum)
 
-  def setupSpinSystems(self, resonanceGroups, useAssignments=True, useTentative=True,
+  def setupSpinSystems(self, resonanceGroups, shiftList, useAssignments=True, useTentative=True,
                        useType=True,includeUntypedSpinSystems=True, minTypeScore=0.0, makeJokers=False) :
     '''Sets up spin system objects based on CCPN resonanceGroup.
        kwarg: minTypeScore can be passed. This is used when the possible
@@ -118,12 +114,12 @@ cdef class myDataModel :
       ccpCodes = [residue.ccpCode] #getResidueCode(resonanceGroup.residue.molResidue)
       
       if useAssignments:
-        self._makeSpinsystem(resonanceGroup=resonanceGroup, residues=residues)
+        self._makeSpinSystem(resonanceGroup=resonanceGroup, shiftList=shiftList, residues=residues)
         assignedResidues.add(residue)
       elif useType:
-        self._makeSpinSystem(resonanceGroup, ccpCodes)
+        self._makeSpinSystem(resonanceGroup, shiftList=shiftList, ccpCodes=ccpCodes)
       else:
-        self._makeSpinSystem(resonanceGroup, minTypeScore=minTypeScore)
+        self._makeSpinSystem(resonanceGroup, shiftList=shiftList, minTypeScore=minTypeScore)
  
     for resonanceGroup in tentativeResonanceGroups:
       
@@ -140,43 +136,47 @@ cdef class myDataModel :
       if residues :
         
         if useTentative:
-          self._makeSpinSystem(resonanceGroup, residues)
+          self._makeSpinSystem(resonanceGroup, shiftList=shiftList, residues=residues)
         elif useType:
           ccpCodes = [residue.ccpCode for residue in residues]
-          self._makeSpinSystem(resonanceGroup, ccpCodes, unAllowedResidues=assignedResidues)
+          self._makeSpinSystem(resonanceGroup, shiftList=shiftList, ccpCodes=ccpCodes, unAllowedResidues=assignedResidues)
         else :
-          self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
+          self._makeSpinSystem(resonanceGroup, shiftList=shiftList, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
 
     for resonanceGroup in typedResonanceGroups:
       
       if useType:
         ccpCodes = [resonanceGroup.ccpCode]
-        self._makeSpinSystem(resonanceGroup, ccpCodes, unAllowedResidues=assignedResidues)
+        self._makeSpinSystem(resonanceGroup, shiftList=shiftList, ccpCodes=ccpCodes, unAllowedResidues=assignedResidues)
       else:
-        self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
+        self._makeSpinSystem(resonanceGroup, shiftList=shiftList, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
     
     for resonanceGroup in multipleTypeResonanceGroups:
       
       if useType :
         ccpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
-        self._makeSpinSystem(resonanceGroup, ccpCodes, unAllowedResidues=assignedResidues)
+        self._makeSpinSystem(resonanceGroup, shiftList=shiftList, ccpCodes=ccpCodes, unAllowedResidues=assignedResidues)
       else:
-        self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
+        self._makeSpinSystem(resonanceGroup, shiftList=shiftList, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
         
     for resonanceGroup in untypedResonanceGroups:
       
-      self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
+      self._makeSpinSystem(resonanceGroup, shiftList=shiftList, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
       
     if makeJokers:
       
-      for ccpCode, residues in self.chain.residuesByCcpCode:
+      for ccpCode, residues in self.chain.residuesByCcpCode.items():
       
         for i in range(len(residues)):
           
-          self._makeSpinSystem(None,ccpCodes=[ccpCode], unAllowedResidues=assignedResidues)
+          self._makeSpinSystem(None, shiftList=shiftList, ccpCodes=[ccpCode], unAllowedResidues=assignedResidues)
       
     
-  def _makeSpinsystem(self, resonanceGroup, residues=None, ccpCodes=None, unAllowedResidues=None, minTypeScore=0.0):
+  def _makeSpinSystem(self, resonanceGroup, shiftList, residues=None, ccpCodes=None, unAllowedResidues=None, minTypeScore=0.0):
+    print 'A'
+    cdef Residue residue
+    
+    residuesByCcpCode = self.chain.residuesByCcpCode
     
     allowedResidues = set()
     if residues:
@@ -184,11 +184,11 @@ cdef class myDataModel :
       allowedResidues = set(residues)
     elif ccpCodes:
       ccpCodes = set(ccpCodes)
-      allowedResidues = set([self.chain.residuesByCcpCode[ccpCode] for ccpCode in ccpCodes])
+      allowedResidues = set([residue for ccpCode in ccpCodes for residue in residuesByCcpCode[ccpCode]])
     else:
-      aminoAcidProbs = runAminoAcidTyping(resonanceGroup, self.auto.shiftsList, self.chain.ccpnChain, minTypeScore)
+      aminoAcidProbs = runAminoAcidTyping(resonanceGroup, shiftList, self.chain.ccpnChain, minTypeScore)
       ccpCodes = set(aminoAcidProbs.keys())
-      allowedResidues = set([self.chain.residuesByCcpCode[ccpCode] for ccpCode in ccpCodes])
+      allowedResidues = set([residue for ccpCode in ccpCodes for residue in residuesByCcpCode[ccpCode]])
  
     if unAllowedResidues:
       allowedResidues -= unAllowedResidues
@@ -331,8 +331,14 @@ cdef class myDataModel :
   
     return self.chain
   
-  def getSpinSystemSet(assigned=True, typed=True, ccpCode=None):
-    pass
+  def getSpinSystemSet(self, ccpCode=None):
+        
+    if ccpCode:
+      spinSystemSet = set(self.spinSystems[ccpCode])
+    else:
+      spinSystemSet = set([item for sublist in self.spinSystems.values() for item in sublist])
+    return spinSystemSet
+  
   
   def getSpinSystems(self) :
     '''Return spin systems in dict, keys are three-letter amino acid codes'''

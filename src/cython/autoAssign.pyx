@@ -96,18 +96,23 @@ cdef class Malandro :
     sendText = self.notifyTextObservers
     
     sendText('Setting up model for calculations...')
-    self.DataModel = myDataModel(self)
+    self.DataModel = myDataModel()
     sendText('Setup-up all spectra...')
     self.DataModel.project = self.project
+    print '1'
     self.DataModel.nmrProject = self.nmrProject
+    print '2'
     self.DataModel.setupSpectra(self.selectedSpectra)
+    print '3'
     self.DataModel.setupChain(self.chain)
-    self.createSpinSytemsAndResonances(resonanceGroups=self.nmrProject.resonanceGroups, useAssignments=self.useAssignments,
-                                       useTentative=self.useTentative, useType=not self.reTypeSpinSystems,
-                                       includeUntypedSpinSystems=self.typeSpinSystems, minTypeScore=self.minTypeScore, makeJokers=True)
+    print '4'
+    self.DataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups, shiftList=self.shiftList,
+                                    useAssignments=self.useAssignments, useTentative=self.useTentative,
+                                    useType=not self.reTypeSpinSystems, includeUntypedSpinSystems=self.typeSpinSystems,
+                                    minTypeScore=self.minTypeScore, makeJokers=True)
     sendText('Simulating spectra...')
     self.DataModel.setupLinks()
-    self.simulateSpectra()
+    self.simulateSpectra(minIsoFrac=self.minIsoFrac)
     sendText('Evaluating possible dimensional contributions to peak in real spectra...')
     self.calculateAllPeakContributions()
     sendText('Matching simulated with real spectra...')
@@ -128,22 +133,24 @@ cdef class Malandro :
     cdef myDataModel DataModel
     cdef Residue residue
     cdef SpinSystem spinSystem
-
+    
     choice = pyrandom.choice
     shuffle = pyrandom.shuffle
+    DataModel = self.DataModel
     
     usedSpinSystems = set()
-    randomResidues = shuffle(DataModel.chain.residues[:])
+    residues = DataModel.chain.residues[:]
+    shuffle(residues)
     
-    for residue in randomResidues:
+    for residue in residues:
       
       unUsedPossibilities = residue.allowedSpinSystems - usedSpinSystems
       if not unUsedPossibilities:
         print 'Something went wrong during the random assignment with %s%s' %(residue.seqCode, residue.ccpCode)
         print '%s%s' %(2,'swd')
         continue
-      spinSystem = sample(list(unUsedPossibilities))
-      spinSystem.currentResidueAssignment = res
+      spinSystem = choice(list(unUsedPossibilities))
+      spinSystem.currentResidueAssignment = residue
       residue.currentSpinSystemAssigned = spinSystem
       usedSpinSystems.add(spinSystem)
 
@@ -155,33 +162,28 @@ cdef class Malandro :
     '''
     
     cdef Residue res
-
-    useAssignments = self.useAssignments
-    useTentative = self.useTentative
-    DataModel = self.DataModel      
-    allSpinSystems = DataModel.spinSystems
-    allSpinSystemsWithoutAssigned = DataModel.allSpinSystemsWithoutAssigned
-
-    if useAssignments :                                                 # If the already made assignments are used, the dictionary will just include unassigned spinsystems and Joker spinsystems
-      relevantSpinSystems = allSpinSystemsWithoutAssigned
-    else :                                                                       # If the already assigned are chosen to still be permutated, the dictionary will also include the ready assinged spinsystems
-      relevantSpinSystems = allSpinSystems
-      
-    listWithSpinSystems = list(set([val for subl in relevantSpinSystems.values() for val in subl]))
+    cdef SpinSystem spinSystem
     
+    # Only spin systems that can change assignment during the monte carlo procedure
+    # are relevant, all others will stay were they are anyway.
+    relevantSpinSystems = [spinSystem for spinSystem in self.DataModel.getSpinSystemSet() if spinSystem.exchangeSpinSystems]
+
     # For every annealing I create a new instance of the mersenne twister random number generator.
     # As a seed I use a number from the linear congruential generator present in the c standard
     # library.
+    rng = Random()
     
-    rng = Random() #randomGenerator.cyrandom.Random()
+    if relevantSpinSystems:
+      # doing one annealing
+      for x,acceptanceConstant in enumerate(acceptanceConstants) :
+        
+        rng.seed(rand())
+        self.annealingSub(acceptanceConstant,stepsPerTemperature,relevantSpinSystems,rng)
+        self.scoreInitialAssignment()
+        self.notifyEnergyObservers(self.score,x+1)
     
-    # doing one annealing
-    for x,acceptanceConstant in enumerate(acceptanceConstants) :
-      
-      rng.seed(rand())
-      self.annealingSub(acceptanceConstant,stepsPerTemperature,listWithSpinSystems,rng)
-      self.scoreInitialAssignment()
-      self.notifyEnergyObservers(self.score,x)
+    else:
+      self.notifyTextObservers('Nothing to do.')      #todo, more explanation to user here.
     
     # storing the result  
     for res in self.DataModel.chain.residues :
@@ -208,8 +210,9 @@ cdef class Malandro :
       self.scoreAllLinks()
       self.doRandomAssignment()
       self.setupPeakInformationForRandomAssignment()
-      self.scoreInitialAssignment()
       self.notifyTextObservers(info %str(run+1))
+      self.scoreInitialAssignment()
+      self.notifyEnergyObservers(self.score,0)
       self.runAnnealling(stepsPerTemperature=stepsPerTemperature,acceptanceConstants=acceptanceConstants)
  
     self.notifyTextObservers('Done')
@@ -220,35 +223,21 @@ cdef class Malandro :
        
     '''
     
-    cdef myDataModel DataModel
-    cdef Chain chain
     cdef Spectrum spectrum
-    cdef SpinSystem spinSys
+    cdef SpinSystem spinSystem
     cdef Peak peak
-    cdef Residue res
-    cdef list residues, spectra, spinSystemList
-    cdef dict mySpinSystems, tentativeSpinSystems
-    cdef str key
-    
-    DataModel = self.DataModel
-    chain = DataModel.chain
-    residues = chain.residues
-    spectra = DataModel.spectra
-    mySpinSystems = DataModel.spinSystems
-    tentativeSpinSystems = DataModel.tentativeSpinSystems
-    
-    for key,  spinSystemList in mySpinSystems.items() :                                 # de-assigning residues from spinsystems
-      for spinSys in spinSystemList :
-        spinSys.currentResidueAssignment = None
+    cdef Residue residue
 
-    for key,  spinSystemList in tentativeSpinSystems.items() :                                 # also de-assigning residues from tentative assigned spinsystems
-      for spinSys in spinSystemList :
-        spinSys.currentResidueAssignment = None
-
-    for res in residues :                                                                       # de-assigning spinsystems from residues
-      res.currentSpinSystemAssigned = None
-
-    for spectrum in spectra :                                                               # Setting all peak-degeneracies back to 0
+    # de-assigning residues from spin systems
+    for spinSystem in self.DataModel.getSpinSystemSet():
+      spinSystem.currentResidueAssignment = None
+      
+    # de-assigning spin systems from residues
+    for residue in self.DataModel.chain.residues :
+      residue.currentSpinSystemAssigned = None
+      
+    # Setting all peak-degeneracies back to 0
+    for spectrum in self.DataModel.spectra :                                                               
       for peak in spectrum.peaks :
         peak.degeneracy = 0
 
@@ -321,7 +310,7 @@ cdef class Malandro :
   #
   #  string = str(i-1) + ' joker spinsystems are used in this calculation.'    
 
-  cdef void simulateSpectra(self, minIsoFrac) :
+  def simulateSpectra(self, minIsoFrac=0.0) :
     '''Simulates all spectra, in the sense that
        a list with simulated peaks is created.
     
@@ -329,20 +318,18 @@ cdef class Malandro :
     
     cdef myDataModel DataModel
     cdef Spectrum spectrum
-    
     DataModel = self.DataModel
     
-    for spectrum in DataModel.spectra:                 
-      
+    for spectrum in DataModel.spectra:
       self.notifyTextObservers('Simulating ' + spectrum.name)
       spectrum.simulate(minIsoFrac=minIsoFrac)
       spectrum.determineSymmetry()
 
-  cdef void createSpinSytemsAndResonances(self):
-    '''Sets up all spin systems and resonances in the model.
-    '''
-    
-    self.DataModel.setupSpinSystems(minTypeScore=self.minTypeScore)
+  #cdef void createSpinSytemsAndResonances(self):
+  #  '''Sets up all spin systems and resonances in the model.
+  #  '''
+  #  
+  #  self.DataModel.setupSpinSystems(minTypeScore=self.minTypeScore)
 
   cdef void scoreAllLinks(self):
     '''Scores every link in the model.
@@ -434,24 +421,9 @@ cdef class Malandro :
   cdef void setupSpinSystemExchange(self):
     
     cdef SpinSystem spinSystem
-    
-    spinSystems = self.DataModel.spinSystems
-    allSpinSystems = []
-    
-    for spinSystemList in spinSystems.values() :
-      
-      allSpinSystems += spinSystemList
-      
-    allSpinSystems = list(set(allSpinSystems))
-    
-    for spinSystem in allSpinSystems :
-        
-      spinSystem.setupAllowedResidues(self.useAssignments, self.useTentative)
-      spinSystem.setupAllowedResidueView()
-
-    for spinSystem in allSpinSystems :
-    
-      spinSystem.setupExchangeSpinSystems(self.useAssignments)
+    spinSystems = self.DataModel.getSpinSystemSet()
+    for spinSystem in spinSystems :
+      spinSystem.setupExchangeSpinSystems()
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
