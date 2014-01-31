@@ -100,9 +100,11 @@ cdef class Malandro :
     sendText('Setup-up all spectra...')
     self.DataModel.project = self.project
     self.DataModel.nmrProject = self.nmrProject
-    self.DataModel.setupSpectra()
-    self.DataModel.setupChain()
-    self.createSpinSytemsAndResonances()
+    self.DataModel.setupSpectra(self.selectedSpectra)
+    self.DataModel.setupChain(self.chain)
+    self.createSpinSytemsAndResonances(resonanceGroups=self.nmrProject.resonanceGroups, useAssignments=self.useAssignments,
+                                       useTentative=self.useTentative, useType=not self.reTypeSpinSystems,
+                                       includeUntypedSpinSystems=self.typeSpinSystems, minTypeScore=self.minTypeScore, makeJokers=True)
     sendText('Simulating spectra...')
     self.DataModel.setupLinks()
     self.simulateSpectra()
@@ -110,7 +112,7 @@ cdef class Malandro :
     self.calculateAllPeakContributions()
     sendText('Matching simulated with real spectra...')
     self.matchSimulatedWithRealSpectra()
-    self.createJokerSpinSystems()
+    #self.createJokerSpinSystems()
     sendText('Scoring links between spin systems...')
     #self.scoreAllLinks()
     #self.multiplyPeakScoresWithLinkScores()
@@ -124,117 +126,26 @@ cdef class Malandro :
     self.notifyTextObservers('Making a random assignment...')
     
     cdef myDataModel DataModel
-    cdef dict assignedSpinSystems, tentativeSpinSystems, justTypedSpinSystems, allSpinSystems, jokerSpinSystems, dictio
-    cdef Residue res, resimin1, resiplus1
-    cdef int i, seqCode
-    cdef str ccpCode
-    cdef list listWithSpinSystems, listWithFittingSpinSystems
-    cdef SpinSystem spinSystem, randomSpinSystem
-    cdef bint useAssignments, useTentative
+    cdef Residue residue
+    cdef SpinSystem spinSystem
 
-    useAssignments = self.useAssignments
-    useTentative = self.useTentative
-    DataModel = self.DataModel
+    choice = pyrandom.choice
+    shuffle = pyrandom.shuffle
     
-    sample = pyrandom.choice
-
-    assignedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.previouslyAssignedSpinSystems)
-    tentativeSpinSystems =  makePrivateCopyOfDictContainingLists(DataModel.tentativeSpinSystems)
-    justTypedSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.justTypedSpinSystems)
-    allSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.spinSystems)
-    jokerSpinSystems = makePrivateCopyOfDictContainingLists(DataModel.jokerSpinSystems)
+    usedSpinSystems = set()
+    randomResidues = shuffle(DataModel.chain.residues[:])
     
-    if useAssignments and useTentative:
+    for residue in randomResidues:
       
-      dictio = mergeDictionariesContainingLists([justTypedSpinSystems,jokerSpinSystems])  
-      
-    elif useAssignments :
-    
-      dictio = mergeDictionariesContainingLists([justTypedSpinSystems, tentativeSpinSystems,jokerSpinSystems])
-                                              
-    elif useTentative :
-      
-      dictio = mergeDictionariesContainingLists([assignedSpinSystems,justTypedSpinSystems,jokerSpinSystems])
-                                                
-    else :
-      
-      dictio = makePrivateCopyOfDictContainingLists(allSpinSystems)
-    
-    for res in DataModel.chain.residues :
-      
-      isAssigned = False     
-      ccpCode = res.ccpCode
-      seqCode = res.seqCode
-      
-      if  useAssignments and (ccpCode in assignedSpinSystems) :                                                         # If wanted by the user: try to put the assigned spin system in this position
-        
-        listWithSpinSystems = assignedSpinSystems[ccpCode]
-        
-        for spinSystem in listWithSpinSystems :
-          
-          if spinSystem.ccpnSeqCode == seqCode :
-             
-            spinSystem.currentResidueAssignment = res
-            res.currentSpinSystemAssigned = spinSystem
-            isAssigned = True
-            listWithSpinSystems.remove(spinSystem)
-            break
-            
-      if not isAssigned and useTentative and (ccpCode in tentativeSpinSystems) :                            # If wanted by the user: try to put a tenitative assigned spin system on this position
-        
-        listWithSpinSystems = tentativeSpinSystems[ccpCode]
-        listWithFittingSpinSystems = []
-        
-        for spinSystem in listWithSpinSystems :
-          
-          if not spinSystem.currentResidueAssignment and seqCode in spinSystem.tentativeSeqCodes :
-            
-            listWithFittingSpinSystems.append(spinSystem)
-            
-        if len(listWithFittingSpinSystems) > 0 :  
-            
-          randomSpinSystem =  sample(listWithFittingSpinSystems)                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))]                   # get a random element out of the list 
-          randomSpinSystem.currentResidueAssignment = res
-          res.currentSpinSystemAssigned = randomSpinSystem 
-          isAssigned = True
-          listWithSpinSystems.remove(randomSpinSystem)
-            
-      if not isAssigned :                                                                                                                                                           # If no spin system is assigned to the residue by now, assign some unassigned spinsystem (or whatever random spinsystem, when the user-made assignment should be ignored)
-        
-        listWithSpinSystems = []
-        
-        listWithFittingSpinSystems = []
-        
-        if ccpCode in dictio :
-          
-          listWithSpinSystems = dictio[ccpCode]
-          
-          for spinSystem in listWithSpinSystems :
-            
-            if not spinSystem.currentResidueAssignment :
-              
-              listWithFittingSpinSystems.append(spinSystem)    
-            
-      
-        if len(listWithFittingSpinSystems) > 0 :      
-          
-                      
-          randomSpinSystem = sample(listWithFittingSpinSystems)                                                        #listWithFittingSpinSystems[random.randint(0, (len(listWithFittingSpinSystems)-1))] 
-          randomSpinSystem.currentResidueAssignment = res
-          res.currentSpinSystemAssigned = randomSpinSystem 
-          isAssigned = True
-          
-          if randomSpinSystem in listWithFittingSpinSystems :
-          
-            listWithSpinSystems.remove(randomSpinSystem)
-            
-            
-          
-      if not isAssigned :
-          
-        print 'something went wrong during random assignment at the start of the procedure, not all residues have an assignment'
-        print res.seqCode
-        print res.ccpCode
+      unUsedPossibilities = residue.allowedSpinSystems - usedSpinSystems
+      if not unUsedPossibilities:
+        print 'Something went wrong during the random assignment with %s%s' %(residue.seqCode, residue.ccpCode)
+        print '%s%s' %(2,'swd')
+        continue
+      spinSystem = sample(list(unUsedPossibilities))
+      spinSystem.currentResidueAssignment = res
+      residue.currentSpinSystemAssigned = spinSystem
+      usedSpinSystems.add(spinSystem)
 
   def runAnnealling(self, stepsPerTemperature=10000, acceptanceConstants=acceptanceConstants):
     '''Runs one full annealling by going through a list
@@ -366,51 +277,51 @@ cdef class Malandro :
         
         pl.peak.degeneracy += 1
 
-  cdef void createJokerSpinSystems(self):
-    
-    '''
-    When there are less spin systems that are typed to a
-    certain amino acid type than there are residues of that
-    type in the sequence, some Jokers have to be introduced. 
-    
-    '''
-    
-    cdef myDataModel DataModel
-    cdef str ccpCode
-    cdef int amountOfAssignedSpinsystems, NTypedSpinSystems, NResiduesOfThisType, short, i, x
-    cdef SpinSystem spinSys, newSpinSystem
-    
-    DataModel = self.DataModel    
-    
-    #for ccpCode, NResiduesOfThisType in DataModel.chain.residueTypeFrequencyDict.items() : #DataModel.spinSystems.keys() :
-    i = 1
-    for ccpCode,residues in DataModel.chain.residuesByCcpCode.items():
-      
-      NResiduesOfThisType = len(residues)
-      NResiduesAssigned = len(set([spinSys.ccpnSeqCode for spinSys in DataModel.previouslyAssignedSpinSystems.get(ccpCode, [])]))
-      NTypedSpinSystems = len(DataModel.justTypedSpinSystems.get(ccpCode,[]))
+  #cdef void createJokerSpinSystems(self):
+  #  
+  #  '''
+  #  When there are less spin systems that are typed to a
+  #  certain amino acid type than there are residues of that
+  #  type in the sequence, some Jokers have to be introduced. 
+  #  
+  #  '''
+  #  
+  #  cdef myDataModel DataModel
+  #  cdef str ccpCode
+  #  cdef int amountOfAssignedSpinsystems, NTypedSpinSystems, NResiduesOfThisType, short, i, x
+  #  cdef SpinSystem spinSys, newSpinSystem
+  #  
+  #  DataModel = self.DataModel    
+  #  
+  #  #for ccpCode, NResiduesOfThisType in DataModel.chain.residueTypeFrequencyDict.items() : #DataModel.spinSystems.keys() :
+  #  i = 1
+  #  for ccpCode,residues in DataModel.chain.residuesByCcpCode.items():
+  #    
+  #    NResiduesOfThisType = len(residues)
+  #    NResiduesAssigned = len(set([spinSys.ccpnSeqCode for spinSys in DataModel.previouslyAssignedSpinSystems.get(ccpCode, [])]))
+  #    NTypedSpinSystems = len(DataModel.justTypedSpinSystems.get(ccpCode,[]))
+  #
+  #    #short = amountOfResiduesOfThisType- (amountOfAssignedSpinsystems + amountOfTypedSpinSystems + amountOfTentativeSpinSystemsWithOnlyOneCcpCode)
+  #    short = NResiduesOfThisType - (NResiduesAssigned + NTypedSpinSystems)
+  #    
+  #    if short < 0 :
+  #      
+  #      string = 'You seem to have more ' + ccpCode + ' spin systems than residues of this type are in the sequence'
+  #      short = 0
+  #      return
+  #    
+  #    for x in range(short) :
+  #      
+  #      newSpinSystem = SpinSystem(DataModel=DataModel,ccpCode=ccpCode)
+  #      newSpinSystem.spinSystemNumber = i * 1000000
+  #      i = i + 1
+  #      DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
+  #      DataModel.addToDictWithLists(DataModel.jokerSpinSystems,ccpCode,newSpinSystem)
+  #      DataModel.addToDictWithLists(DataModel.allSpinSystemsWithoutAssigned,ccpCode,newSpinSystem)
+  #
+  #  string = str(i-1) + ' joker spinsystems are used in this calculation.'    
 
-      #short = amountOfResiduesOfThisType- (amountOfAssignedSpinsystems + amountOfTypedSpinSystems + amountOfTentativeSpinSystemsWithOnlyOneCcpCode)
-      short = NResiduesOfThisType - (NResiduesAssigned + NTypedSpinSystems)
-      
-      if short < 0 :
-        
-        string = 'You seem to have more ' + ccpCode + ' spin systems than residues of this type are in the sequence'
-        short = 0
-        return
-      
-      for x in range(short) :
-        
-        newSpinSystem = SpinSystem(DataModel=DataModel,ccpCode=ccpCode)
-        newSpinSystem.spinSystemNumber = i * 1000000
-        i = i + 1
-        DataModel.addToDictWithLists(DataModel.spinSystems,ccpCode,newSpinSystem)
-        DataModel.addToDictWithLists(DataModel.jokerSpinSystems,ccpCode,newSpinSystem)
-        DataModel.addToDictWithLists(DataModel.allSpinSystemsWithoutAssigned,ccpCode,newSpinSystem)
-
-    string = str(i-1) + ' joker spinsystems are used in this calculation.'    
-
-  cdef void simulateSpectra(self) :
+  cdef void simulateSpectra(self, minIsoFrac) :
     '''Simulates all spectra, in the sense that
        a list with simulated peaks is created.
     
@@ -424,7 +335,7 @@ cdef class Malandro :
     for spectrum in DataModel.spectra:                 
       
       self.notifyTextObservers('Simulating ' + spectrum.name)
-      spectrum.simulate()
+      spectrum.simulate(minIsoFrac=minIsoFrac)
       spectrum.determineSymmetry()
 
   cdef void createSpinSytemsAndResonances(self):
@@ -472,32 +383,23 @@ cdef class Malandro :
     if fraction == 0.0 :
       
       for residue in residues :
-        
         for spinSystemLink in residue.linkDict.values():
-          
           spinSystemLink.activePeakLinks = spinSystemLink.peakLinks
       
     else :
     
       peaksToLeaveOutList = []
-      
       for spectrum in spectra:
-        
         peaksToLeaveOutList.extend(spectrum.getRandomSubSetofPeaks(fraction))
         
         
       peaksToLeaveOut = set(peaksToLeaveOutList)
       
       for residue in residues :
-        
         for spinSystemLink in residue.linkDict.values():
-          
           activePeakLinks = []
-          
           for peakLink in spinSystemLink.peakLinks:
-            
             if not peakLink.peak in peaksToLeaveOut :
-              
               activePeakLinks.append(peakLink)
           
           spinSystemLink.activePeakLinks = activePeakLinks
@@ -525,7 +427,6 @@ cdef class Malandro :
     for spectrum in self.DataModel.spectra:                 # Determine for each dimension of every peak in all (used) spectra, which resonances can contribute to the peak
               
       info = 'Evaluating dimensional contributions to peaks: ' + spectrum.name
-      
       self.notifyTextObservers(info)
       
       spectrum.findPossiblePeakContributions(self.useDimenionalAssignments)

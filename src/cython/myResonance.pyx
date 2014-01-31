@@ -115,12 +115,7 @@ cdef class Resonance :
     
   def connectToProject(self) :
     
-    self.ccpnResonance = self.spinSystem.ccpnResonanceGroup.findFirstResonance(serial=self.serial)
-    
-    if not self.ccpnResonance :
-      
-      print 'Error: could not find resonance %s' %str(self.serial)
-      return
+    self.ccpnResonance = self.getCcpnResonance()
   
   def getChemicalShift(self) :
     
@@ -152,5 +147,4 @@ cdef class Resonance :
       
         print 'Error: could not find resonance %s, might be deleted or merged with other resonance' %str(self.serial)
         
-        return None
 

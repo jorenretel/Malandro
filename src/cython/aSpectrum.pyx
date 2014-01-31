@@ -2,15 +2,10 @@
 cdef class Spectrum:
   
   cdef public str name
-  
   cdef myDataModel DataModel
-  
   cdef object ccpnSpectrum, ccpnPeakList, labellingScheme, pySpectrum
- 
   cdef list simulatedPeakMatrix, intraResidualSimulatedPeakMatrix, peaks
-  
   cdef int symmetry, experimentSerial, serial
-  
   cdef frozenset molLabelFractions
   
   def __init__(self, temporary_spectrum_object):
@@ -67,7 +62,7 @@ cdef class Spectrum:
     self.matchIntraResidual()
     self.matchSequential()
 
-  cdef void simulate(self) :
+  def simulate(self, double minIsoFrac=0.0) :
     '''Generates two nested lists of simulated peaks. One for
        intra-residual peaks that is saved in
        self.intraResidualSimulatedPeakMatrix and one for the
@@ -78,71 +73,28 @@ cdef class Spectrum:
     '''
     
     cdef myDataModel DataModel
-    
-    cdef list residues
-    
     cdef Spectrum spectrum
-    
-    cdef object ccpnSpectrum
-    
-    cdef object scheme
-    
-    cdef list simulatedPeakMatrix
-    
-    cdef Residue resA
-    
-    cdef Residue resB
-    
-    cdef object refExperiment
-    
-    cdef object PT
-    
-    cdef object expGraph
-    
-    cdef dict recordedExpMeasuments
-    
-    cdef list expTransfers
-    
-    #cdef object refExpDim
-    
-    cdef list atomSitePathWay
-    
-    cdef object expStep
-    
-    cdef object atomSite
-    
+    cdef Residue resA, resB
     cdef Atom atom
-    
-    cdef list atomPathWays
-    
-    cdef list atomPathWay
-    
-    cdef list peaks
-    
-    cdef list isotopeCodes
-    
-    cdef double minIsoFrac
-    
     cdef SimulatedPeakContrib contrib
-    
-    cdef tuple dimNumbers
-    cdef tuple stepNumbers
-    cdef int dimNumber
-    cdef int stepNumber
+    cdef list residues, expTransfers, atomSitePathWay
+    cdef list simulatedPeakMatrix, atomPathWays, atomPathWay, peaks, isotopeCodes
+    cdef object ccpnSpectrum, scheme, refExperiment, PT, expGraph
+    cdef object expStep, atomSite
+    cdef dict recordedExpMeasuments    
+    #cdef object refExpDim
+    #cdef double minIsoFrac
+    cdef tuple dimNumbers, stepNumbers
+    cdef int dimNumber, stepNumber
+
     
     DataModel = self.DataModel
-    
-    minIsoFrac = DataModel.minIsoFrac
-    
+    #minIsoFrac = DataModel.minIsoFrac
     residues = DataModel.chain.residues 
-    
     ccpnSpectrum = self.ccpnSpectrum
-    
     scheme = self.labellingScheme
-    
     simulatedPeakMatrix = self.simulatedPeakMatrix
     intraResidualSimulatedPeakMatrix = self.intraResidualSimulatedPeakMatrix
-  
     refExperiment = ccpnSpectrum.experiment.refExperiment
     
     #molLabelFractions = self.molLabelFractions  #ccpnSpectrum.experiment.findFirstLabeledMixture().getMolLabelFractions()
@@ -310,17 +262,11 @@ cdef class Spectrum:
           for dimNumber, stepNumber, atomSet, isotopeCode in zip(dimNumbers, stepNumbers, atomSetTuple, measuredIsotopeCodes) :
 
             contrib = SimulatedPeakContrib()
-
             atom = firstAtomPathWay[stepNumber-1]
-
             residue = atom.residue
-            
             contrib.residue = residue
-            
             contrib.ccpCode = residue.ccpCode
-            
             contrib.atomName = atomSet.name
-            
             contrib.isotopeCode = isotopeCode #isotopeCodes[stepNumber-1]
             
             if atom.residue is resA :
@@ -332,7 +278,6 @@ cdef class Spectrum:
               contrib.firstOrSecondResidue = 2  
         
             contrib.dimNumber = dimNumber
-
             newPeak.simulatedPeakContribs.append(contrib)
             
           peakList.append(newPeak)
@@ -819,11 +764,11 @@ cdef class Spectrum:
         
         if assignedContributions and ( useDimenionalAssignments is True or peak.intraResidual ) :
           
-          assignedResonances = set([contrib.resonance for contrib in assignedContributions])
+          assignedResonanceSerials = set([contrib.resonance for contrib in assignedContributions])
           
           for resonance in resonances :
             
-            if resonance.ccpnResonance in assignedResonances :
+            if resonance.serial in assignedResonanceSerials :
               
               dim.possibleContributions.append(resonance)
               resonance.addPeakToPeakDimsLib(peak,dim)

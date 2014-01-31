@@ -50,6 +50,7 @@ cdef class Residue :
   cdef list atoms
   cdef dict atomsByAtomSiteName, linkDict, intraDict, atomsByName  #, atomsByCcpnChemAtom
   cdef int seqCode
+  cdef set allowedSpinSystems
   
   def __init__(self, chain, ccpnResidue):
     '''Init residue (wrapper). Also triggers the setup of the atoms
@@ -70,6 +71,7 @@ cdef class Residue :
     #self.atomsByCcpnChemAtom = {}  #Not used
     self.atomsByAtomSiteName = {}
     self.userDefinedSolution = None
+    self.allowedSpinSystems = set()
     
     if ccpnResidue :
     

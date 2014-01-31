@@ -4,19 +4,17 @@ cdef class SpinSystem :
   
   cdef myDataModel DataModel
   cdef Residue currentResidueAssignment
-  cdef int spinSystemNumber, ccpnSeqCode
+  cdef int spinSystemNumber
   cdef list exchangeSpinSystems
-  cdef str ccpCode
   cdef object ccpnResonanceGroup
   cdef bint isJoker
-  cdef public list solutions, tentativeCcpCodes, tentativeSeqCodes, typeProbCcpCodes, userDefinedSolutions
-  cdef public set allowedResidues
+  cdef public list solutions
+  cdef public set allowedResidues, ccpCodes
   cdef dict resonanceDict, aminoAcidProbs, resonancesByAtomSiteName
   cdef bint [:] allowedResidueView
   
 
-  def __init__(self, DataModel=None, ccpnResonanceGroup=None, ccpnSeqCode = 0, ccpCode=None,
-               tentativeSeqCodes = [],tentativeCcpCodes=[] , typeProbCcpCodes=[], typeSpinSystem=False, minTypeScore=1.0) :
+  def __init__(self, DataModel=None, ccpnResonanceGroup=None, allowedResidues=None, ccpCodes=None):
     '''kwargs: DataModel, parent, root of the model
                ccpnResonanceGroup:  resonanceGroup this spin system corresponds to in CCPN.
                ccpnSeqCode:         if resonanceGroup in assigned to residue. Position of
@@ -37,61 +35,41 @@ cdef class SpinSystem :
     '''
     self.DataModel = DataModel
     self.ccpnResonanceGroup = ccpnResonanceGroup
-    self.ccpCode = ccpCode
-    self.ccpnSeqCode = ccpnSeqCode
-    self.typeProbCcpCodes = typeProbCcpCodes
-    self.tentativeCcpCodes = tentativeCcpCodes
-    self.tentativeSeqCodes = tentativeSeqCodes
+    self.allowedResidues = allowedResidues or set()
+    self.ccpCodes = ccpCodes or set()
     self.resonanceDict = {}
-    
     self.userDefinedSolutions = []
-    
     self.currentResidueAssignment = None   
-    
     self.isJoker = False
-    
     self.solutions = []
-    
     self.aminoAcidProbs = {}
-    
     self.exchangeSpinSystems = []
-    
-    self.allowedResidues = set()                                      # This is later on going to be a Frozen Set for fast membership testing during the annealing run. If the set is empty that means everything residue is allowed, if has members, only these residues are allowed.
-    
     self.resonancesByAtomSiteName = {}
 
     if not ccpnResonanceGroup :
-      
       self.isJoker = True
-      
       return
     
     self.spinSystemNumber = ccpnResonanceGroup.serial
-    
-
-      
-    if typeSpinSystem : 
-
-      self.runAminoAcidTyping(minTypeScore)
- 
     self.setupResonances()
-
     self.groupResonancesByAtomSite()
+    self.setupAllowedResidueView()
 
   cdef set getCcpCodes(self) :
     '''Return three-letter amino acid code this spin system could
       be assigned to.
     
     '''
-    if self.ccpCode :
+    return self.ccpCodes
+    #if self.ccpCode :
       
-      ccpCodes = [self.ccpCode]
+    #  ccpCodes = [self.ccpCode]
     
-    else :
+    #else :
       
-      ccpCodes = self.tentativeCcpCodes or self.typeProbCcpCodes or self.aminoAcidProbs.keys() or []
+    #  ccpCodes = self.tentativeCcpCodes or self.typeProbCcpCodes or self.aminoAcidProbs.keys() or []
       
-    return set(ccpCodes)  
+    #return set(ccpCodes)  
       
   cdef void setupResonances(self) :
     '''Sets up all resonances belonging in the spin system based on
@@ -107,41 +85,6 @@ cdef class SpinSystem :
         
         self.resonanceDict[newResonance.atomName] = newResonance
 
-  cdef void runAminoAcidTyping(self, double minTypeScore) :
-    '''Find all residue types the spin system could be assigned to.
-       The algorithm in CCPN analysis is used for this task.
-       kwargs:  minTypeScore: cut-off value (percentage). Everything
-                             scoring higher is consider a possible
-                             residue type assignment.
-       
-    '''
-    shiftList = self.DataModel.auto.shiftList
-    ccpnChain = self.DataModel.chain.ccpnChain
-    
-    shifts = []
-    for resonance in self.ccpnResonanceGroup.resonances:
-      if resonance.isotopeCode in ('1H',  '13C',  '15N') :
-        shift = resonance.findFirstShift(parentList=shiftList)
-        if shift:
-          shifts.append(shift)
-  
-    scores = getShiftsChainProbabilities(shifts, ccpnChain)
-    total = sum(scores.values())
-    
-    scoreDict = {}
-    
-    if total:
-        
-      for ccpCode, score in scores.items() :
-        
-        relativeScore = score/total * 100.0         # minTypeScore is a percentage, therefor so should relativeScore 
-        
-        if relativeScore >= minTypeScore :
-          
-          scoreDict[ccpCode] = relativeScore
-          
-    self.aminoAcidProbs = scoreDict
-    
   cdef void setupAllowedResidueView(self) :
     ''' Sets up a memory view containing bints. Every bint corresponts to
         a residue in the sequence. If the spin system could, based on its
@@ -150,19 +93,17 @@ cdef class SpinSystem :
     '''
     
     cdef Chain chain
-    
     cdef int resNumber
+    cdef Residue residue
     
     chain = self.DataModel.chain
-    
     cythonArray = cvarray(shape=(len(chain.residues) + 1,), itemsize=sizeof(bint), format="i")
-    
     self.allowedResidueView = cythonArray
-    
     self.allowedResidueView[:] = False
     
-    for resNumber in self.allowedResidues :
+    for residue in self.allowedResidues :
       
+      resNumber = residue.seqCode
       self.allowedResidueView[resNumber] = True
       
   cdef Resonance getResonanceForAtomName(self,str atomName) :       # Used in matchSpectrum()

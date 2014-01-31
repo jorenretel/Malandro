@@ -12,7 +12,7 @@ cdef class myDataModel :
   cdef public Chain chain
   cdef dict spinSystems, previouslyAssignedSpinSystems, justTypedSpinSystems, tentativeSpinSystems, untypedSpinSystems, typeProbSpinSystems, allSpinSystemsWithoutAssigned, jokerSpinSystems
   cdef Malandro auto  
-  cdef double minIsoFrac
+  #cdef double minIsoFrac
   cdef object nmrProject, project
 
   def __init__(self, Malandro auto):
@@ -21,13 +21,7 @@ cdef class myDataModel :
     self.spectra = []
     self.chain = None
     self.spinSystems = {}
-    self.previouslyAssignedSpinSystems = {}
-    self.justTypedSpinSystems = {}
-    self.tentativeSpinSystems = {}
-    self.typeProbSpinSystems = {}
-    self.untypedSpinSystems = {}
-    self.allSpinSystemsWithoutAssigned = {}
-    self.jokerSpinSystems = {}
+
     
     aminoAcids = ['Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu',
                   'Gly', 'His', 'Ile', 'Leu', 'Lys', 'Met', 'Phe',
@@ -36,26 +30,18 @@ cdef class myDataModel :
     for aa in aminoAcids :
       
       self.spinSystems[aa] = []
-      self.previouslyAssignedSpinSystems[aa] = []
-      self.justTypedSpinSystems[aa] = []
-      self.tentativeSpinSystems[aa] = []
-      self.typeProbSpinSystems[aa] = []
-      self.untypedSpinSystems[aa] = []
-      self.allSpinSystemsWithoutAssigned[aa] = []
-      self.jokerSpinSystems[aa] = []
 
-    
-    self.minIsoFrac = auto.minIsoFrac
+    #self.minIsoFrac = auto.minIsoFrac
 
-  def setupChain(self):
+  def setupChain(self, ccpnChain):
     '''Generates new Chain by based on a chain object from CCPN.'''
     
-    self.chain = Chain(self.auto.chain)
+    self.chain = Chain(ccpnChain)
         
-  def setupSpectra(self):
+  def setupSpectra(self, selectedSpectra):
     '''Sets up spectra objects for all selected spectra.'''
     
-    for temporary_spectrum_object in self.auto.selectedSpectra :
+    for temporary_spectrum_object in selectedSpectra :
 
       newspectrum = Spectrum(temporary_spectrum_object)
       
@@ -63,7 +49,8 @@ cdef class myDataModel :
 
       self.spectra.append(newspectrum)
 
-  def setupSpinSystems(self, minTypeScore=1.0) :
+  def setupSpinSystems(self, resonanceGroups, useAssignments=True, useTentative=True,
+                       useType=True,includeUntypedSpinSystems=True, minTypeScore=0.0, makeJokers=False) :
     '''Sets up spin system objects based on CCPN resonanceGroup.
        kwarg: minTypeScore can be passed. This is used when the possible
               residue types of the spin system has to be determined. The residue
@@ -76,95 +63,152 @@ cdef class myDataModel :
        
     '''
     
-    cdef SpinSystem newSpinSystem
-    cdef bint reTypeSpinSystems
+    cdef SpinSystem spinSystem
+        
+    assignedResidues = set()
     
-    reTypeSpinSystems = self.auto.reTypeSpinSystems
+    assignedResonanceGroups = []
+    tentativeResonanceGroups = []
+    typedResonanceGroups = []
+    multipleTypeResonanceGroups = []
+    untypedResonanceGroups = []
     
-    for resonanceGroup in self.auto.nmrProject.resonanceGroups :   # taking all spinsystems in the project, except for the ones that have no resonances
+    ignoreAssignedResidues = useAssignments
+    
+    for resonanceGroup in resonanceGroups :
+      # Sorting the resonanceGroups by the type of
+      # information they contain.
 
       if not resonanceGroup.resonances :
-        
+        # resonanceGroups that contain no resonances are basically placeholders
+        # in the analysis project that we are not interested in.
         continue
       
-      if resonanceGroup.residue and resonanceGroup.residue.chain is self.chain.ccpnChain and not reTypeSpinSystems:                                  # SpinSystem is assigned to a residue in the selected chain
+      if resonanceGroup.residue:
+        # resonanceGroup is assigned to a residue.
+        if resonanceGroup.residue.chain is self.chain.ccpnChain:
+          # we should not use resonanceGroups that
+          # are assigned to another chain.
+          assignedResonanceGroups.append(resonanceGroup)
         
-        seqCode = int(resonanceGroup.residue.seqCode)
-        ccpCode = getResidueCode(resonanceGroup.residue.molResidue)
-        
-        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpnSeqCode = seqCode, ccpCode=ccpCode)
-        
-        self.addToDictWithLists(self.previouslyAssignedSpinSystems, ccpCode, newSpinSystem)
-        self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
-        
-      elif resonanceGroup.residueProbs and not reTypeSpinSystems:                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
-        
-        ccpCodes = []
-        seqCodes = []
-        
-        for residueProb in resonanceGroup.residueProbs:
-          if not residueProb.weight:
-            continue
-            
-          residue = residueProb.possibility
-          
-          seq = residue.seqCode
-          resCode = residue.ccpCode
-          
-          if residue.chain is self.chain.ccpnChain :
-  
-            ccpCodes.append(resCode)                                                                   # Only consider the tentative assignments to residues in the selected chain.                                                         
-            seqCodes.append(seq)
-            
-        if seqCodes :
-
-          newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, tentativeSeqCodes = seqCodes,tentativeCcpCodes=ccpCodes)
-          
-          for ccpCode in set(ccpCodes) :
-          
-            self.addToDictWithLists(self.tentativeSpinSystems, ccpCode, newSpinSystem)
-            self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
-            self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+      elif resonanceGroup.residueProbs:
+        # resonanceGroup has tentative assignment to residues
+        # that can be used to constraint the possible residue
+        # assignments.
+        tentativeResonanceGroups.append(resonanceGroup)
       
-      elif resonanceGroup.ccpCode and not reTypeSpinSystems:                                                                                                              # Residue is just Typed
+      elif resonanceGroup.ccpCode:
+        # resonanceGroup is just amino acid typed. 
+        typedResonanceGroups.append(resonanceGroup)
   
-        ccpCode = resonanceGroup.ccpCode
-        
-        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, ccpCode=ccpCode)
-        
-        self.addToDictWithLists(self.justTypedSpinSystems, ccpCode, newSpinSystem)
-        self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
-        self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+      elif resonanceGroup.residueTypeProbs:
+        # resonanceGroup has a set of options for the amino acid type.
+        multipleTypeResonanceGroups.append(resonanceGroup)
 
-      elif resonanceGroup.residueTypeProbs and not reTypeSpinSystems:
+      elif includeUntypedSpinSystems:
+        # resonanceGroup does not hold information
+        # about residue assignment or type.
+        untypedResonanceGroups.append(resonanceGroup)
+
+    for resonanceGroup in assignedResonanceGroups:
+      
+      seqCode = int(resonanceGroup.residue.seqCode)
+      residue = self.chain.residues[seqCode-1]
+      residues = [residue]
+      ccpCodes = [residue.ccpCode] #getResidueCode(resonanceGroup.residue.molResidue)
+      
+      if useAssignments:
+        self._makeSpinsystem(resonanceGroup=resonanceGroup, residues=residues)
+        assignedResidues.add(residue)
+      elif useType:
+        self._makeSpinSystem(resonanceGroup, ccpCodes)
+      else:
+        self._makeSpinSystem(resonanceGroup, minTypeScore=minTypeScore)
+ 
+    for resonanceGroup in tentativeResonanceGroups:
+      
+      residues = []
+      
+      for residueProb in resonanceGroup.residueProbs:
+        if residueProb.weight:
+          ccpnResidue = residueProb.possibility
+          if ccpnResidue.chain is self.chain.ccpnChain :
+            seqCode = ccpnResidue.seqCode
+            residue = self.chain.residues[seqCode-1]
+            residues.append(residue)
+
+      if residues :
         
-        typeProbCcpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
+        if useTentative:
+          self._makeSpinSystem(resonanceGroup, residues)
+        elif useType:
+          ccpCodes = [residue.ccpCode for residue in residues]
+          self._makeSpinSystem(resonanceGroup, ccpCodes, unAllowedResidues=assignedResidues)
+        else :
+          self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
+
+    for resonanceGroup in typedResonanceGroups:
+      
+      if useType:
+        ccpCodes = [resonanceGroup.ccpCode]
+        self._makeSpinSystem(resonanceGroup, ccpCodes, unAllowedResidues=assignedResidues)
+      else:
+        self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
+    
+    for resonanceGroup in multipleTypeResonanceGroups:
+      
+      if useType :
+        ccpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
+        self._makeSpinSystem(resonanceGroup, ccpCodes, unAllowedResidues=assignedResidues)
+      else:
+        self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
         
-        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup,typeProbCcpCodes=typeProbCcpCodes)
-        
-        for ccpCode in typeProbCcpCodes :
-        
-          self.addToDictWithLists(self.typeProbSpinSystems, ccpCode, newSpinSystem)
-          self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
-          self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
-        
-      elif self.auto.typeSpinSystems or reTypeSpinSystems:
-        
-        newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, typeSpinSystem=True, minTypeScore=minTypeScore)
-        
-        for ccpCode in newSpinSystem.aminoAcidProbs.keys() :
+    for resonanceGroup in untypedResonanceGroups:
+      
+      self._makeSpinSystem(resonanceGroup, unAllowedResidues=assignedResidues, minTypeScore=minTypeScore)
+      
+    if makeJokers:
+      
+      for ccpCode, residues in self.chain.residuesByCcpCode:
+      
+        for i in range(len(residues)):
           
-          self.addToDictWithLists(self.untypedSpinSystems, ccpCode, newSpinSystem)
-          self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
-          self.addToDictWithLists(self.allSpinSystemsWithoutAssigned, ccpCode, newSpinSystem)
+          self._makeSpinSystem(None,ccpCodes=[ccpCode], unAllowedResidues=assignedResidues)
+      
+    
+  def _makeSpinsystem(self, resonanceGroup, residues=None, ccpCodes=None, unAllowedResidues=None, minTypeScore=0.0):
+    
+    allowedResidues = set()
+    if residues:
+      ccpCodes = set([residue.ccpCode for residue in residues])
+      allowedResidues = set(residues)
+    elif ccpCodes:
+      ccpCodes = set(ccpCodes)
+      allowedResidues = set([self.chain.residuesByCcpCode[ccpCode] for ccpCode in ccpCodes])
+    else:
+      aminoAcidProbs = runAminoAcidTyping(resonanceGroup, self.auto.shiftsList, self.chain.ccpnChain, minTypeScore)
+      ccpCodes = set(aminoAcidProbs.keys())
+      allowedResidues = set([self.chain.residuesByCcpCode[ccpCode] for ccpCode in ccpCodes])
+ 
+    if unAllowedResidues:
+      allowedResidues -= unAllowedResidues
+    
+    newSpinSystem = SpinSystem(DataModel=self, ccpnResonanceGroup=resonanceGroup, allowedResidues=allowedResidues, ccpCodes=ccpCodes)
+    newSpinSystem.allowedResidues = allowedResidues
+    
+    for residue in allowedResidues:
+      residue.allowedSpinSystems.add(newSpinSystem)
+    for ccpCode in ccpCodes:
+      self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
   
+ 
   def setupLinks(self) :
     '''Setup all links between spin systems. Two dicts are created.
        One intraDict for intra-residual links, which contains intra-residual
        peaks (or peak links, to be exact). In this case the key in the
        dict is just the serial of the spin system. The linkDict contains
        sequential links between spin system. Very simple keys are created
-       from both spin system serials.
+       from both spin system serials. Jokers spin systems are excluded.
        
     '''
     cdef Residue resA, resB
@@ -185,9 +229,15 @@ cdef class myDataModel :
       
       for spinSystemA in self.spinSystems[ccpCodeA] :
         
+        if spinSystemA.isJoker:
+          continue
+        
         intraDict[spinSystemA.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resA,spinSystem1=spinSystemA,spinSystem2=spinSystemA)
         
         for spinSystemB in self.spinSystems[ccpCodeB] :
+          
+          if spinSystemB.isJoker:
+            continue
           
           linkDict[spinSystemA.spinSystemNumber*10000+spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resA,residue2=resB,spinSystem1=spinSystemA,spinSystem2=spinSystemB)
     
@@ -195,7 +245,10 @@ cdef class myDataModel :
     intraDict = resB.intraDict
     
     for spinSystemB in self.spinSystems[ccpCodeB] :
-    
+      
+      if spinSystemB.isJoker:
+        continue
+      
       intraDict[spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resB,residue2=resB,spinSystem1=spinSystemB,spinSystem2=spinSystemB)
           
   cdef void addToDictWithLists(self, dict dictToAddTo, key,value) :
@@ -272,11 +325,14 @@ cdef class myDataModel :
     for spectrum in self.spectra :
       
       spectrum.connectToProject(nmrProject)
-      
+       
   def getChain(self) :
     '''Resturn chain.'''
   
     return self.chain
+  
+  def getSpinSystemSet(assigned=True, typed=True, ccpCode=None):
+    pass
   
   def getSpinSystems(self) :
     '''Return spin systems in dict, keys are three-letter amino acid codes'''
