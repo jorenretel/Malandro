@@ -1,5 +1,5 @@
 
-from memops.gui.ButtonList import ButtonList
+from memops.gui.Button import Button
 from memops.gui.CheckButton import CheckButton
 from memops.gui.FloatEntry import FloatEntry
 from memops.gui.IntEntry import IntEntry
@@ -37,37 +37,18 @@ class AnnealingSettingsTab(object) :
   
     frame = self.frame
 
-    frame.expandGrid(13,0)
+    #frame.expandGrid(13,0)
     frame.expandGrid(13,1)
     row = 0
 
-    texts    = ['Calculate Assignment Suggestions']
-    commands = [self.guiParent.connector.runAllCalculations]
-    self.startNAButton = ButtonList(frame,commands=commands, texts=texts)
-    self.startNAButton.grid(row=row, column=0, sticky='nsew', columnspan=2)
-    
-    row += 1
-    
-
-    label = Label(frame, text='Minimal colabelling fraction:', grid=(row,0))      
-    tipText = 'The minimal amount of colabelling the different nuclei should have in order to still give rise to a peak.'
-    self.minLabelEntry = FloatEntry(frame, grid=(row,1), width=7, text=0.1,
-                                      returnCallback=self.updateMinLabelEntry,
-                                      tipText=tipText, sticky= 'nsew')
-    self.minLabelEntry.bind('<Leave>', self.updateMinLabelEntry, '+')
+    text = 'Calculate Assignment Suggestions'
+    command = self.runCalculations
+    self.startButton = Button(frame,command=command, text=text)
+    self.startButton.grid(row=row, column=0, sticky='nsew', columnspan=2)
     
     row += 1
 
-    label = Label(frame, text='Amount of attempts per temperature point in the annealling:', grid=(row,0))      
-    tipText = 'The amount of attempts to switch the position of two spinsystems in the sequence are performed for each temperature point'
-    self.NAStepEntry = IntEntry(frame, grid=(row,1), width=7, text=10000,
-                                      returnCallback=self.updateStepEntry,
-                                      tipText=tipText, sticky= 'nsew')
-    self.NAStepEntry.bind('<Leave>', self.updateStepEntry, '+')
-    
-    row += 1
-    
-    label = Label(frame, text=' Perform N runs of the optimsation, N', grid=(row,0))      
+    label = Label(frame, text='Amount of runs: ', grid=(row,0))      
     tipText = 'The amount of times the whole optimization procedure is performed, each result is safed'
     self.repeatEntry = IntEntry(frame, grid=(row,1), width=7, text=10,
                                       returnCallback=self.updateRepeatEntry,
@@ -76,11 +57,23 @@ class AnnealingSettingsTab(object) :
     
     row += 1
     
-    label = Label(frame, text='Temperature constants: ', grid=(row,0))   
-    self.tempEntry = Entry(frame, text=map(str, self.acceptanceConstantList), width=64, grid=(row,1), isArray=True, returnCallback=self.updateAcceptanceConstantList)
+    label = Label(frame, text='Temperature regime: ', grid=(row,0))
+    tipText = 'This list of numbers govern the temperature steps during the annealing, every number represents 1/(kb*t), where kb is the Boltzmann constant and t the temperature of one step.'
+    self.tempEntry = Entry(frame, text=map(str, self.acceptanceConstantList), width=64,
+                           grid=(row,1), isArray=True, returnCallback=self.updateAcceptanceConstantList,
+                           tipText=tipText, sticky= 'nsew')
+    
+    row += 1    
+
+    label = Label(frame, text='Amount of attempts per temperature:', grid=(row,0))      
+    tipText = 'The amount of attempts to switch the position of two spinsystems in the sequence are performed for each temperature point'
+    self.NAStepEntry = IntEntry(frame, grid=(row,1), width=7, text=10000,
+                                      returnCallback=self.updateStepEntry,
+                                      tipText=tipText, sticky= 'nsew')
+    self.NAStepEntry.bind('<Leave>', self.updateStepEntry, '+')
     
     row += 1
-    
+        
     label = Label(frame, text='Fraction of peaks to leave out:', grid=(row,0))      
     tipText = 'In each run a fraction of the peaks can be left out of the optimization, thereby increasing the variability in the outcome and reducing false negatives. In each run this will be different randomly chosen sub-set of all peaks. 0.1 (10%) can be a good value.'
     self.leaveOutPeaksEntry = FloatEntry(frame, grid=(row,1), width=7, text=0.0,
@@ -99,35 +92,44 @@ class AnnealingSettingsTab(object) :
     
 
     row += 1
-    
-    label = Label(frame, text='Re-type all typed spin systems:', grid=(row,0))      
-    tipText = 'The algorithm does not take into account any previously made assignment and re-types all spin systems, only resonance names and frequencies are used'
 
-    self.reTypeSpinSystemsCheck = CheckButton(frame, selected=False, grid=(row,1))
+    label = Label(frame, text='Minimal colabelling fraction:', grid=(row,0))      
+    tipText = 'The minimal amount of colabelling the different nuclei should have in order to still give rise to a peak.'
+    self.minLabelEntry = FloatEntry(frame, grid=(row,1), width=7, text=0.1,
+                                      returnCallback=self.updateMinLabelEntry,
+                                      tipText=tipText, sticky= 'nsew')
+    self.minLabelEntry.bind('<Leave>', self.updateMinLabelEntry, '+')
+    
+    row += 1
+    
+    label= Label(frame, text = 'Use sequential assignments:', grid=(row,0))
+    tipText = 'When this option is select the present sequential assignments will be kept in place'
+    self.useAssignmentsCheck = CheckButton(frame, selected=True, tipText=tipText, grid=(row,1))
+    
+    row += 1
+    
+    label= Label(frame, text = 'Use tentative assignments:', grid=(row,0))
+    tipText = 'If a spin system has tentative assignments this can be used to narrow down the amount of possible sequential assignments.'
+    self.useTentativeCheck = CheckButton(frame, selected=True, tipText=tipText, grid=(row,1))
+
+    row += 1
+    
+    label = Label(frame, text='Use amino acid types:', grid=(row,0))      
+    tipText = 'Use amino acid types of the spin systems. If this option is not checked the spin systems are re-typed, only resonance names and frequencies are used'
+    self.useTypeCheck = CheckButton(frame, selected=True, tipText=tipText, grid=(row,1))
      
     row += 1
     
-    label = Label(frame, text='Type untyped spin systems on the fly:', grid=(row,0))      
-    tipText = 'Spin system typing can be carried out so also untyped spin systems can be used. Only amino acid types that have a reasonable score (i.e. higher than the random chance) will be considered'
-
-    self.typeSpinSystemsCheck = CheckButton(frame, selected=False, grid=(row,1))
+    label = Label(frame, text='Include untyped spin systems:', grid=(row,0))      
+    tipText = 'Also include spin system that have no type information. Amino acid typing will be done on the fly.'
+    self.useAlsoUntypedSpinSystemsCheck = CheckButton(frame, selected=True, tipText=tipText, grid=(row,1))
 
     row += 1
 
-    label = Label(frame, text='If a peak dimension has resonances assigned, only consider those:', grid=(row,0))      
-    tipText = 'If one or more dimensions of a peak is already assigned, assume that this assignment is the only option. If not the program will assume the peak can have other assignment options as well.'
-    self.useDimenionalAssignmentsCheck = CheckButton(frame, selected=True, grid=(row,1))
+    label = Label(frame, text='Use dimensional assignments:', grid=(row,0))      
+    tipText = 'If one or more dimensions of a peak is already assigned, assume that this assignment is the only option. If not the check the program will consider all possibilities for the assignment of the dimension.'
+    self.useDimenionalAssignmentsCheck = CheckButton(frame, selected=True, tipText=tipText, grid=(row,1))
     
-    row += 1
-
-    label= Label(frame, text = 'Keep sequentially assigned spin systems in place:', grid=(row,0))
-    self.useAssignmentsCheck = CheckButton(frame, selected=True, grid=(row,1))
-    
-    row += 1
-    
-    label= Label(frame, text = 'If a spin system has tentative residue assignments, only consider those:', grid=(row,0))
-    self.useTentativeCheck = CheckButton(frame, selected=True, grid=(row,1))
-
     row += 1
 
     self.shiftListLabel    = Label(frame, text ='Shift List:', grid=(row,0), sticky='w')
@@ -147,6 +149,28 @@ class AnnealingSettingsTab(object) :
                                        height=200, title='Annealing',
                                        xLabel='time', yLabel='energy')
     self.energyPlot.grid(row=row, column=0, columnspan=2, sticky='nsew')
+    
+  def runCalculations(self):
+    
+    self.startButton.disable()
+    self.disableIllegalButtonsAfterPrecalculations()
+    self.guiParent.connector.runAllCalculations()
+    self.startButton.configure(text='More runs')
+    self.startButton.enable()
+    
+  def disableIllegalButtonsAfterPrecalculations(self):
+    
+    illegalButtons = [self.minTypeScoreEntry, self.minLabelEntry,
+                      self.useAlsoUntypedSpinSystemsCheck, self.useAssignmentsCheck,
+                      self.useTypeCheck, self.useDimenionalAssignmentsCheck,
+                      self.useTentativeCheck]
+    
+    for illegalButton in illegalButtons :
+      illegalButton.configure(state='disabled')
+      
+    self.molPulldown.disable()
+    self.shiftListPulldown.disable()
+      
      
   def getChainName(self, chain):
   

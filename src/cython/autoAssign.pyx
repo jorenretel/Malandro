@@ -31,7 +31,7 @@ cdef class Malandro :
   cdef public myDataModel DataModel
   cdef bint useAssignments, useTentative, typeSpinSystems, reTypeSpinSystems, useDimenionalAssignments
   cdef object project, shiftList, nmrProject, chain
-  cdef double minTypeScore, leavePeaksOutFraction, minIsoFrac
+  cdef double minTypeScore, minIsoFrac
   cdef list selectedSpectra
   cdef int hc
   cdef double score
@@ -67,7 +67,6 @@ cdef class Malandro :
     self.nmrProject = connector.nmrProject
     self.project = connector.project          #Not really used, nmrProject is sufficient
     self.minIsoFrac = connector.minIsoFrac
-    self.leavePeaksOutFraction = connector.leavePeaksOutFraction
     self.minTypeScore = connector.minTypeScore
     self.selectedSpectra = connector.selectedSpectra
     self.typeSpinSystems = connector.typeSpinSystems
@@ -88,13 +87,9 @@ cdef class Malandro :
     self.DataModel = myDataModel()
     sendText('Setup-up all spectra...')
     self.DataModel.project = self.project
-    print '1'
     self.DataModel.nmrProject = self.nmrProject
-    print '2'
     self.DataModel.setupSpectra(self.selectedSpectra)
-    print '3'
     self.DataModel.setupChain(self.chain)
-    print '4'
     self.DataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups, shiftList=self.shiftList,
                                     useAssignments=self.useAssignments, useTentative=self.useTentative,
                                     useType=not self.reTypeSpinSystems, includeUntypedSpinSystems=self.typeSpinSystems,
@@ -106,8 +101,9 @@ cdef class Malandro :
     self.calculateAllPeakContributions()
     sendText('Matching simulated with real spectra...')
     self.matchSimulatedWithRealSpectra()
+    self.setupSpinSystemExchange()
     #self.createJokerSpinSystems()
-    sendText('Scoring links between spin systems...')
+    #sendText('Scoring links between spin systems...')
     #self.scoreAllLinks()
     #self.multiplyPeakScoresWithLinkScores()
     sendText('Precalculations have finished...')
@@ -149,8 +145,7 @@ cdef class Malandro :
        with it.
        
     '''
-    
-    cdef Residue res
+
     cdef SpinSystem spinSystem
     
     # Only spin systems that can change assignment during the monte carlo procedure
@@ -174,28 +169,35 @@ cdef class Malandro :
     else:
       self.notifyTextObservers('Nothing to do.')      #todo, more explanation to user here.
     
-    # storing the result  
-    for res in self.DataModel.chain.residues :
-
-      res.solutions.append(res.currentSpinSystemAssigned)
-      res.currentSpinSystemAssigned.solutions.append(res.seqCode)
+    # storing the result
+  
+  def storeResults(self):
+    
+    cdef Residue residue
+    cdef SpinSystem spinSystem
+    
+    for residue in self.DataModel.chain.residues :
+      residue.solutions.append(residue.currentSpinSystemAssigned)
       
-  def startMonteCarlo(self, amountOfRuns=1, stepsPerTemperature=10000, acceptanceConstants=acceptanceConstants):
+    for spinSystem in self.DataModel.getSpinSystemSet():
+      spinSystem.solutions.append(spinSystem.currentResidueAssignment.seqCode)
+    
+    self.DataModel.energies.append(self.score*-1)
+    
+      
+  def startMonteCarlo(self, amountOfRuns=1, stepsPerTemperature=10000, acceptanceConstants=acceptanceConstants, fractionOfPeaksLeftOut=0.0):
     '''Run the optimization for a number of times
        as defined in amountOfRuns.
     
     '''
     
-    info = 'Running annealing number %s out of ' + str(amountOfRuns) + '...'
-    
-    self.setupSpinSystemExchange()
-    
+    info = 'Running annealing number %s out of ' + str(amountOfRuns) + '...'    
     srand(int(time()*1000000%10000000))        # Seeding the linear congruential pseudo-random number generator
 
     for run in range(amountOfRuns) :
       
       self.cleanAssignments()
-      self.leaveOutSubSetOfPeaks(self.leavePeaksOutFraction)
+      self.leaveOutSubSetOfPeaks(fractionOfPeaksLeftOut)
       self.scoreAllLinks()
       self.doRandomAssignment()
       self.setupPeakInformationForRandomAssignment()
@@ -203,6 +205,7 @@ cdef class Malandro :
       self.scoreInitialAssignment()
       self.notifyEnergyObservers(self.score,0)
       self.runAnnealling(stepsPerTemperature=stepsPerTemperature,acceptanceConstants=acceptanceConstants)
+      self.storeResults()
  
     self.notifyTextObservers('Done')
 
@@ -563,13 +566,6 @@ cdef class Malandro :
     cdef double score
     cdef SpinSystemLink link
     cdef PeakLink pl
-    #cdef dict linkDict
-    #cdef int keyA
-    #cdef int keyB
-    #cdef int key
-    #cdef list peaks
-    #cdef Peak peak
-    #cdef double peakScore
     
     residues = self.DataModel.chain.residues
     score = 0.0

@@ -1,25 +1,13 @@
 
 cdef class Peak :
 
-  cdef int degeneracy
-  
-  cdef int degeneracyTemp
-  
-  cdef object ccpnPeak
-  
+  cdef int degeneracy, degeneracyTemp
+  cdef object ccpnPeak, pyPeak
   cdef list dimensions
-  
   cdef Spectrum spectrum
-  
-  cdef int serial
-  
-  cdef int peakListSerial
+  cdef int serial, peakListSerial
+  cdef bint intraResidual
 
-  cdef object intraResidual
-  
-  cdef object pyPeak
-  
-  
   def __init__(self, spectrum, ccpnPeak):
     
     self.ccpnPeak = ccpnPeak
@@ -36,13 +24,11 @@ cdef class Peak :
   def setupDimensions(self):
     
     ccpnDims = self.ccpnPeak.sortedPeakDims()
-    
     self.dimensions = [None]*len(ccpnDims)            # We want the dimensions sorted by .dataDim.expDim.refExpDim.dim (this dimNumber is also used everywhere in the simulation, and it is handy during the matching procedure to have the contributions to the simulated peaks in the same order as dimensions of the real peaks in the spectra)
     
     for dim in ccpnDims :
 
       dimension = PeakDimension(self,dim)
-
       self.dimensions[dimension.dimNumber - 1] = dimension
           
   cdef void checkForIntraResidualAssignment(self):

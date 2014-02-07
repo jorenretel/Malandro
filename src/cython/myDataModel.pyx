@@ -8,7 +8,7 @@ cdef class myDataModel :
      
   '''
 
-  cdef list spectra
+  cdef list spectra, energies
   cdef public Chain chain
   cdef dict spinSystems
   cdef object nmrProject, project
@@ -16,10 +16,10 @@ cdef class myDataModel :
   def __init__(self):
 
     self.spectra = []
+    self.energies = []
     self.chain = None
     self.spinSystems = {}
 
-    
     aminoAcids = ['Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu',
                   'Gly', 'His', 'Ile', 'Leu', 'Lys', 'Met', 'Phe',
                   'Pro', 'Ser', 'Thr', 'Trp', 'Tyr', 'Val']
@@ -27,7 +27,6 @@ cdef class myDataModel :
     for aa in aminoAcids :
       
       self.spinSystems[aa] = []
-
 
   def setupChain(self, ccpnChain):
     '''Generates new Chain by based on a chain object from CCPN.'''
@@ -170,10 +169,9 @@ cdef class myDataModel :
         for i in range(len(residues)):
           
           self._makeSpinSystem(None, shiftList=shiftList, ccpCodes=[ccpCode], unAllowedResidues=assignedResidues)
-      
-    
+        
   def _makeSpinSystem(self, resonanceGroup, shiftList, residues=None, ccpCodes=None, unAllowedResidues=None, minTypeScore=0.0):
-    print 'A'
+
     cdef Residue residue
     
     residuesByCcpCode = self.chain.residuesByCcpCode
@@ -201,7 +199,6 @@ cdef class myDataModel :
     for ccpCode in ccpCodes:
       self.addToDictWithLists(self.spinSystems, ccpCode, newSpinSystem)
   
- 
   def setupLinks(self) :
     '''Setup all links between spin systems. Two dicts are created.
        One intraDict for intra-residual links, which contains intra-residual
@@ -339,7 +336,6 @@ cdef class myDataModel :
       spinSystemSet = set([item for sublist in self.spinSystems.values() for item in sublist])
     return spinSystemSet
   
-  
   def getSpinSystems(self) :
     '''Return spin systems in dict, keys are three-letter amino acid codes'''
     
@@ -348,3 +344,9 @@ cdef class myDataModel :
   def getSpectra(self) :
     '''Return list with spectra.'''
     return self.spectra
+  
+  def getEnergy(self, runNumber):
+    
+    return self.energies[runNumber]
+  
+  

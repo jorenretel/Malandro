@@ -102,14 +102,17 @@ class ResultsTab(object) :
                                          grid=(0,5), tipText=tipText)
                                          
     self.selectedSolution = 1                               
+    
+    runLabel = Label(resultTopFrame, text='run:')
+    runLabel.grid(row=0, column=6)
                                          
     texts    = [' < ']
     commands = [self.resultsPrevSolution]
     self.resultsPreviousSolutionButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
-    self.resultsPreviousSolutionButton.grid(row=0, column=6, sticky='nsew')    
+    self.resultsPreviousSolutionButton.grid(row=0, column=7, sticky='nsew')    
     
-    tipText = 'If you rean the algorithm more than once, you can select the solution given by the different runs.'
-    self.resultsSolutionNumberEntry = IntEntry(resultTopFrame, grid=(0,7), width=7, text=1,
+    tipText = 'If you ran the algorithm more than once, you can select the solution given by the different runs.'
+    self.resultsSolutionNumberEntry = IntEntry(resultTopFrame, grid=(0,8), width=7, text=1,
                                       returnCallback=self.solutionUpdateAfterEntry,
                                       tipText=tipText)
     #self.resultsSolutionNumberEntry.bind('<Leave>', self.solutionUpdateAfterEntry, '+')
@@ -118,12 +121,15 @@ class ResultsTab(object) :
     texts    = [' > ']
     commands = [self.resultsNextSolution]
     self.resultsNextSolutionButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
-    self.resultsNextSolutionButton.grid(row=0, column=8, sticky='nsew')   
-        
-    texts    = ['select this solution']
+    self.resultsNextSolutionButton.grid(row=0, column=9, sticky='nsew')   
+    
+    self.energyLabel = Label(resultTopFrame, text='energy:')
+    self.energyLabel.grid(row=0, column=10)
+    
+    texts    = ['template for puzzling']
     commands = [self.adoptSolution]
     self.adoptButton = ButtonList(resultTopFrame,commands=commands, texts=texts)
-    self.adoptButton.grid(row=0, column=9, sticky='nsew')  
+    self.adoptButton.grid(row=0, column=11, sticky='nsew')  
     
     resultsSecondFrame = Frame(frame)#LabelFrame(frame, text='Spin Systems')
     resultsSecondFrame.grid(row=2, column=0, sticky='nsew')
@@ -146,7 +152,7 @@ class ResultsTab(object) :
     self.residueLabels = []
     
     # Sorry for this one, but it saves a lot of lines of code with arbitrary function names. createCallBackFunction takes one argument 'tableNumber'
-    # and returns a function that also takes one archument 'spinSystem'. This function is called in the end when the user
+    # and returns a function that also takes one argument 'spinSystem'. This function is called in the end when the user
     # clicks on the table to select a spinsystem. What this function does is calling self.selectSpinSystem(tableNumber,spinSystem).
     # In this way it is possible to create five tables in a loop but still tell self.selectSpinSystem from who the call came. 
     createCallbackFunction = lambda tableNumber : (lambda spinSystem :  self.selectSpinSystem(tableNumber, spinSystem) )
@@ -176,7 +182,7 @@ class ResultsTab(object) :
     resultsFirstFrame.grid_rowconfigure(1, weight=1)
     resultsFirstFrame.grid_columnconfigure(0,  weight=1)
     
-    texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
+    texts    = [' res 1 ',  ' links ',  ' res 2 ',  ' links ', ' res 3 ', ' links ', ' res 4 ', ' links ', ' res 5 ']
     commands = [lambda:self.selectRelativeResidue(1,True), lambda: self.selectLink(1,True), lambda:self.selectRelativeResidue(2,True), lambda: self.selectLink(2,True), lambda:self.selectRelativeResidue(3,True), lambda: self.selectLink(3,True), lambda:self.selectRelativeResidue(4,True), lambda: self.selectLink(4,True), lambda:self.selectRelativeResidue(5,True)]
     self.sequenceButtons = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
     self.sequenceButtons.grid(row=0, column=0, sticky='nsew')   
@@ -200,7 +206,7 @@ class ResultsTab(object) :
     spacer = Spacer(resultsFirstFrame)
     spacer.grid(row=1, column=0, sticky='nsew') 
     
-    texts    = [' res 1 ',  ' link ',  ' res 2 ',  ' link ', ' res 3 ', ' link ', ' res 4 ', ' link ', ' res 5 ']
+    texts    = [' res 1 ',  ' links ',  ' res 2 ',  ' links ', ' res 3 ', ' links ', ' res 4 ', ' links ', ' res 5 ']
     commands = commands = [lambda:self.selectRelativeResidue(1,False), lambda: self.selectLink(1,False), lambda:self.selectRelativeResidue(2,False), lambda: self.selectLink(2,False), lambda:self.selectRelativeResidue(3,False), lambda: self.selectLink(3,False), lambda:self.selectRelativeResidue(4,False), lambda: self.selectLink(4,False), lambda:self.selectRelativeResidue(5,False)]
     self.sequenceButtonsB = ButtonList(resultsFirstFrame,commands=commands, texts=texts)
     self.sequenceButtonsB.grid(row=2, column=0, sticky='nsew')    
@@ -753,53 +759,43 @@ class ResultsTab(object) :
     data = []
     colorMatrix = []
     
-    for residueNumber in spinSystem.allowedResidues :
-      
-      residue = residues[residueNumber-1]
-        
+    for residue in spinSystem.allowedResidues :
+
       oneRow = []
-      
       oneRowColor = []
-      
       string = str(residue.getSeqCode()) + ' ' + residue.getCcpCode()
 
       oneRow.append(string)
       
-      ccpnSeqCode = spinSystem.getCcpnSeqCode()
-          
-      if ccpnSeqCode and ccpnSeqCode == residue.getSeqCode() :                          # Assigned in the project to this residue
-       
-        oneRow.append('x') 
-        
-      else :
-        
-        oneRow.append(None)
-        
-      if residue.getSeqCode() in spinSystem.userDefinedSolutions :                                # The user selected this res for this spinsystem (could be more than one res for which this happens)
-        
+      resonanceGroup = spinSystem.getCcpnResonanceGroup()
+      ccpnResidue = residue.ccpnResidue
+      
+      # Assigned in the project to this residue    
+      if resonanceGroup and resonanceGroup.residue and resonanceGroup.residue is ccpnResidue:
         oneRow.append('x')
-        
       else :
-        
+        oneRow.append(None)
+      
+      # The user selected this res for this spinsystem (could be more than one res for which this happens)
+      if residue.getSeqCode() in spinSystem.userDefinedSolutions :
+        oneRow.append('x')
+      else :
         oneRow.append(None)
         
       if residue.solutions[self.selectedSolution-1] == spinSystem :
-        
         oneRow.append('x')
-        
       else :
-        
         oneRow.append(None)
       
       if spinSystem.solutions :
         
-        percentage = spinSystem.solutions.count(residueNumber)/float(len(spinSystem.solutions))*100.0
+        percentage = spinSystem.solutions.count(residue.getSeqCode())/float(len(spinSystem.solutions))*100.0
         
       else :
         
         percentage = 0
         
-      oneRow.append(int(percentage))
+      oneRow.append(int(percentage+0.5))
       color = self.pickColorByPercentage(percentage)
       oneRowColor = [color]*5
          
@@ -839,6 +835,7 @@ class ResultsTab(object) :
       
       self.updateLink()
       self.updateButtons()
+      self.updateEnergy()
  
   @lockUntillResults     
   def resultsNextSolution(self):
@@ -851,6 +848,7 @@ class ResultsTab(object) :
       
       self.updateLink()
       self.updateButtons()
+      self.updateEnergy()
   
   @lockUntillResults
   def resultsPrevResidue(self):
@@ -974,6 +972,7 @@ class ResultsTab(object) :
     self.updateResultsTable()
     self.updateButtons()
     self.updateButtons()
+    self.updateEnergy()
     
   def updateResultsTable(self):
     
@@ -1156,6 +1155,12 @@ class ResultsTab(object) :
       
       buttons = [self.sequenceButtonsB.buttons[1], self.sequenceButtonsB.buttons[3], self.sequenceButtonsB.buttons[5], self.sequenceButtonsB.buttons[7]]
       buttons[self.selectedLinkB - 1].config(bg='yellow')
+  
+  def updateEnergy(self):
+    
+    text = 'energy: %s' %int(self.dataModel.getEnergy(self.selectedSolution-1)+0.5)
+    self.energyLabel.set(text)
+    self.energyLabel.update()
       
   def setAllButtonsToGrey(self) :
     

@@ -60,16 +60,7 @@ cdef class SpinSystem :
     
     '''
     return self.ccpCodes
-    #if self.ccpCode :
-      
-    #  ccpCodes = [self.ccpCode]
-    
-    #else :
-      
-    #  ccpCodes = self.tentativeCcpCodes or self.typeProbCcpCodes or self.aminoAcidProbs.keys() or []
-      
-    #return set(ccpCodes)  
-      
+
   cdef void setupResonances(self) :
     '''Sets up all resonances belonging in the spin system based on
        the resonances in the resonanceGroup in CCPN. Resonances are
@@ -348,7 +339,6 @@ cdef class SpinSystem :
         
       return '%s%s%s' %(serial,resCode,ccpCode)
     
-    
     elif resonanceGroup.residueProbs :                                                                                                      # SpinSystem has one or more tentative assignments. Got this piece out of EditSpinSystem.py in popups.
       
       ccpCodes = []
@@ -375,7 +365,6 @@ cdef class SpinSystem :
           return spinSystemInfo
           
       return '{%s}-%s' %(resonanceGroup.serial, spinSystemInfo)
-      
 
     elif resonanceGroup.ccpCode :
       
@@ -398,37 +387,31 @@ cdef class SpinSystem :
     
     return self.isJoker
   
-  def getSeqCode(self) :
-    '''Returns sequence code if resonanceGroup had a sequential assignment.'''
-    
-    return self.ccpnSeqCode
+  #def getSeqCode(self) :
+  #  '''Returns sequence code if resonanceGroup had a sequential assignment.'''
+  #  
+  #  return self.ccpnSeqCode
   
-  def getCcpCode(self) :
-    '''Returns three-letter amino acid code if residue type was set on resonanceGroup'''
-    
-    return self.ccpCode
-  
-  def getTentativeCcpCodes(self) :
-    '''Returns three-letter amino acid codes if resonanceGroup has tentative residue assignments'''
-    
-    return self.tentativeCcpCodes
+  #def getCcpCode(self) :
+  #  '''Returns three-letter amino acid code if residue type was set on resonanceGroup'''
+  #  
+  #  return self.ccpCode
   
   def getSerial(self) :
     '''Returns serial. Serial of spin system is equal to serial of resonanceGroup in CCPN'''
     
     return self.spinSystemNumber
   
-  def getCcpnSeqCode(self) :
-    '''Synonym to getSeqCode.'''
-    
-    return self.ccpnSeqCode
+  #def getCcpnSeqCode(self) :
+  #  '''Synonym to getSeqCode.'''
+  #  
+  #  return self.ccpnSeqCode
   
   def getCcpnResonanceGroup(self) :
     '''Returns corresponding resonanceGroup. This is determined every time from scratch
        because during the assignment process the resonanceGroup might have been removed.
        
     '''
-    #return self.ccpnResonanceGroup
   
     if self.isJoker :
       

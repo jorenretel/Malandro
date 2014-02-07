@@ -545,9 +545,7 @@ cdef class Spectrum:
     cdef object ccpnSpectrum
     cdef Residue x
     cdef list ccpnResidues
-    
     cdef double colabelling
-    
     
     scheme = self.labellingScheme
     
@@ -685,18 +683,11 @@ cdef class Spectrum:
                 
     '''
     
-    cdef double isoWeightSum
-
+    cdef double isoWeightSum, labellingFraction
     cdef object isotopomer
-    
-    cdef double labellingFraction
-    
     cdef Atom atom
-    
     cdef str isotopeCode
-    
     labellingFraction = 0.0
-    
     isoWeightSum =  float(sum([isotopomer.weight for isotopomer in isotopomers]))
     
     for isotopomer in isotopomers :
@@ -791,58 +782,39 @@ cdef class Spectrum:
     '''
     
     cdef myDataModel DataModel
-    
     cdef list simulatedPeakMatrix, residues, simulatedPeakList, spinsystemsaa1, spinsystemsaa2, listWithPresentPeaks, listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks, listWithScores, contributions, resonances, peakLists, peaksInWindow
-
     cdef Residue resA, resB
-    
     cdef dict allSpinSystems
-    
     cdef SpinSystem spinSys1, spinSys2, spinSystem
-    
     cdef int presentPeaks, i
-    
     cdef double symmetry
-    
     cdef SimulatedPeak simulatedPeak
-    
     cdef SimulatedPeakContrib contrib
-    
     cdef PeakDimension dim
-    
     cdef Resonance resonance
-    
     cdef Peak peak
-    
     cdef int hc
-    
     cdef double bestScore
-    
     cdef SpinSystemLink link
-    
+
     hc = 10000 #self.hc
 
     DataModel = self.DataModel
     simulatedPeakMatrix = self.simulatedPeakMatrix
-    
     allSpinSystems = DataModel.spinSystems
-    
     residues = DataModel.chain.residues
-    
     symmetry = float(self.symmetry)     # preventing int division
 
     for i,  simulatedPeakList in enumerate(simulatedPeakMatrix) :
       
       resA = residues[i]
       resB = residues[i+1]
-      
       linkDict = resA.linkDict
       
       for link in linkDict.values() :
         
         spinSys1 = link.spinSystem1
         spinSys2 = link.spinSystem2
-          
         spinSystems = [spinSys1,spinSys2]
 
         for simulatedPeak in simulatedPeakList :
@@ -850,29 +822,23 @@ cdef class Spectrum:
           closestPeak = None
           bestScore = 0.0
           resonances = []
-          
           contributions = simulatedPeak.simulatedPeakContribs
 
           for contrib in contributions :
             
             spinSystem = spinSystems[contrib.firstOrSecondResidue-1]
-            
             resonance = spinSystem.getResonanceForAtomName(contrib.atomName)
-            
             resonances.append(resonance)
             
           if resonances and not None in resonances :
             
             peakLists = [ resonance.getPeaksForSpectrumDim(self,contrib.dimNumber) for resonance, contrib in zip(resonances , contributions) ]
-
             peaksInWindow = commonElementInLists(peakLists)                                      # And check whether 1 or more peaks that fit in one dimension actually also fit in all other dimensions. In that case the peak is in the multidimensional tolerance window
 
             if peaksInWindow :
               
               peakScores = [scorePeak(peak.dimensions,resonances) for peak in peaksInWindow]
-              
               bestScore, closestPeak = sorted(zip(peakScores,peaksInWindow))[-1]
-
               bestScore = min(1.0,bestScore) / symmetry * (len(set(resonances))**2.0)                      # Put a flat bottom (top) in. 
               
           link.addPeak(closestPeak, simulatedPeak, resonances, bestScore)

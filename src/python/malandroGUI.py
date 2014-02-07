@@ -12,6 +12,7 @@ def open_reference(argServer):
 
 
 import cPickle
+import os
 from memops.general import Implementation
 from memops.gui.ButtonList import UtilityButtonList
 from memops.gui.Label import Label
@@ -80,8 +81,8 @@ class Connector(object):
     self.chain = self.GUI.annealingSettingsTab.chain
     self.useAssignments =self.GUI.annealingSettingsTab.useAssignmentsCheck.get()
     self.useTentative = self.GUI.annealingSettingsTab.useTentativeCheck.get()
-    self.reTypeSpinSystems = self.GUI.annealingSettingsTab.reTypeSpinSystemsCheck.get()
-    self.typeSpinSystems = self.GUI.annealingSettingsTab.typeSpinSystemsCheck.get()
+    self.reTypeSpinSystems = not self.GUI.annealingSettingsTab.useTypeCheck.get()
+    self.typeSpinSystems = self.GUI.annealingSettingsTab.useAlsoUntypedSpinSystemsCheck.get()
     self.useDimenionalAssignments = self.GUI.annealingSettingsTab.useDimenionalAssignmentsCheck.get()
     self.amountOfRepeats = self.GUI.annealingSettingsTab.amountOfRepeats
     self.amountOfSteps = self.GUI.annealingSettingsTab.amountOfSteps
@@ -108,8 +109,10 @@ class Connector(object):
     
   def runAllCalculations(self):
     
-    self.update()
-    self.preCalculateDataModel()
+    if not self.ranPreCalculations:
+      self.update()
+      self.GUI.annealingSettingsTab.disableIllegalButtonsAfterPrecalculations()
+      self.preCalculateDataModel()
     self.startAnnealing()
     
   def preCalculateDataModel(self):
@@ -133,10 +136,10 @@ class Connector(object):
   def startAnnealing(self):
     
     if self.checkPoint2() :
-
-      self.update()
       
-      self.auto.startMonteCarlo(amountOfRuns=self.amountOfRepeats, stepsPerTemperature=self.amountOfSteps, acceptanceConstants=self.acceptanceConstantList)
+      self.auto.startMonteCarlo(amountOfRuns=self.amountOfRepeats, stepsPerTemperature=self.amountOfSteps,
+                                acceptanceConstants=self.acceptanceConstantList,
+                                fractionOfPeaksLeftOut=self.leavePeaksOutFraction)
     
       self.ranAnnealling = True
       
@@ -378,7 +381,7 @@ class ViewAssignmentPopup(BasePopup):
     
     self.connector = controler
     
-    self.waiting   = False
+    #self.waiting   = False
     
     BasePopup.__init__(self, parent, title= "Assignment Suggestions", **kw)
     

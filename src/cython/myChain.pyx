@@ -11,23 +11,14 @@ cdef class Chain :
        kwargs: ccpn chain instance
     
     '''
-    print 'B'
     self.ccpnChain = ccpnChain
-    print 'C'
     self.ccpnChainCode = ccpnChain.code
-    print 'D'
     self.molSystemCode = ccpnChain.molSystem.code
-    print 'E'
     self.residues = []
-    print 'F'
     self.residuesByCcpCode = {}
-    print 'G'
     self.setupResidues()
-    print 'H'
     self.linkResiduesTogether()
-    print 'I'
     self.addDummyResiduesAtEnds()
-    print 'J'
     
   cdef void setupResidues(self):
     '''Sets up all residues in the chain and stores them in self.residues
@@ -39,7 +30,6 @@ cdef class Chain :
     for res in self.ccpnChain.sortedResidues() :
       
       newresidue = Residue(self, res)
-
       self.residues.append(newresidue)
       
       if res.ccpCode in self.residuesByCcpCode :
@@ -81,12 +71,8 @@ cdef class Chain :
     
     '''
     cdef list residues
-    
     cdef int i
-    
-    cdef Residue res
-    
-    cdef Residue nextResidue
+    cdef Residue res, nextResidue
     
     residues = self.residues
     
