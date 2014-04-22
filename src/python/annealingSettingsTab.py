@@ -147,7 +147,7 @@ class AnnealingSettingsTab(object) :
     
     self.energyPlot = ScrolledGraph(frame,symbolSize=2, width=600,
                                        height=200, title='Annealing',
-                                       xLabel='time', yLabel='energy')
+                                       xLabel='temperature step', yLabel='energy')
     self.energyPlot.grid(row=row, column=0, columnspan=2, sticky='nsew')
     
   def runCalculations(self):
