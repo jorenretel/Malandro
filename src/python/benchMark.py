@@ -52,10 +52,8 @@ def calculatePercentages(res):
       
     manualAssigned = False
       
-  solutions = res.getSolutions()
-    
+  solutions = res.getSolutions()  
   Nsolutions = len(solutions)
-    
   solutionSet = set(solutions)      
     
   for spinSys in solutionSet :
@@ -68,8 +66,7 @@ def calculatePercentages(res):
       
       realSpinSystems.append(spinSys)
         
-        
-    
+
   for spinsys in realSpinSystems :
       
     assignmentPercentage = int(float(solutions.count(spinsys)) / Nsolutions * 100.0)
@@ -106,9 +103,9 @@ def calculatePercentages(res):
       #print '----'  
       #print spinSys.getCcpnResonanceGroup().residue.seqCode
       #print resSeqCode
-      if spinSys.getCcpnResonanceGroup().residue.seqCode == resSeqCode : #spinSys.getCcpnSeqCode() == resSeqCode :
+      if spinSys.getCcpnResonanceGroup().residue and spinSys.getCcpnResonanceGroup().residue.seqCode == resSeqCode :
             
-        agreePercentage = percent  
+        agreePercentage = percent
         
       elif not foundBad :
             
