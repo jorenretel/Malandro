@@ -14,6 +14,9 @@ cdef class myDataModel :
   cdef object nmrProject, project
 
   def __init__(self):
+    '''Init. Just sets up the bare minimum.
+    
+    '''
 
     self.spectra = []
     self.energies = []
@@ -171,7 +174,13 @@ cdef class myDataModel :
           self._makeSpinSystem(None, shiftList=shiftList, ccpCodes=[ccpCode], unAllowedResidues=assignedResidues)
         
   def _makeSpinSystem(self, resonanceGroup, shiftList, residues=None, ccpCodes=None, unAllowedResidues=None, minTypeScore=0.0):
-
+    '''Generate a spin-system containing the right amount of
+       information about which residues and amino acid types
+       this spin system can be assigned to.
+       kwargs:  resonanceGroup: ccpn resonanceGroup that is wrapped.
+                shiftlist:      shiftList that should be used
+                
+    '''
     cdef Residue residue
     
     residuesByCcpCode = self.chain.residuesByCcpCode
@@ -248,7 +257,7 @@ cdef class myDataModel :
       
       intraDict[spinSystemB.spinSystemNumber] = SpinSystemLink(residue1=resB,residue2=resB,spinSystem1=spinSystemB,spinSystem2=spinSystemB)
           
-  cdef void addToDictWithLists(self, dict dictToAddTo, key,value) :
+  cdef void addToDictWithLists(self, dict dictToAddTo, key,value) :       #Should not be here.
     
     if key in dictToAddTo :       
       
@@ -261,6 +270,9 @@ cdef class myDataModel :
   cdef list getResonancesForAtomSiteName(self, str atomSiteName) :
     '''Return all resonances of all spin systems in the model
        that fit the atomSite described by the atomSiteName.
+       kwargs:  atomSiteName: Name of atomSite. For example 'CA',
+                'HB' or 'Caro'.
+       returns: list of resonances
        
     '''
     
@@ -302,6 +314,9 @@ cdef class myDataModel :
        objects is lost. By running this method, the attributes that link to objects in the ccpn project are
        set again. Of course when the project has changed and objects have been removed,
        they can not be set again.
+       kwargs:  project: ccpnProject
+                nmrProject: nmrProject
+       returns: None
        
     '''
     
@@ -329,7 +344,15 @@ cdef class myDataModel :
     return self.chain
   
   def getSpinSystemSet(self, ccpCode=None):
-        
+    ''' Get all spin systems that could be assigned to
+        a specific amino acid type. If ccpCode (amino acid type tree
+        letter code) is not defined, all spin systems are returned.
+        kwargs: ccpCode:  tree letter code specifying an amino acid
+                          type. If not defined all spin systems are
+                          returned.
+        returns: set of spin systems.
+    '''
+    
     if ccpCode:
       spinSystemSet = set(self.spinSystems[ccpCode])
     else:
@@ -346,7 +369,11 @@ cdef class myDataModel :
     return self.spectra
   
   def getEnergy(self, runNumber):
-    
+    '''Returns the final energy of a given annealing run.
+       kwargs: runNumber: index (starting at 0) specifying the run.
+       returns: float final energy of the specified annealing run.
+       
+    '''
     return self.energies[runNumber]
   
   

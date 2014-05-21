@@ -53,7 +53,6 @@ cdef class SpinSystem :
     self.setupResonances()
     self.groupResonancesByAtomSite()
 
-
   cdef set getCcpCodes(self) :
     '''Return three-letter amino acid code this spin system could
       be assigned to.
@@ -373,7 +372,6 @@ cdef class SpinSystem :
     elif resonanceGroup.residueTypeProbs :
         
       typeProbCcpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
-      
       ccpCodeString = (('%s/' * len(typeProbCcpCodes)) %tuple(typeProbCcpCodes))[:-1]
       
       return '{%s}-%s' %(resonanceGroup.serial, ccpCodeString)
