@@ -11,7 +11,7 @@ cdef class SpinSystem :
   cdef public list solutions, userDefinedSolutions
   cdef public set allowedResidues, ccpCodes
   cdef dict resonanceDict, aminoAcidProbs, resonancesByAtomSiteName
-  cdef bint [:] allowedResidueView
+  cdef int [:] allowedResidueView
   
 
   def __init__(self, DataModel=None, ccpnResonanceGroup=None, allowedResidues=None, ccpCodes=None):
