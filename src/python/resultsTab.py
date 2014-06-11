@@ -144,9 +144,9 @@ class ResultsTab(object) :
 
     tipTexts = [ 'Spinsystem number {} indicates serial of the spinsystem. If the spinsystem was already assigned to a residue, the residue number is shown aswell',  'percentage of the solutions that connected this spinsystem to this residue']
 
-    editWidgets = [None, None]
+    editWidgets = [None, None, None]
 
-    editSetCallbacks = [None, None]
+    editSetCallbacks = [None, None, None]
     
     self.displayResultsTables = []
     self.residueLabels = []
