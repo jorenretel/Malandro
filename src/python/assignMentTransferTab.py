@@ -358,7 +358,7 @@ class AssignMentTransferTab(object) :
         
     for spinSystem in spinSystems :
       
-      if spinSystem.getCcpnSeqCode() == seqCode :
+      if spinSystem.getSeqCode() == seqCode :
         
         if self.skipResidue(res,spinSystem) :         # Just checking to make sure, analysis project could have changed
           
