@@ -571,57 +571,31 @@ cdef class Spectrum:
                 
     '''
     cdef object mixture
-    
     cdef double TotalCoLabellingFraction
-    
     cdef dict residueDict
-    
     cdef Atom atom
-    
     cdef double molWeightSum
-    
     cdef double resFactor
-    
     cdef object molResidue
-    
     cdef object ccpnAtom
-    
-    cdef frozenset molLabelFractions
-    
+    #cdef frozenset molLabelFractions
     cdef object mlf
-    
     cdef double molFactor
-    
     cdef object molLabel
-    
     cdef double colabellingOfAtomsInThismolLabelFraction
-    
     cdef double colabellingOfAtomsWithinThisResidue
-    
     cdef list ccpnAtomList
-    
     cdef str atomName
-    
     cdef object chemAtom
-    
     cdef dict fracDict
-    
     cdef double fraction
-    
     cdef list subTypes
-    
     cdef list atomNameList
-    
     cdef double addedColabelling
-    
     molLabelFractions = self.molLabelFractions
-  
     #mixture = self.ccpnSpectrum.experiment.findFirstLabeledMixture()
-      
     #molLabelFractions = mixture.molLabelFractions
-    
     molWeightSum = sum([x.weight for x in molLabelFractions])                                                               # This is the sum of weight of all labelling patterns present in the sample
-    
     residueDict = {}
     
     for atom, isotopeCode in zip(atoms, isotopeCodes) :                                                             # Group Atoms by residue
@@ -671,7 +645,7 @@ cdef class Spectrum:
 
     return TotalCoLabellingFraction 
          
-  cdef double getIsotopomerAtomSetFractions(self,set isotopomers, set atomIsotopeTuples) :
+  cdef double getIsotopomerAtomSetFractions(self,isotopomers, atomIsotopeTuples) :
     '''Returns the colabelling of atoms for the labelling
        scheme corresponding to this spectrum over a set of
        isotopomers.
