@@ -15,6 +15,10 @@ import ccpnmr.analysis.core.WindowBasic as WindowBasic
 from ccpnmr.analysis.core.WindowBasic import getSpectrumWindowView
 from ccp.general.Constants import standardResidueCcpCodes
 from assignmentFunctions import assignSpinSystemstoResidues
+import color
+reload(color)
+from color import pick_color_by_percentage
+
 
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
@@ -796,7 +800,7 @@ class ResultsTab(object) :
         percentage = 0
         
       oneRow.append(int(percentage+0.5))
-      color = self.pickColorByPercentage(percentage)
+      color = pick_color_by_percentage(percentage)
       oneRowColor = [color]*5
          
       data.append(oneRow)    
@@ -1032,7 +1036,7 @@ class ResultsTab(object) :
         
         objectList.append(spinsys)
         
-        color = self.pickColorByPercentage(assignmentPercentage)
+        color = pick_color_by_percentage(assignmentPercentage)
         
         oneRowColor = [color, color]
         
@@ -1054,7 +1058,7 @@ class ResultsTab(object) :
         
         oneRow.append(assignmentPercentage)
         
-        color = self.pickColorByPercentage(assignmentPercentage)
+        color = pick_color_by_percentage(assignmentPercentage)
         
         oneRowColor = [color, color]
         
@@ -1183,59 +1187,6 @@ class ResultsTab(object) :
     residues = self.dataModel.chain.residues[resNumber - 3 : resNumber + 2]
   
     return residues 
-
-  def pickColorByPercentage(self, percentage):
-
-    percentage = float(percentage)
-    
-    if percentage < 1 :
-      
-      return 'grey83'
-    
-    if percentage > 80 :
-
-      red = 0
-      green = int(percentage/100.0 * 255.0)
-      blue = int(255.0 - (percentage/100.0 * 255.0))
-      
-
-    elif percentage > 50 :
-
-      green = 0 
-      blue = int(percentage/80.0 * 255.0)
-      red = int(255.0 - (percentage/80.0 * 255.0))
-
-    else :
-
-      red = 255
-      green = 0
-      blue = 0
-
-    red = self.rgbToHex(red)
-    green = self.rgbToHex(green)
-    blue = self.rgbToHex(blue)
-
-    color = '#' + red + green + blue
-    return color
-    
-  def rgbToHex(self,rgb):
-
-    div = str(rgb/16)
-    rem = str(rgb%16)
-
-    for i in [['10','A'],['11','B'],['12','C'],['13','D'],['14','E'],['15','F']] :
-
-      if div == i[0] :
-        
-        div = i[1]
-
-      if rem == i[0] :
-        
-        rem = i[1]
-
-    h = div + rem
-
-    return h
  
   def toggleTab(self, index):
   
