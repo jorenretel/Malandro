@@ -149,30 +149,21 @@ class ResultsTab(object) :
     tipTexts = [ 'Spinsystem number {} indicates serial of the spinsystem. If the spinsystem was already assigned to a residue, the residue number is shown aswell',  'percentage of the solutions that connected this spinsystem to this residue']
 
     editWidgets = [None, None, None]
-
-    editSetCallbacks = [None, None, None]
     
     self.displayResultsTables = []
     self.residueLabels = []
-    
-    # Sorry for this one, but it saves a lot of lines of code with arbitrary function names. createCallBackFunction takes one argument 'tableNumber'
-    # and returns a function that also takes one argument 'spinSystem'. This function is called in the end when the user
-    # clicks on the table to select a spinsystem. What this function does is calling self.selectSpinSystem(tableNumber,spinSystem).
-    # In this way it is possible to create five tables in a loop but still tell self.selectSpinSystem from who the call came. 
-    createCallbackFunction = lambda tableNumber : (lambda spinSystem :  self.selectSpinSystem(tableNumber, spinSystem) )
-    
+        
     for i in range(5) :
       
       label = Label(resultsSecondFrame, text='residue')
       label.grid(row=0, column=i)
       
-      editGetCallbacks = [createCallbackFunction(i)]*3
+      #editGetCallbacks = [createCallbackFunction(i)]*3
       
-      displayResultsTable = ScrolledMatrix(resultsSecondFrame, headingList=headingList,
-                                       editWidgets=editWidgets, multiSelect=False,
-                                       editGetCallbacks=editGetCallbacks,
-                                       editSetCallbacks=editSetCallbacks,
-                                       tipTexts=tipTexts)
+      displayResultsTable = ScrolledMatrix(resultsSecondFrame, headingList=headingList, multiSelect=False,
+                                           tipTexts=tipTexts,callback=self.selectSpinSystemForTable,
+                                           passSelfToCallback=True)
+      
       displayResultsTable.grid(row=2, column=i, sticky='nsew')
       displayResultsTable.sortDown = False
       
@@ -326,6 +317,11 @@ class ResultsTab(object) :
     
     self.windowPane = 'None'
     self.updateWindows()
+  
+  def selectSpinSystemForTable(self, spinSystem, row, column, table):
+    
+    table_number = self.displayResultsTables.index(table)
+    self.selectSpinSystem(table_number, spinSystem)
     
   @lockUntillResults              
   def showResults(self):
@@ -820,12 +816,13 @@ class ResultsTab(object) :
   def adoptSolution(self):
     
     DataModel = self.dataModel
-    
     selectedSolution = self.selectedSolution
     
     for res in DataModel.chain.residues :
       
-      res.userDefinedSolution = res.solutions[selectedSolution-1]
+      spinSystem = res.solutions[selectedSolution-1]
+      res.userDefinedSolution = spinSystem
+      spinSystem.userDefinedSolutions = [res.getSeqCode()]
      
     self.updateLink()
     self.updateButtons()
