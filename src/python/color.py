@@ -1,12 +1,32 @@
 
+highLightRed = rgb_to_hex((227,26,28))
+highLightYellow = rgb_to_hex((253,191,111))
+_standardBackGroundColorRGB = (212,212,212) #This is grey83
+_niceGreenRGB = (0,130,60)
+
+#_niceGreenRGB = (51,160,44)
+
+# http://colorbrewer2.org/ qualitative 12 colors
+colorSeries = ['#a6cee3',
+                '#1f78b4',
+                '#b2df8a',
+                '#33a02c',
+                '#fb9a99',
+                '#e31a1c',
+                '#fdbf6f',
+                '#ff7f00',
+                '#cab2d6',
+                '#6a3d9a',
+                '#ffff99',
+                '#b15928']
 
 def pick_color_by_percentage(percentage, asHex=True):
   
-  standardBackGroundColorRGB = (212,212,212) #This is grey83
+  #standardBackGroundColorRGB = (212,212,212) #This is grey83
   #niceGreenRGB = (49,163,84)
   #niceGreenRGB = (0,69,41)
-  niceGreenRGB = (0,130,60)
-  RGB = pick_color_from_scale(percentage, standardBackGroundColorRGB, niceGreenRGB)
+  #niceGreenRGB = (0,130,60)
+  RGB = pick_color_from_scale(percentage, _standardBackGroundColorRGB, _niceGreenRGB)
   
   #RGB = grey_scale(RGB)
   
@@ -14,8 +34,7 @@ def pick_color_by_percentage(percentage, asHex=True):
     return rgb_to_hex(RGB)
   else:
     return RGB
-  
-  
+    
 def pick_color_from_scale(percentage, minRGB, maxRGB):
   
   percentage = float(percentage)
@@ -30,7 +49,6 @@ def pick_color_from_scale(percentage, minRGB, maxRGB):
 
   return tuple(newRGB)
   
-
 def pickColorByPercentage(percentage):
 
   percentage = float(percentage)

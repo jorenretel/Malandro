@@ -17,8 +17,7 @@ from ccp.general.Constants import standardResidueCcpCodes
 from assignmentFunctions import assignSpinSystemstoResidues
 import color
 reload(color)
-from color import pick_color_by_percentage
-
+from color import pick_color_by_percentage, highLightRed, highLightYellow
 
 
 AMINO_ACIDS = standardResidueCcpCodes['protein']
@@ -1120,7 +1119,7 @@ class ResultsTab(object) :
         
         if len(selectedSpinSystem.userDefinedSolutions) > 1 :
       
-          button.config(text=text,  bg='red')                                                           # The red color signals that the spinssystem is used in more than 1 place in the sequence
+          button.config(text=text,  bg=highLightRed)                                                           # The red color signals that the spinssystem is used in more than 1 place in the sequence
           
         else :
           
@@ -1139,23 +1138,23 @@ class ResultsTab(object) :
     if self.selectedResidueA :
       
       buttons = [self.sequenceButtons.buttons[0], self.sequenceButtons.buttons[2], self.sequenceButtons.buttons[4], self.sequenceButtons.buttons[6],self.sequenceButtons.buttons[8]]
-      buttons[self.selectedResidueA - 1].config(bg='yellow')
+      buttons[self.selectedResidueA - 1].config(bg=highLightYellow)
       
     
     elif self.selectedResidueB :
       
       buttons = [self.sequenceButtonsB.buttons[0], self.sequenceButtonsB.buttons[2], self.sequenceButtonsB.buttons[4], self.sequenceButtonsB.buttons[6],self.sequenceButtonsB.buttons[8]]
-      buttons[self.selectedResidueB - 1].config(bg='yellow')  
+      buttons[self.selectedResidueB - 1].config(bg=highLightYellow)  
     
     elif self.selectedLinkA :
       
       buttons = [self.sequenceButtons.buttons[1], self.sequenceButtons.buttons[3], self.sequenceButtons.buttons[5], self.sequenceButtons.buttons[7]]
-      buttons[self.selectedLinkA - 1].config(bg='yellow')
+      buttons[self.selectedLinkA - 1].config(bg=highLightYellow)
 
     elif self.selectedLinkB :
       
       buttons = [self.sequenceButtonsB.buttons[1], self.sequenceButtonsB.buttons[3], self.sequenceButtonsB.buttons[5], self.sequenceButtonsB.buttons[7]]
-      buttons[self.selectedLinkB - 1].config(bg='yellow')
+      buttons[self.selectedLinkB - 1].config(bg=highLightYellow)
   
   def updateEnergy(self):
     
@@ -1173,7 +1172,7 @@ class ResultsTab(object) :
     
     for button in self.sequenceButtons.buttons + self.sequenceButtonsB.buttons :
       
-      if button.enableFg == 'red' :
+      if button.enableFg == highLightRed :
       
         button.config(bg='grey83')
       

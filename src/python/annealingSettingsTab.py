@@ -8,6 +8,9 @@ from memops.gui.PulldownList import PulldownList
 from memops.gui.ScrolledGraph import ScrolledGraph
 from memops.gui.Entry import Entry
 from ccpnmr.analysis.core.AssignmentBasic import getShiftLists
+import color
+reload(color)
+from color import colorSeries
 
 class AnnealingSettingsTab(object) :
 
@@ -359,7 +362,9 @@ class AnnealingSettingsTab(object) :
       
       self.energyDataSets[-1].append(point)
       
-    colors = ['#993366','#000000','#FF0099','#33FF00','#003300','#999999','#FF6633','#000099','#33CCFF','#FFCC00']
+    #colors = ['#993366','#000000','#FF0099','#33FF00','#003300','#999999','#FF6633','#000099','#33CCFF','#FFCC00']
+    
+    colors = colorSeries
     
     Ncolors = len(colors)
     
