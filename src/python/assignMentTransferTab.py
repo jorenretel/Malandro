@@ -355,18 +355,25 @@ class AssignMentTransferTab(object) :
     ccpCode = res.ccpCode
     seqCode = res.getSeqCode()
     spinSystems= self.dataModel.getSpinSystems()[ccpCode]
-        
-    for spinSystem in spinSystems :
-      
-      if spinSystem.getSeqCode() == seqCode :
-        
-        if self.skipResidue(res,spinSystem) :         # Just checking to make sure, analysis project could have changed
-          
-          return None
-        
-        return spinSystem
     
-    return None        
+    ccpnResidue = res.getCcpnResidue()
+    if ccpnResidue:
+      assignedResonanceGroups = ccpnResidue.getResonanceGroups()
+      if len(assignedResonanceGroups) > 1:
+        print 'There is more than one spin system assigned to residue %s, did not know which one to use to assign peaks. Therefor this residue is skipped.' %(seqCode)
+        return
+      
+      assignedResonanceGroup = ccpnResidue.findFirstResonanceGroup()
+      
+      if assignedResonanceGroup:
+        
+        for spinSystem in spinSystems :
+          
+          if spinSystem.getCcpnResonanceGroup is assignedResonanceGroup :    
+            if not self.skipResidue(res,spinSystem) :         # Just checking to make sure, analysis project could have changed
+              
+              return spinSystem
+                   
    
   def getBestScoringSpinSystem(self, res) :
     
@@ -390,7 +397,7 @@ class AssignMentTransferTab(object) :
     
     userDefinedSpinSystem = res.userDefinedSolution
     
-    if not userDefinedSpinSystem.getIsJoker() and not self.skipResidue(res,userDefinedSpinSystem) :
+    if userDefinedSpinSystem and not userDefinedSpinSystem.getIsJoker() and not self.skipResidue(res,userDefinedSpinSystem) :
       
       return userDefinedSpinSystem
     
