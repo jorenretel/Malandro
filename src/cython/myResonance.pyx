@@ -145,6 +145,6 @@ cdef class Resonance :
       
       else :
       
-        print 'Error: could not find resonance %s, might be deleted or merged with other resonance' %str(self.serial)
+        print 'Error: could not find resonance %s, might be deleted or merged with other resonance. It is advisable to re-run the algorithm since the state of the project has changed.' %str(self.serial)
         
 

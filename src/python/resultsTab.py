@@ -492,7 +492,7 @@ class ResultsTab(object) :
 
           atomName = simulatedPeakContrib.getAtomName()
 
-          ccpCode = simulatedPeakContrib.getCcpCode()
+          #ccpCode = simulatedPeakContrib.getCcpCode()
 
           dimNumber = simulatedPeakContrib.getDimNumber()
 
@@ -637,7 +637,9 @@ class ResultsTab(object) :
           ccpnResonance = resonance.getCcpnResonance()
           ccpnDimension = dimension.getCcpnDimension()
           
-          assignResToDim(ccpnDimension, ccpnResonance)
+          if ccpnResonance and ccpnDimension :
+          
+            assignResToDim(ccpnDimension, ccpnResonance)
           
   def assignSelectedSpinSystemsToResidues(self) :
     
@@ -658,7 +660,7 @@ class ResultsTab(object) :
           ccpnSpinSystems.append(spinSys.getCcpnResonanceGroup())
           ccpnResidues.append(res.getCcpnResidue())
       
-      assignSpinSystemstoResidues(ccpnSpinSystems, ccpnResidues, guiParent=self)
+      assignSpinSystemstoResidues(ccpnSpinSystems, ccpnResidues, guiParent=self.guiParent)
       
       self.updateButtons()    
       self.updateButtons()

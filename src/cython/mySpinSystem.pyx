@@ -327,6 +327,10 @@ cdef class SpinSystem :
     
     resonanceGroup = self.getCcpnResonanceGroup()
     
+    if not resonanceGroup:
+      
+      return '{%s}' % self.spinSystemNumber
+    
     if resonanceGroup.residue :
       
       serial = '{%s}-' %resonanceGroup.serial
@@ -423,6 +427,6 @@ cdef class SpinSystem :
     
     else :
       
-      print 'Error: could not find spin system %s , it possibly does not exist anylonger because it was deleted or merged with another spin-system.' %str(self.spinSystemNumber)
+      print 'Error: could not find spin system %s , it possibly does not exist anylonger because it was deleted or merged with another spin-system. I advise to re-run the algorithm because the state of the project has changed.' %str(self.spinSystemNumber)
       return None
   

@@ -53,7 +53,7 @@ def assignSpinSystemstoResidues(spinSystems, residues, strategy=None, guiParent=
   
   
   # Determine the proposed mapping between spin systems and residues and the other way around. Only a unique mapping between residues and spin systems
-  # is used, bacause it is impossible to assign one spin system to different residues. Although it is technically possible to assign two spin systems
+  # is used, because it is impossible to assign one spin system to different residues. Although it is technically possible to assign two spin systems
   # to one residue that is not what I want to do (unless there is already a spin system assigned to the residue, in which case I'll ask what to do with it.).
   
   for spinSystem, residue in set(zip(spinSystems,residues)) :
