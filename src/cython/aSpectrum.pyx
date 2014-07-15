@@ -676,12 +676,12 @@ cdef class Spectrum:
     
     return labellingFraction
 
-  cdef void findPossiblePeakContributions(self,useDimenionalAssignments=False) :
+  cdef void findPossiblePeakContributions(self,useDimensionalAssignments=False) :
     '''Performs a two-way mapping between peak dimensions and resonances.
        every peak dimension gets a list of resonances that withing the assignment
        tolerance of the spectrum (peakDimension.possibleContributions). Likewise
        every resonance gets a dict with peak dimensions.
-       kwargs:  useDimenionalAssignments: boolean, indicating whether to use
+       kwargs:  useDimensionalAssignments: boolean, indicating whether to use
                                           dimensional assignments that are present
                                           in the analysis project.
        returns: void
@@ -699,6 +699,7 @@ cdef class Spectrum:
     cdef double tolerance
     
     dimAtomsDict = {}
+    
 
     if self.peaks:
       
@@ -727,10 +728,10 @@ cdef class Spectrum:
         
         assignedContributions = dim.ccpnDim.peakDimContribs
         
-        if assignedContributions and ( useDimenionalAssignments is True or peak.intraResidual ) :
+        if assignedContributions and ( useDimensionalAssignments is True or peak.intraResidual ) :
           
-          assignedResonanceSerials = set([contrib.resonance for contrib in assignedContributions])
-          
+          assignedResonanceSerials = set([contrib.resonance.serial for contrib in assignedContributions if contrib.resonance])
+
           for resonance in resonances :
             
             if resonance.serial in assignedResonanceSerials :

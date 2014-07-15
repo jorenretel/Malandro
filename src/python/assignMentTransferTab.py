@@ -373,8 +373,7 @@ class AssignMentTransferTab(object) :
             if not self.skipResidue(res,spinSystem) :         # Just checking to make sure, analysis project could have changed
               
               return spinSystem
-                   
-   
+      
   def getBestScoringSpinSystem(self, res) :
     
     ccpCode = res.ccpCode
@@ -397,31 +396,31 @@ class AssignMentTransferTab(object) :
     
     userDefinedSpinSystem = res.userDefinedSolution
     
-    if userDefinedSpinSystem and not userDefinedSpinSystem.getIsJoker() and not self.skipResidue(res,userDefinedSpinSystem) :
+    if userDefinedSpinSystem and not userDefinedSpinSystem.getIsJoker() and not self.skipResidue(res,userDefinedSpinSystem):
       
       return userDefinedSpinSystem
     
     return None
   
-  def getSelectedSolutionSpinSystem(self, res) :
+  def getSelectedSolutionSpinSystem(self, res):
     
     solutions = res.solutions
     
     spinSystem = solutions[self.selectedSolution-1]
     
-    if not spinSystem.getIsJoker() and not self.skipResidue(res,spinSystem) :
+    if not spinSystem.getIsJoker() and not self.skipResidue(res,spinSystem):
       
       return spinSystem
     
     return None
   
-  def skipResidue(self,residue,spinSystem) :
+  def skipResidue(self,residue,spinSystem):
     
     if self.strategy == 0 :
       
       assignedSpinSystems = residue.getCcpnResidue().getResonanceGroups()
       
-      if assignedSpinSystems and spinSystem not in assignedSpinSystems :
+      if assignedSpinSystems and spinSystem not in assignedSpinSystems:
         
         return True
       

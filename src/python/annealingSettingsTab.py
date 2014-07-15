@@ -131,7 +131,7 @@ class AnnealingSettingsTab(object) :
 
     label = Label(frame, text='Use dimensional assignments:', grid=(row,0))      
     tipText = 'If one or more dimensions of a peak is already assigned, assume that this assignment is the only option. If not the check the program will consider all possibilities for the assignment of the dimension.'
-    self.useDimenionalAssignmentsCheck = CheckButton(frame, selected=True, tipText=tipText, grid=(row,1))
+    self.useDimensionalAssignmentsCheck = CheckButton(frame, selected=True, tipText=tipText, grid=(row,1))
     
     row += 1
 
@@ -165,7 +165,7 @@ class AnnealingSettingsTab(object) :
     
     illegalButtons = [self.minTypeScoreEntry, self.minLabelEntry,
                       self.useAlsoUntypedSpinSystemsCheck, self.useAssignmentsCheck,
-                      self.useTypeCheck, self.useDimenionalAssignmentsCheck,
+                      self.useTypeCheck, self.useDimensionalAssignmentsCheck,
                       self.useTentativeCheck]
     
     for illegalButton in illegalButtons :

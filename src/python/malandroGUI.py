@@ -83,7 +83,7 @@ class Connector(object):
     self.useTentative = self.GUI.annealingSettingsTab.useTentativeCheck.get()
     self.reTypeSpinSystems = not self.GUI.annealingSettingsTab.useTypeCheck.get()
     self.typeSpinSystems = self.GUI.annealingSettingsTab.useAlsoUntypedSpinSystemsCheck.get()
-    self.useDimenionalAssignments = self.GUI.annealingSettingsTab.useDimenionalAssignmentsCheck.get()
+    self.useDimensionalAssignments = self.GUI.annealingSettingsTab.useDimensionalAssignmentsCheck.get()
     self.amountOfRepeats = self.GUI.annealingSettingsTab.amountOfRepeats
     self.amountOfSteps = self.GUI.annealingSettingsTab.amountOfSteps
     self.minTypeScore = self.GUI.annealingSettingsTab.minTypeScore

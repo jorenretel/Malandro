@@ -29,7 +29,7 @@ acceptanceConstants = [0.0, 0.01, 0.015, 0.022, 0.033,
 cdef class Malandro :
   
   cdef public myDataModel DataModel
-  cdef bint useAssignments, useTentative, typeSpinSystems, reTypeSpinSystems, useDimenionalAssignments
+  cdef bint useAssignments, useTentative, typeSpinSystems, reTypeSpinSystems, useDimensionalAssignments
   cdef object project, shiftList, nmrProject, chain
   cdef double minTypeScore, minIsoFrac
   cdef list selectedSpectra
@@ -71,7 +71,7 @@ cdef class Malandro :
     self.selectedSpectra = connector.selectedSpectra
     self.typeSpinSystems = connector.typeSpinSystems
     self.reTypeSpinSystems = connector.reTypeSpinSystems
-    self.useDimenionalAssignments = connector.useDimenionalAssignments
+    self.useDimensionalAssignments = connector.useDimensionalAssignments
     
   def preCalculateDataModel(self):
     '''Creates the data model for the calculations and sequentially
@@ -358,7 +358,7 @@ cdef class Malandro :
       info = 'Evaluating dimensional contributions to peaks: ' + spectrum.name
       self.notifyTextObservers(info)
       
-      spectrum.findPossiblePeakContributions(self.useDimenionalAssignments)
+      spectrum.findPossiblePeakContributions(self.useDimensionalAssignments)
 
   cdef void setupSpinSystemExchange(self):
     
