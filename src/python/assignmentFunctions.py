@@ -190,7 +190,7 @@ def askToMergeSpinSystems(residue,newSpinSystem,oldSpinSystems,guiParent=None) :
   title = 'Merge'
   amountOfOld = len(oldSpinSystems)
 
-  if amountOfOld == 1 :
+  if amountOfOld == 1:
 
     oldSpinSystem = oldSpinSystems[0]
 

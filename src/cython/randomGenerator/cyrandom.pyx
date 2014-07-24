@@ -21,7 +21,7 @@ from ._random cimport (
 from numpy cimport int64_t, uint8_t, uint64_t
 import cython
 import numpy as np
-
+#cimport numpy as np
 
 cdef class Random:
     """Random number generator using Mersenne Twister.
@@ -216,10 +216,10 @@ cdef class Random:
             msg = 'empty range:  ({0}, {1}, {2})'
             raise ValueError(msg.format(start, stop, step))
         return output
-    
+
     cdef int cy_randrange(self, start, stop, step):
         """Same as py_randrange, but than faster accesible.
-        
+
         Can be handy instead of randrange, because no pointer for
         the output has to be given.
         """
@@ -234,7 +234,7 @@ cdef class Random:
             msg = 'empty range:  ({0}, {1}, {2})'
             raise ValueError(msg.format(start, stop, step))
         return output
-    
+
     @cython.cdivision(True)
     cdef int randrange(self, int64_t start, int64_t stop, int64_t step,
                        int64_t *output) nogil:
@@ -273,7 +273,7 @@ cdef class Random:
             return -2
         output[0] = start + step * <int64_t> self._randbelow(n)
         return 0
-    
+
 
     def py_randint(self, a, b):
         """Return random integer in range [a, b], including both end points.
@@ -294,7 +294,7 @@ cdef class Random:
         """Return random integer in range [a, b], including both end points.
         """
         return self.randrange(a, b + 1, 1, output)
-    
+
     def py_uniform(self, a, b):
         """Return a random double precision floating point number in the
         range [a, b].
