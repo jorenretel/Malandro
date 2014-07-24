@@ -14,6 +14,7 @@ def assignSpinSystemResidueMinimal(spinSystem,residue=None):
     molResidue = residue.molResidue
     if spinSystem.ccpCode != molResidue.ccpCode:
       spinSystem.setCcpCode(None)
+
     molType = molResidue.molType
     spinSystem.setResidue(residue)
     spinSystem.setCcpCode(molResidue.ccpCode)
