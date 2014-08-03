@@ -600,11 +600,9 @@ cdef class Malandro:
         for res in residues:
 
             nextRes = res.nextResidue
-            link = res.getFromLinkDict(
-                res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
+            link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
             # + link.score
-            score += sum([1.0 / pl.peak.degeneracy *
-                          pl.preMultipliedScore for pl in link.activePeakLinks])
+            score += sum([1.0 / pl.peak.degeneracy * pl.preMultipliedScore for pl in link.activePeakLinks])
 
         self.score = score
 
