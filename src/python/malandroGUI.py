@@ -497,11 +497,9 @@ class ViewAssignmentPopup(BasePopup):
     def destroy(self):
 
         self.administerNotifiers(self.unregisterNotify)
-
         BasePopup.destroy(self)
 
     def updateInfoText(self, string):
 
         self.infoLabel.set(string)
-
         self.infoLabel.update()
