@@ -1135,7 +1135,7 @@ class ResultsTab(object):
 
             # str(res.getSeqCode()) + ' ' + res.getCcpCode() + ': ' +
             # spinsys.getDescription()
-            # #self.getStringDescriptionOfSpinSystem(spinsys)
+            # self.getStringDescriptionOfSpinSystem(spinsys)
             text = spinsys.getDescription(noSerialWhenSeqCodeIsPresent=False)
 
             button.config(text=text)

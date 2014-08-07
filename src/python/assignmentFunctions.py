@@ -1,9 +1,24 @@
+'''Some functions to assign spin systems to
+   residues in the ccpn analysis project.
+   In principle a lot of this functionality
+   is already present in
+   ccpnmr.analysis.core.AssignmentBasic.
+   However, when more than one spin system
+   has to be assigned to a more than one
+   residue at the same time, somewhat
+   more checks have to be performed.
+'''
 
 from memops.gui.MessageReporter import showMulti
-from ccpnmr.analysis.core.AssignmentBasic import mergeSpinSystems,assignResonanceResidue, findConnectedSpinSystem, clearSeqSpinSystemLinks
+from ccpnmr.analysis.core.AssignmentBasic import (mergeSpinSystems,
+                                                  assignResonanceResidue,
+                                                  findConnectedSpinSystem,
+                                                  clearSeqSpinSystemLinks)
 
 
 def assignSpinSystemResidueMinimal(spinSystem, residue=None):
+    '''Assign a spin system to a residue.
+    '''
 
     for resonanceProb in spinSystem.resonanceProbs:
         # NBNB TBD should this happen??? Rasmus Jan 2010
@@ -30,31 +45,59 @@ def assignSpinSystemResidueMinimal(spinSystem, residue=None):
             assignResonanceResidue(resonance, None)
 
 
-def assignSpinSystemstoResidues(spinSystems, residues, strategy=None, guiParent=None):
-    ''' input: ccpn objects
+def assignSpinSystemstoResidues(spinSystems, residues,
+                                strategy=None, guiParent=None):
+    ''' This method is somewhat different than multiple calls
+        to assignmentBasic.assignSpinSystemResidue does.
+        If you want to assign more spin systems in one go,
+        you should prevent merging 2 spin systems A and B if
+        B possibly needs to be assigned in a next iteration
+        to another residue.
+        Also multiple calls to assignmentBasic.assignSpinSystem
+        would cause unnescesarry breaking of sequential links,
+        because they don't fit the assignment temporarely.
+        In this funtion, non-valid sequential links are only
+        corrected after all assignments have been made.
+        Also, present sequential links are ignored in this
+        function, in the sense that linked spin systems are not
+        automatically assigned to neighboring residues because
+        they might conflict with the answer the annealing presented.
+        Also no new sequential links are made.
+        args:    spinSystems: list of spin systems
+                 residues:    list of corrsponding residues
+        kwargs:  strategy: what to do when if a spin systems
+                           should be assigned to a residue that
+                           already has a spin system assignment.
+                           five possibilities:
+                               1) None, in this case the user is
+                                        asked every single time
+                                        this happens.
+                               2) 'skip', leave the old spin
+                                          system assignment.
+                               3) 'noMerge', assign but do not
+                                   merge.
+                               4) 'remove', remove old spin
+                                            system assignment
+                               4) 'merge', assign and merge.
+                 guiParent: nescesarry to raise a popup to
+                            ask for a merging strategy, only
+                            important when strategy=None
+
 
         output: None
-
-        This method is somewhat different than multiple calls to assignmentBasic.assignSpinSystemResidue does.
-        If you want to assign more spin systems in one go, you should prevent merging 2 spin systems
-        A and B if B possibly needs to be assigned in a next iteration to another residue.
-        Also multiple calls to assignmentBasic.assignSpinSystem would cause unnescesarry breaking of sequential links,
-        because they don't fit the assignment temporarely. In this funtion, non-valid sequential links are only corrected after
-        all assignments have been made. Also, present sequential links are ignored in this function, in the sense that linked
-        spin systems are not automatically assigned to neighboring residues because they might conflict with the answer the
-        annealing presented. Also no new sequential links are
     '''
 
     #proposedSRdict = {}
     proposedRSdict = {}
-
     visitedSpinSystems = set()
     visitedResidues = set()
-
     deAssignedSpinSystems = set()
 
-    # Determine the proposed mapping between spin systems and residues and the other way around. Only a unique mapping between residues and spin systems
-    # is used, because it is impossible to assign one spin system to different residues. Although it is technically possible to assign two spin systems
+    # Determine the proposed mapping between spin systems and residues and
+    # the other way around. Only a unique mapping between residues and
+    # spin systems is used, because it is impossible to assign one spin
+    # system to different residues.
+    # Although it is technically possible to assign two spin systems
     # to one residue that is not what I want to do (unless there is already a
     # spin system assigned to the residue, in which case I'll ask what to do
     # with it.).
@@ -73,7 +116,8 @@ def assignSpinSystemstoResidues(spinSystems, residues, strategy=None, guiParent=
         visitedSpinSystems.add(spinSystem)
         visitedResidues.add(residue)
 
-    # Figuring out which of the spin systems assigned to the targetted residues are not going to be shuffled around, they potentially have to get
+    # Figuring out which of the spin systems assigned to the targetted
+    #residues are not going to be shuffled around, they potentially have to get
     # merged or correct assignment might already be present
     assignSpinSystems = set(proposedRSdict.values())
 
@@ -105,8 +149,10 @@ def assignSpinSystemstoResidues(spinSystems, residues, strategy=None, guiParent=
 
             else:
 
-                tempStrategy = strategy or askToMergeSpinSystems(
-                    residue, spinSystem, nonMovingSpinSystems + placeHolderSpinSystems, guiParent=guiParent)
+                tempStrategy = strategy or askToMergeSpinSystems(residue,
+                                spinSystem,
+                                nonMovingSpinSystems + placeHolderSpinSystems,
+                                guiParent=guiParent)
                 # options are: 'merge','remove','noMerge','skip'
 
                 if tempStrategy == 'skip':
@@ -187,8 +233,24 @@ def assignSpinSystemstoResidues(spinSystems, residues, strategy=None, guiParent=
                             clearSeqSpinSystemLinks(spinSystem, delta=i)
 
 
-def askToMergeSpinSystems(residue, newSpinSystem, oldSpinSystems, guiParent=None):
+def askToMergeSpinSystems(residue, newSpinSystem,
+                          oldSpinSystems, guiParent=None):
+    '''Raise popup and ask how to go about merging
+       two spinSystems that are going to be assigned to
+       the same residue.
+       args: residue:  the residue both spin systems need
+                       to be assigned to.
+       newSpinSystem:  the spin system to is about to be
+                       assigned to the residue.
+       oldSpinSystems: spin systems already assigned to
+                       the residue.
+       guiParent:      gui object. Nescesarry to raise the popup.
 
+       return: one of four stategies: 1) 'merge'
+                                      2) 'remove'
+                                      3) 'noMerge'
+                                      4) 'skip'
+    '''
     title = 'Merge'
     amountOfOld = len(oldSpinSystems)
 
@@ -210,7 +272,8 @@ def askToMergeSpinSystems(residue, newSpinSystem, oldSpinSystems, guiParent=None
 
     objects = ['merge', 'remove', 'noMerge', 'skip']
 
-    strategy = showMulti(
-        title, message, texts, objects=objects, parent=guiParent)
+    strategy = showMulti(title, message,
+                         texts, objects=objects,
+                         parent=guiParent)
 
     return strategy
