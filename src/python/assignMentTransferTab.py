@@ -471,7 +471,9 @@ class AssignMentTransferTab(object):
 
             if self.sequential:
 
-                for residue, spinSystemA, spinSystemB in zip(residues, spinSystemSequence, spinSystemSequence[1:]):
+                for residue, spinSystemA, spinSystemB in zip(residues,
+                                                             spinSystemSequence,
+                                                             spinSystemSequence[1:]):
 
                     if not spinSystemA or not spinSystemB:
 

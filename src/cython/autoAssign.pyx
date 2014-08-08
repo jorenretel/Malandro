@@ -8,7 +8,11 @@ from cython.view cimport array as cvarray
 from time import time
 from ccpnmr.analysis.core.ChemicalShiftBasic import getShiftsChainProbabilities
 from ccpnmr.analysis.core.MoleculeBasic import getResidueCode
-from ccp.util.LabeledMolecule import getIsotopomerSingleAtomFractions, getIsotopomerAtomPairFractions,  atomPairFrac,  atomPairFractions
+from ccp.util.LabeledMolecule import (getIsotopomerSingleAtomFractions,
+                                      getIsotopomerAtomPairFractions,
+                                      atomPairFrac,
+                                      atomPairFractions)
+
 from ccpnmr.analysis.core.Util import getAnalysisDataDim
 from generalFactory import generalFactory
 
@@ -29,7 +33,8 @@ acceptanceConstants = [0.0, 0.01, 0.015, 0.022, 0.033,
 cdef class Malandro:
 
     cdef public myDataModel DataModel
-    cdef bint useAssignments, useTentative, typeSpinSystems, reTypeSpinSystems, useDimensionalAssignments
+    cdef bint useAssignments, useTentative, typeSpinSystems
+    cdef bint reTypeSpinSystems, useDimensionalAssignments
     cdef object project, shiftList, nmrProject, chain
     cdef double minTypeScore, minIsoFrac
     cdef list selectedSpectra
@@ -52,10 +57,11 @@ cdef class Malandro:
         return self.DataModel
 
     def updateSettings(self,  connector):
-        ''''This method is used to fetch all important parameters from the 'connector'
-        class, that stores all connects the GUI to the algorithm. All important settings
-        are fetched from the GUI by the connector and passed on to the algorithm.
-        This to prevent mixing the GUI and the algorithm, which might be unhandy when
+        ''''This method is used to fetch all important parameters from
+        the 'connector' class, that stores all connects the GUI to the
+        algorithm. All important settings are fetched from the GUI by
+        the connector and passed on to the algorithm. This to prevent
+        mixing the GUI and the algorithm, which might be unhandy when
         a new GUI has to be written.
 
         '''
@@ -77,9 +83,10 @@ cdef class Malandro:
     def preCalculateDataModel(self):
         '''Creates the data model for the calculations and sequentially
            sets up everything that is needed to run the annealing later,
-           like simulating the spectra, finding out which resonances could
-           contribute to which peak dimensions. Matching the simulated
-           with the real spectra and introducing joker spin systems.
+           like simulating the spectra, finding out which resonances
+           could contribute to which peak dimensions. Matching the
+           simulated with the real spectra and introducing joker spin
+           systems.
 
         '''
         sendText = self.notifyTextObservers
@@ -91,10 +98,15 @@ cdef class Malandro:
         self.DataModel.nmrProject = self.nmrProject
         self.DataModel.setupSpectra(self.selectedSpectra)
         self.DataModel.setupChain(self.chain)
-        self.DataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups, shiftList=self.shiftList,
-                                        useAssignments=self.useAssignments, useTentative=self.useTentative,
-                                        useType=not self.reTypeSpinSystems, includeUntypedSpinSystems=self.typeSpinSystems,
-                                        minTypeScore=self.minTypeScore, makeJokers=True)
+        self.DataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups,
+                                        shiftList=self.shiftList,
+                                        useAssignments=self.useAssignments,
+                                        useTentative=self.useTentative,
+                                        useType=not self.reTypeSpinSystems,
+                                        includeUntypedSpinSystems=self.typeSpinSystems,
+                                        minTypeScore=self.minTypeScore,
+                                        makeJokers=True)
+
         sendText('Simulating spectra...')
         self.DataModel.setupLinks()
         self.simulateSpectra(minIsoFrac=self.minIsoFrac)
@@ -141,7 +153,8 @@ cdef class Malandro:
             residue.currentSpinSystemAssigned = spinSystem
             usedSpinSystems.add(spinSystem)
 
-    def runAnnealling(self, stepsPerTemperature=10000, acceptanceConstants=acceptanceConstants):
+    def runAnnealling(self, stepsPerTemperature=10000,
+                      acceptanceConstants=acceptanceConstants):
         '''Runs one full annealling by going through a list
            of temperature constants and calling annealingSub
            with it.
@@ -150,14 +163,15 @@ cdef class Malandro:
 
         cdef SpinSystem spinSystem
 
-        # Only spin systems that can change assignment during the monte carlo procedure
-        # are relevant, all others will stay were they are anyway.
-        relevantSpinSystems = [spinSystem for spinSystem in self.DataModel.getSpinSystemSet(
-        ) if spinSystem.exchangeSpinSystems]
+        # Only spin systems that can change assignment during the monte
+        # carlo procedureare relevant, all others will stay were they
+        # are anyway.
+        relevantSpinSystems = [spinSystem for spinSystem in self.DataModel.getSpinSystemSet() if spinSystem.exchangeSpinSystems]
 
-        # For every annealing I create a new instance of the mersenne twister random number generator.
-        # As a seed I use a number from the linear congruential generator present in the c standard
-        # library.
+        # For every annealing I create a new instance of the mersenne
+        # twister random number generator. As a seed I use a number from
+        # the linear congruential generator present in the c standard library.
+
         rng = Random()
 
         if relevantSpinSystems:
@@ -165,8 +179,10 @@ cdef class Malandro:
             for x, acceptanceConstant in enumerate(acceptanceConstants):
 
                 rng.seed(rand())
-                self.annealingSub(
-                    acceptanceConstant, stepsPerTemperature, relevantSpinSystems, rng)
+                self.annealingSub(acceptanceConstant,
+                                  stepsPerTemperature,
+                                  relevantSpinSystems, rng)
+
                 self.scoreInitialAssignment()
                 self.notifyEnergyObservers(self.score, x + 1)
 
@@ -190,14 +206,18 @@ cdef class Malandro:
 
         self.DataModel.energies.append(self.score * -1)
 
-    def startMonteCarlo(self, amountOfRuns=1, stepsPerTemperature=10000, acceptanceConstants=acceptanceConstants, fractionOfPeaksLeftOut=0.0):
+    def startMonteCarlo(self, amountOfRuns=1, stepsPerTemperature=10000,
+                        acceptanceConstants=acceptanceConstants,
+                        fractionOfPeaksLeftOut=0.0):
+
         '''Run the optimization for a number of times
            as defined in amountOfRuns.
 
         '''
 
         info = 'Running annealing number %s out of ' + \
-            str(amountOfRuns) + '...'
+               str(amountOfRuns) + '...'
+
         # Seeding the linear congruential pseudo-random number generator
         srand(int(time() * 1000000 % 10000000))
 
@@ -211,8 +231,8 @@ cdef class Malandro:
             self.notifyTextObservers(info % str(run + 1))
             self.scoreInitialAssignment()
             self.notifyEnergyObservers(self.score, 0)
-            self.runAnnealling(
-                stepsPerTemperature=stepsPerTemperature, acceptanceConstants=acceptanceConstants)
+            self.runAnnealling(stepsPerTemperature=stepsPerTemperature,
+                               acceptanceConstants=acceptanceConstants)
             self.storeResults()
 
         self.notifyTextObservers('Done')
@@ -260,8 +280,8 @@ cdef class Malandro:
         for res in residues:
 
             nextRes = res.nextResidue
-            link = res.getFromLinkDict(
-                res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
+            link = res.getFromLinkDict(res.currentSpinSystemAssigned,
+                                       nextRes.currentSpinSystemAssigned)
 
             for pl in link.activePeakLinks:
 
@@ -353,9 +373,8 @@ cdef class Malandro:
 
         for spectrum in DataModel.spectra:
 
-            self.notifyTextObservers(
-                'Match simulated with real spectrum: ' + spectrum.name)
-
+            info = 'Match simulated with real spectrum: %s' % spectrum.name
+            self.notifyTextObservers(info)
             spectrum.match()
 
     cdef void calculateAllPeakContributions(self):
@@ -368,7 +387,7 @@ cdef class Malandro:
         for spectrum in self.DataModel.spectra:
 
             info = 'Evaluating dimensional contributions to peaks: ' + \
-                spectrum.name
+                   spectrum.name
             self.notifyTextObservers(info)
 
             spectrum.findPossiblePeakContributions(
@@ -385,7 +404,9 @@ cdef class Malandro:
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.nonecheck(False)
-    cdef void annealingSub(self, double AcceptanceConstant, int stepsPerTemperature, list listWithSpinSystems, Random rng):
+    cdef void annealingSub(self, double AcceptanceConstant,
+                           int stepsPerTemperature,
+                           list listWithSpinSystems, Random rng):
 
         cdef int improvements, equals, worse, r, seqCodeA, seqCodeB, deltaLinkScore, lengthOfListWithSpinSystems, path
         cdef double score, DeltaScore
@@ -406,10 +427,10 @@ cdef class Malandro:
 
             r = rng.cy_randrange(0, lengthOfListWithSpinSystems, 1)
             #r = int(rand()/(randMax+1)*lengthOfListWithSpinSystems)
-            A = <SpinSystem > listWithSpinSystems[r]
+            A = <SpinSystem> listWithSpinSystems[r]
             exchangeSpinSystems = A.exchangeSpinSystems
             r = rng.cy_randrange(0, len(exchangeSpinSystems), 1)
-            B = <SpinSystem > exchangeSpinSystems[r]
+            B = <SpinSystem> exchangeSpinSystems[r]
 
             currentResidueA = A.currentResidueAssignment
             currentResidueB = B.currentResidueAssignment
@@ -448,11 +469,12 @@ cdef class Malandro:
                     l5 = previousResA.getFromLinkDict(Am1, B)
                     l6 = currentResidueB.getFromLinkDict(A, Bp1)
 
-                    #deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
                     oldPeaks = l1.activePeakLinks + \
-                        l2.activePeakLinks + l3.activePeakLinks
+                               l2.activePeakLinks + \
+                               l3.activePeakLinks
                     newPeaks = l4.activePeakLinks + \
-                        l5.activePeakLinks + l6.activePeakLinks
+                               l5.activePeakLinks + \
+                               l6.activePeakLinks
                     peakSet = oldPeaks + newPeaks
 
                 # sequential pair BA
@@ -468,11 +490,12 @@ cdef class Malandro:
                     l5 = previousResB.getFromLinkDict(Bm1, A)
                     l6 = currentResidueA.getFromLinkDict(B, Ap1)
 
-                    #deltaLinkScore = l4.score + l5.score + l6.score - (l1.score + l2.score + l3.score)
                     oldPeaks = l1.activePeakLinks + \
-                        l2.activePeakLinks + l3.activePeakLinks
+                               l2.activePeakLinks + \
+                               l3.activePeakLinks
                     newPeaks = l4.activePeakLinks + \
-                        l5.activePeakLinks + l6.activePeakLinks
+                               l5.activePeakLinks + \
+                               l6.activePeakLinks
                     peakSet = oldPeaks + newPeaks
 
                 # A and B are not sequential
@@ -492,7 +515,6 @@ cdef class Malandro:
                     l7 = previousResB.getFromLinkDict(Bm1, A)
                     l8 = currentResidueB.getFromLinkDict(A, Bp1)
 
-                    #deltaLinkScore = l5.score + l6.score + l7.score + l8.score - (l1.score + l2.score + l3.score + l4.score)
                     oldPeaks = l1.activePeakLinks + l2.activePeakLinks + \
                         l3.activePeakLinks + l4.activePeakLinks
                     newPeaks = l5.activePeakLinks + l6.activePeakLinks + \
@@ -521,7 +543,6 @@ cdef class Malandro:
                 l3 = previousResA.getFromLinkDict(Am1, B)
                 l4 = currentResidueA.getFromLinkDict(B, Ap1)
 
-                #deltaLinkScore = l3.score + l4.score - (l1.score + l2.score)
                 oldPeaks = l1.activePeakLinks + l2.activePeakLinks
                 newPeaks = l3.activePeakLinks + l4.activePeakLinks
                 peakSet = oldPeaks + newPeaks
@@ -556,8 +577,9 @@ cdef class Malandro:
 
                 continue
 
-            DeltaScore = CcalcDeltaPeakScore(
-                peakSet, oldPeaks, newPeaks)  # + deltaLinkScore
+            DeltaScore = CcalcDeltaPeakScore(peakSet,
+                                             oldPeaks,
+                                             newPeaks)
 
             if DeltaScore >= 0 or exp(AcceptanceConstant * DeltaScore) > rng.random():
 
@@ -571,16 +593,13 @@ cdef class Malandro:
                 A.currentResidueAssignment = currentResidueB
 
                 if path == 0:
-
                     currentResidueA.currentSpinSystemAssigned = B
                     currentResidueB.currentSpinSystemAssigned = A
 
                 elif path == 1:
-
                     currentResidueA.currentSpinSystemAssigned = B
 
                 else:
-
                     currentResidueB.currentSpinSystemAssigned = A
 
         self.score = score
@@ -600,7 +619,8 @@ cdef class Malandro:
         for res in residues:
 
             nextRes = res.nextResidue
-            link = res.getFromLinkDict(res.currentSpinSystemAssigned, nextRes.currentSpinSystemAssigned)
+            link = res.getFromLinkDict(res.currentSpinSystemAssigned,
+                                       nextRes.currentSpinSystemAssigned)
             # + link.score
             score += sum([1.0 / pl.peak.degeneracy * pl.preMultipliedScore for pl in link.activePeakLinks])
 

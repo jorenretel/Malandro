@@ -1,41 +1,34 @@
 
 
-cdef class Atom :
+cdef class Atom:
 
-  cdef object ccpnAtom
+    cdef object ccpnAtom
+    cdef str atomName
+    cdef Residue residue
+    cdef list assignmentPossibilityDimensions
+    cdef dict labelInfoTemp
 
-  cdef str atomName
+    def __init__(self, residue, ccpnAtom):
 
-  cdef Residue residue
+        self.residue = residue
+        self.ccpnAtom = ccpnAtom
+        self.atomName = ccpnAtom.chemAtom.name
+        self.assignmentPossibilityDimensions = []
+        self.labelInfoTemp = {}
 
-  cdef list assignmentPossibilityDimensions
-  
-  cdef dict labelInfoTemp 
+    def __reduce__(self):
 
-  def __init__(self, residue, ccpnAtom):
-    
-    self.residue = residue
-    
-    self.ccpnAtom = ccpnAtom
-    
-    self.atomName = ccpnAtom.chemAtom.name
+        return (generalFactory, (type(self),), self.__getstate__())
 
-    self.assignmentPossibilityDimensions = []
-    
-    self.labelInfoTemp = {}
-    
-  def __reduce__(self) :
+    def __getstate__(self):
 
-    return (generalFactory, (type(self),), self.__getstate__())
-    
-  def __getstate__(self) :
+        return (self.atomName, self.residue)
 
-    return (self.atomName, self.residue)
-  
-  def __setstate__(self, state) :
+    def __setstate__(self, state):
 
-    self.atomName, self.residue = state
-    
-  def connectToProject(self) :
-    
-    self.ccpnAtom = self.residue.ccpnResidue.findFirstAtom(name=self.atomName)
+        self.atomName, self.residue = state
+
+    def connectToProject(self):
+
+        self.ccpnAtom = self.residue.ccpnResidue.findFirstAtom(
+            name=self.atomName)

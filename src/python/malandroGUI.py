@@ -26,7 +26,6 @@ from ccpnmr.analysis.popups.BasePopup import BasePopup
 #from assignmentFunctions import assignSpinSystemstoResidues
 
 from src.cython.malandro import Malandro, myDataModel
-
 import src.python.assignMentTransferTab
 reload(src.python.assignMentTransferTab)
 from src.python.assignMentTransferTab import AssignMentTransferTab

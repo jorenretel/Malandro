@@ -1,52 +1,46 @@
 
 cdef class SimulatedPeakContrib:
-  
-  
-  cdef str ccpCode
-  
-  cdef str atomName
-  
-  cdef str isotopeCode
-  
-  cdef int dimNumber
-  
-  cdef Residue residue
-  
-  cdef int firstOrSecondResidue
-    
-  def __init__(self):
 
-    self.ccpCode = None
-    
-    self.atomName = None
-    
-    self.isotopeCode = None
-    
-  def __reduce__(self) :
+    cdef str ccpCode, atomName, isotopeCode
+    cdef int dimNumber, firstOrSecondResidue
+    cdef Residue residue
 
-    return (generalFactory, (type(self),), self.__getstate__())
-    
-  def __getstate__(self) :
-    
-    return (self.ccpCode, self.atomName, self.dimNumber, self.firstOrSecondResidue)
-  
-  def __setstate__(self, state) :
+    def __init__(self):
 
-    self.ccpCode, self.atomName, self.dimNumber, self.firstOrSecondResidue = state
-    
-  def getCcpCode(self) :
-    
-    return self.ccpCode
-  
-  def getAtomName(self) :
-    
-    return self.atomName
-  
-  def getDimNumber(self) :
-    
-    return self.dimNumber
-  
-  def getResidue(self) :
-    
-    return self.residue
+        self.ccpCode = None
 
+        self.atomName = None
+
+        self.isotopeCode = None
+
+    def __reduce__(self):
+
+        return (generalFactory, (type(self),), self.__getstate__())
+
+    def __getstate__(self):
+
+        return (self.ccpCode, self.atomName,
+                self.dimNumber, self.firstOrSecondResidue)
+
+    def __setstate__(self, state):
+
+        (self.ccpCode,
+         self.atomName,
+         self.dimNumber,
+         self.firstOrSecondResidue) = state
+
+    def getCcpCode(self):
+
+        return self.ccpCode
+
+    def getAtomName(self):
+
+        return self.atomName
+
+    def getDimNumber(self):
+
+        return self.dimNumber
+
+    def getResidue(self):
+
+        return self.residue
