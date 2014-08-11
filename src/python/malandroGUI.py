@@ -22,9 +22,7 @@ from memops.gui.TabbedFrame import TabbedFrame
 from memops.gui.MessageReporter import showWarning, showYesNo  # showMulti
 from ccpnmr.analysis.popups.BasePopup import BasePopup
 #from ccpnmr.analysis.macros.ArgumentServer import ArgumentServer
-
 #from assignmentFunctions import assignSpinSystemstoResidues
-
 from src.cython.malandro import Malandro, myDataModel
 import src.python.assignMentTransferTab
 reload(src.python.assignMentTransferTab)

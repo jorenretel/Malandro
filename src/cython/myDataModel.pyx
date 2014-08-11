@@ -355,11 +355,11 @@ cdef class myDataModel:
 
     def __getstate__(self):
 
-        return (self.spectra, self.chain, self.spinSystems)
+        return (self.spectra, self.chain, self.spinSystems, self.energies)
 
     def __setstate__(self, state):
 
-        self.spectra, self.chain, self.spinSystems = state
+        self.spectra, self.chain, self.spinSystems, self.energies = state
 
     def connectToProject(self, project, nmrProject):
         '''This method can be called after an unpickling from file.
