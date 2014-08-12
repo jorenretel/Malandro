@@ -410,9 +410,6 @@ class AssignMentTransferTab(object):
 
         spinSystemSequence = [lookupSpinSystem(res) for res in residues]
 
-        print 'spinSystemSequence:'
-        print spinSystemSequence
-
         ccpnSpinSystems = []
         ccpnResidues = []
 
