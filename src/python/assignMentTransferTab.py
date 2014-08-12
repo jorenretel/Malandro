@@ -410,7 +410,8 @@ class AssignMentTransferTab(object):
 
         spinSystemSequence = [lookupSpinSystem(res) for res in residues]
 
-        # print spinSystemSequence
+        print 'spinSystemSequence:'
+        print spinSystemSequence
 
         ccpnSpinSystems = []
         ccpnResidues = []
@@ -532,7 +533,7 @@ class AssignMentTransferTab(object):
 
                 for spinSystem in spinSystems:
 
-                    if spinSystem.getCcpnResonanceGroup is assignedResonanceGroup:
+                    if spinSystem.getSerial() == assignedResonanceGroup.serial:
                         # Just checking to make sure, analysis project could
                         # have changed
                         if not self.skipResidue(residue, spinSystem):
@@ -603,9 +604,10 @@ class AssignMentTransferTab(object):
 
         if self.strategy == 0:
 
-            assignedSpinSystems = residue.getCcpnResidue().getResonanceGroups()
+            assignedGroups = residue.getCcpnResidue().getResonanceGroups()
+            assignedSerials = set([spinSys.serial for spinSys in assignedGroups])
 
-            if assignedSpinSystems and spinSystem not in assignedSpinSystems:
+            if assignedSerials and spinSystem.getSerial() not in assignedSerials:
 
                 return True
 
