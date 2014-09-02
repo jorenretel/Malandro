@@ -110,8 +110,7 @@ cdef class Malandro:
         sendText('Simulating spectra...')
         self.DataModel.setupLinks()
         self.simulateSpectra(minIsoFrac=self.minIsoFrac)
-        sendText(
-            'Evaluating possible dimensional contributions to peak in real spectra...')
+        sendText('Evaluating possible dimensional contributions to peak in real spectra...')
         self.calculateAllPeakContributions()
         sendText('Matching simulated with real spectra...')
         self.matchSimulatedWithRealSpectra()
@@ -201,8 +200,7 @@ cdef class Malandro:
             residue.solutions.append(residue.currentSpinSystemAssigned)
 
         for spinSystem in self.DataModel.getSpinSystemSet():
-            spinSystem.solutions.append(
-                spinSystem.currentResidueAssignment.seqCode)
+            spinSystem.solutions.append(spinSystem.currentResidueAssignment.seqCode)
 
         self.DataModel.energies.append(self.score * -1)
 
