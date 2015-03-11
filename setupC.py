@@ -1,8 +1,8 @@
 #! usr/bin/python
 
-'''Setup file. This file can be used to compile the cython source
-   to a working python extension. To do this, both cython and
-   a c compiler like gcc should be installed. Typical use:
+'''This file can be used to only compile c-code and skip the translation
+   step from cython to c. The requirement is that this has been done
+   before. Typical use:
 
    python setup.py build_ext --inplace
 
@@ -12,8 +12,7 @@
 
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
-from Cython.Build import cythonize
+
 import numpy
 import os.path
 
@@ -22,12 +21,12 @@ src_dir = os.path.join(current_dir, 'src/cython')
 random_dir = os.path.join(current_dir, 'src/cython/randomGenerator')
 
 randomExtension = Extension("src.cython.randomGenerator.cyrandom",
-                            ["src/cython/randomGenerator/cyrandom.pyx"],
+                            ["src/cython/randomGenerator/cyrandom.c"],
                             include_dirs=[numpy.get_include(), src_dir, random_dir])
 
 malandroExtension = Extension("src.cython.malandro",
-                              ["src/cython/malandro.pyx"],
+                              ["src/cython/malandro.c"],
                               include_dirs=[numpy.get_include(), src_dir, random_dir])
 
-setup(cmdclass={'build_ext':build_ext},
-      ext_modules = cythonize([randomExtension, malandroExtension]))
+setup(ext_modules=[randomExtension, malandroExtension])
+

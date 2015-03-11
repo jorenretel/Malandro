@@ -402,7 +402,6 @@ class Connector(object):
                     string = (('''You are trying to open a file that '''
                                '''was not created using this macro.'''))
 
-
                     showWarning('Can not open file', string, parent=self.GUI)
 
         else:
