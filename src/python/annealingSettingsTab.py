@@ -78,7 +78,7 @@ class AnnealingSettingsTab(object):
                                        4.378, 6.568, 9.852, 14.77,
                                        22.16, 33.25]
         self.energyDataSets = [[]]
-
+        self.residues = []
         self.body()
 
     def body(self):
@@ -91,7 +91,7 @@ class AnnealingSettingsTab(object):
         frame = self.frame
 
         # frame.expandGrid(13,0)
-        frame.expandGrid(13, 1)
+        frame.expandGrid(15, 1)
         row = 0
 
         text = 'Calculate Assignment Suggestions'
@@ -203,6 +203,15 @@ class AnnealingSettingsTab(object):
             frame, callback=self.changeMolecule, grid=(row, 1))
         self.updateChains()
 
+        row += 1
+
+        Label(frame, text='Residue ranges: ', grid=(row, 0))
+        tipText = 'Which residues should be included. Example: "10-35, 62-100, 130".'
+        self.residueRangeEntry = Entry(frame, text=None, width=64,
+                                       grid=(row, 1), isArray=True, returnCallback=self.updateResidueRanges,
+                                       tipText=tipText, sticky='nsew')
+        self.updateResidueRanges(fromChain=True)
+
         self.updateShiftLists()
 
         row += 1
@@ -296,6 +305,7 @@ class AnnealingSettingsTab(object):
 
         if chain is not self.chain:
             self.chain = chain
+            self.updateResidueRanges(fromChain=True)
 
     def changeShiftList(self, shiftList):
         '''Select a shiftList'''
@@ -451,6 +461,32 @@ class AnnealingSettingsTab(object):
         self.acceptanceConstantList = newList
 
         return True
+
+    def updateResidueRanges(self, event=None, fromChain=False):
+
+        self.residues = set()
+
+        subRanges = self.residueRangeEntry.get()
+        if not subRanges or fromChain:
+            self.residues = set(self.chain.residues)
+            residues = self.chain.sortedResidues()
+            text = '{}-{}'.format(residues[0].seqCode, residues[-1].seqCode)
+            self.residueRangeEntry.set(text=text)
+            return
+
+        for subRange in subRanges:
+            indeces = subRange.split('-')
+            start = int(indeces[0])
+            stop = int(indeces[-1]) + 1
+            for seqCode in range(start, stop):
+                residue = self.chain.findFirstResidue(seqCode=seqCode)
+                if not residue:
+                    showWarning('Residue out of range.',
+                                'There is no residue at position {}'.format(seqCode),
+                                parent=self.guiParent)
+                    self.residues = set()
+                    return
+                self.residues.add(residue)
 
     def addEnergyPoint(self, energy, time):
         '''Adds a point to the graph that shows the progress
