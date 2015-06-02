@@ -38,6 +38,7 @@ cdef class Malandro:
     cdef object project, shiftList, nmrProject, chain
     cdef double minTypeScore, minIsoFrac
     cdef list selectedSpectra
+    cdef set residuesInRange
     cdef int hc
     cdef double score
     cdef object textObservers, energyObservers
@@ -79,6 +80,7 @@ cdef class Malandro:
         self.typeSpinSystems = connector.typeSpinSystems
         self.reTypeSpinSystems = connector.reTypeSpinSystems
         self.useDimensionalAssignments = connector.useDimensionalAssignments
+        self.residuesInRange = connector.residuesInRange
 
     def preCalculateDataModel(self):
         '''Creates the data model for the calculations and sequentially
@@ -97,7 +99,7 @@ cdef class Malandro:
         self.DataModel.project = self.project
         self.DataModel.nmrProject = self.nmrProject
         self.DataModel.setupSpectra(self.selectedSpectra)
-        self.DataModel.setupChain(self.chain)
+        self.DataModel.setupChain(self.chain, self.residuesInRange)
         self.DataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups,
                                         shiftList=self.shiftList,
                                         useAssignments=self.useAssignments,

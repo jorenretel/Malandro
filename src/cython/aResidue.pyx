@@ -60,14 +60,17 @@ cdef class Residue:
     cdef dict atomsByAtomSiteName, linkDict, intraDict, atomsByName
     cdef int seqCode
     cdef set allowedSpinSystems
+    cdef bint ignored
 
-    def __init__(self, chain, ccpnResidue):
+    def __init__(self, chain, ccpnResidue, ignored=False):
         '''Init residue (wrapper). Also triggers the setup of the atoms
            within the residue.
            kwargs:  chain:        the chain the residue belongs to.
                                   Not the ccpn chain object but the
                                   chain object used in this macro.
                     ccpnResidue:  the ccpn residue that is wrapped.
+                    ignored:      True if the residues should not
+                                  be considered in the optimization.
 
         '''
 
@@ -81,6 +84,7 @@ cdef class Residue:
         self.atomsByAtomSiteName = {}
         self.userDefinedSolution = None
         self.allowedSpinSystems = set()
+        self.ignored = ignored
 
         if ccpnResidue:
 

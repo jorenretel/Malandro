@@ -97,7 +97,7 @@ cdef class SpinSystem:
         '''
         for resonance in self.ccpnResonanceGroup.resonances:
 
-            if resonance.getAssignNames():
+            if resonance.getAssignNames() and resonance.findFirstShift():
 
                 newResonance = Resonance(self, resonance)
                 self.resonanceDict[newResonance.atomName] = newResonance

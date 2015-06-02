@@ -32,10 +32,10 @@ cdef class myDataModel:
 
             self.spinSystems[aa] = []
 
-    def setupChain(self, ccpnChain):
+    def setupChain(self, ccpnChain, residuesInRange=None):
         '''Generates new Chain by based on a chain object from CCPN.'''
 
-        self.chain = Chain(ccpnChain)
+        self.chain = Chain(ccpnChain, residuesInRange=residuesInRange)
 
     def setupSpectra(self, selectedSpectra):
         '''Sets up spectra objects for all selected spectra.'''
@@ -65,6 +65,7 @@ cdef class myDataModel:
         '''
 
         cdef SpinSystem spinSystem
+        cdef Residue residue
 
         assignedResidues = set()
 
@@ -75,6 +76,11 @@ cdef class myDataModel:
         untypedResonanceGroups = []
 
         ignoreAssignedResidues = useAssignments
+
+        ignoredResidues = set()
+        for residue in self.chain.residues:
+            if residue.ignored:
+                ignoredResidues.add(residue)
 
         for resonanceGroup in resonanceGroups:
             # Sorting the resonanceGroups by the type of
@@ -92,6 +98,12 @@ cdef class myDataModel:
                     # we should not use resonanceGroups that
                     # are assigned to another chain.
                     assignedResonanceGroups.append(resonanceGroup)
+
+                    if useAssignments:
+                        seqCode = int(resonanceGroup.residue.seqCode)
+                        residue = self.chain.residues[seqCode - 1]
+                        assignedResidues.add(residue)
+
 
             elif resonanceGroup.residueProbs:
                 # resonanceGroup has tentative assignment to residues
@@ -112,6 +124,10 @@ cdef class myDataModel:
                 # about residue assignment or type.
                 untypedResonanceGroups.append(resonanceGroup)
 
+        # If present sequential assignments are not to be used
+        # assignedResidues is an empty set
+        ignoredResidues.update(assignedResidues)
+
         for resonanceGroup in assignedResonanceGroups:
 
             seqCode = int(resonanceGroup.residue.seqCode)
@@ -124,17 +140,18 @@ cdef class myDataModel:
                 self._makeSpinSystem(resonanceGroup=resonanceGroup,
                                      shiftList=shiftList,
                                      residues=residues)
-                assignedResidues.add(residue)
 
             elif useType:
                 self._makeSpinSystem(resonanceGroup,
                                      shiftList=shiftList,
-                                     ccpCodes=ccpCodes)
+                                     ccpCodes=ccpCodes,
+                                     unAllowedResidues=ignoredResidues)
 
             else:
                 self._makeSpinSystem(resonanceGroup,
                                      shiftList=shiftList,
-                                     minTypeScore=minTypeScore)
+                                     minTypeScore=minTypeScore,
+                                     unAllowedResidues=ignoredResidues)
 
         for resonanceGroup in tentativeResonanceGroups:
 
@@ -159,11 +176,11 @@ cdef class myDataModel:
                     self._makeSpinSystem(resonanceGroup,
                                          shiftList=shiftList,
                                          ccpCodes=ccpCodes,
-                                         unAllowedResidues=assignedResidues)
+                                         unAllowedResidues=ignoredResidues)
                 else:
                     self._makeSpinSystem(resonanceGroup,
                                          shiftList=shiftList,
-                                         unAllowedResidues=assignedResidues,
+                                         unAllowedResidues=ignoredResidues,
                                          minTypeScore=minTypeScore)
 
         for resonanceGroup in typedResonanceGroups:
@@ -173,11 +190,11 @@ cdef class myDataModel:
                 self._makeSpinSystem(resonanceGroup,
                                      shiftList=shiftList,
                                      ccpCodes=ccpCodes,
-                                     unAllowedResidues=assignedResidues)
+                                     unAllowedResidues=ignoredResidues)
             else:
                 self._makeSpinSystem(resonanceGroup,
                                      shiftList=shiftList,
-                                     unAllowedResidues=assignedResidues,
+                                     unAllowedResidues=ignoredResidues,
                                      minTypeScore=minTypeScore)
 
         for resonanceGroup in multipleTypeResonanceGroups:
@@ -187,18 +204,18 @@ cdef class myDataModel:
                 self._makeSpinSystem(resonanceGroup,
                                      shiftList=shiftList,
                                      ccpCodes=ccpCodes,
-                                     unAllowedResidues=assignedResidues)
+                                     unAllowedResidues=ignoredResidues)
             else:
                 self._makeSpinSystem(resonanceGroup,
                                      shiftList=shiftList,
-                                     unAllowedResidues=assignedResidues,
+                                     unAllowedResidues=ignoredResidues,
                                      minTypeScore=minTypeScore)
 
         for resonanceGroup in untypedResonanceGroups:
 
             self._makeSpinSystem(resonanceGroup,
                                  shiftList=shiftList,
-                                 unAllowedResidues=assignedResidues,
+                                 unAllowedResidues=ignoredResidues,
                                  minTypeScore=minTypeScore)
 
         if makeJokers:

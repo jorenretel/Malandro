@@ -6,7 +6,7 @@ cdef class Chain:
     cdef object ccpnChain
     cdef str ccpnChainCode, molSystemCode
 
-    def __init__(self, ccpnChain):
+    def __init__(self, ccpnChain, residuesInRange=None):
         '''Init chain. Creates a wrapper around the ccpn chain.
            kwargs: ccpn chain instance
 
@@ -16,11 +16,11 @@ cdef class Chain:
         self.molSystemCode = ccpnChain.molSystem.code
         self.residues = []
         self.residuesByCcpCode = {}
-        self.setupResidues()
+        self.setupResidues(residuesInRange)
         self.linkResiduesTogether()
         self.addDummyResiduesAtEnds()
 
-    cdef void setupResidues(self):
+    cdef void setupResidues(self, residuesInRange):
         '''Sets up all residues in the chain and stores them in
            self.residues and in a dictionary self.residuesByCcpCode,
            where the keys are ccpCodes and the values lists with
@@ -40,6 +40,9 @@ cdef class Chain:
             else:
 
                 self.residuesByCcpCode[res.ccpCode] = [newresidue]
+
+            if residuesInRange and res not in residuesInRange:
+                newresidue.ignored = True
 
     cdef void addDummyResiduesAtEnds(self):
         '''Put a residue before the beginning and after the end. Why

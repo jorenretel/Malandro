@@ -116,6 +116,7 @@ class Connector(object):
 
         self.GUI.annealingSettingsTab.updateAcceptanceConstantList()
         self.acceptanceConstantList = self.GUI.annealingSettingsTab.acceptanceConstantList
+        self.residuesInRange = self.GUI.annealingSettingsTab.residues
         self.auto.updateSettings(self)
 
     def runAllCalculations(self):
