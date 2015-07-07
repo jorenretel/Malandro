@@ -77,10 +77,10 @@ cdef class myDataModel:
 
         ignoreAssignedResidues = useAssignments
 
-        ignoredResidues = set()
+        nonOptimizedResidues = set()
         for residue in self.chain.residues:
             if residue.ignored:
-                ignoredResidues.add(residue)
+                nonOptimizedResidues.add(residue)
 
         for resonanceGroup in resonanceGroups:
             # Sorting the resonanceGroups by the type of
@@ -126,7 +126,7 @@ cdef class myDataModel:
 
         # If present sequential assignments are not to be used
         # assignedResidues is an empty set
-        ignoredResidues.update(assignedResidues)
+        ignoredResidues = nonOptimizedResidues | assignedResidues
 
         for resonanceGroup in assignedResonanceGroups:
 
@@ -220,6 +220,9 @@ cdef class myDataModel:
 
         if makeJokers:
 
+            # Making an amount of Jokers that is guaranteed to be
+            # enough to assign all residues. Better too many jokers
+            # as too little.
             for ccpCode, residues in self.chain.residuesByCcpCode.items():
 
                 for i in range(len(residues)):
@@ -227,7 +230,20 @@ cdef class myDataModel:
                     self._makeSpinSystem(None,
                                          shiftList=shiftList,
                                          ccpCodes=[ccpCode],
-                                         unAllowedResidues=assignedResidues)
+                                         unAllowedResidues=ignoredResidues)
+
+            # Create Jokers that are assigned to residues that are to
+            # be kept outside of the optimization. They only have one
+            # allowed residue to be assigned to, which in turn is in
+            # ignoredresidues, so no other spin systems will be assign
+            # to these residues, hence these spin systems will not have
+            # exchange spinsystems and therefor will be left out of the
+            # optimization.
+            for residue in nonOptimizedResidues:
+                self._makeSpinSystem(None,
+                                     shiftList=shiftList,
+                                     residues=[residue])
+
 
     def _makeSpinSystem(self, resonanceGroup, shiftList, residues=None,
                         ccpCodes=None, unAllowedResidues=None,
