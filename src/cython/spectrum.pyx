@@ -2,7 +2,7 @@
 cdef class Spectrum:
 
     cdef public str name
-    cdef myDataModel DataModel
+    cdef DataModel dataModel
     cdef object ccpnSpectrum, ccpnPeakList, labellingScheme, pySpectrum
     cdef list simulatedPeakMatrix, intraResidualSimulatedPeakMatrix, peaks
     cdef int symmetry, experimentSerial, serial
@@ -16,7 +16,7 @@ cdef class Spectrum:
 
         '''
 
-        self.DataModel = None
+        self.dataModel = None
         self.ccpnSpectrum = temporary_spectrum_object.ccpnSpectrum
         self.experimentSerial = self.ccpnSpectrum.experiment.serial
         self.serial = self.ccpnSpectrum.serial
@@ -72,7 +72,7 @@ cdef class Spectrum:
 
         '''
 
-        cdef myDataModel DataModel
+        cdef DataModel dataModel
         cdef Spectrum spectrum
         cdef Residue resA, resB
         cdef Atom atom
@@ -87,9 +87,9 @@ cdef class Spectrum:
         cdef tuple dimNumbers, stepNumbers
         cdef int dimNumber, stepNumber
 
-        DataModel = self.DataModel
-        #minIsoFrac = DataModel.minIsoFrac
-        residues = DataModel.chain.residues
+        dataModel = self.dataModel
+        #minIsoFrac = dataModel.minIsoFrac
+        residues = dataModel.chain.residues
         ccpnSpectrum = self.ccpnSpectrum
         scheme = self.labellingScheme
         simulatedPeakMatrix = self.simulatedPeakMatrix
@@ -743,7 +743,7 @@ cdef class Spectrum:
 
                 dataDim = dim.ccpnDim.dataDim
                 atomSite = dataDim.expDim.refExpDim.findFirstRefExpDimRef().expMeasurement.findFirstAtomSite()
-                resonances = self.DataModel.getResonancesForAtomSiteName(atomSite.name)
+                resonances = self.dataModel.getResonancesForAtomSiteName(atomSite.name)
                 tolerance = getAnalysisDataDim(dataDim).assignTolerance
                 dimAtomsDict[dim.dimNumber] = (resonances, tolerance)
 
@@ -783,7 +783,7 @@ cdef class Spectrum:
 
         '''
 
-        cdef myDataModel DataModel
+        cdef DataModel dataModel
         cdef list simulatedPeakMatrix, residues, simulatedPeakList
         #cdef list spinsystemsaa1, spinsystemsaa2, listWithPresentPeaks
         cdef list listWithSimulatedPeaks, listWithNotFoundSimulatedPeaks
@@ -805,10 +805,10 @@ cdef class Spectrum:
 
         hc = 10000  # self.hc
 
-        DataModel = self.DataModel
+        dataModel = self.dataModel
         simulatedPeakMatrix = self.simulatedPeakMatrix
-        allSpinSystems = DataModel.spinSystems
-        residues = DataModel.chain.residues
+        allSpinSystems = dataModel.spinSystems
+        residues = dataModel.chain.residues
         symmetry = float(self.symmetry)     # preventing int division
 
         for i,  simulatedPeakList in enumerate(simulatedPeakMatrix):
@@ -861,7 +861,7 @@ cdef class Spectrum:
            returns: void
 
         '''
-        cdef myDataModel DataModel
+        cdef DataModel dataModel
         cdef list intraResidualSimulatedPeakMatrix, residues, simulatedPeakList
         cdef list spinsystems, listWithPresentPeaks, listWithSimulatedPeaks
         cdef list listWithNotFoundSimulatedPeaks, listWithScores, contributions
@@ -879,10 +879,10 @@ cdef class Spectrum:
         cdef SpinSystemLink link
 
         hc = 10000  # self.hc
-        DataModel = self.DataModel
+        dataModel = self.dataModel
         intraResidualSimulatedPeakMatrix = self.intraResidualSimulatedPeakMatrix
-        allSpinSystems = DataModel.spinSystems
-        residues = DataModel.chain.residues
+        allSpinSystems = dataModel.spinSystems
+        residues = dataModel.chain.residues
 
         for res, simulatedPeakList in zip(residues, intraResidualSimulatedPeakMatrix):
 

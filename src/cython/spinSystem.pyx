@@ -2,7 +2,7 @@
 cdef class SpinSystem:
     '''Wrapper around resonceGroup object in CCPN.
        attributes:
-         DataModel: parent, root of the model
+         dataModel: parent, root of the model
          ccpnResonanceGroup: (ccp.api.nmr.Nmr.ResonanceGroup) ccpn
              object that is wrapped.
          allowedResidues: (set) all residues this spin system can be
@@ -44,7 +44,7 @@ cdef class SpinSystem:
 
     '''
 
-    cdef myDataModel DataModel
+    cdef DataModel dataModel
     cdef Residue currentResidueAssignment
     cdef int spinSystemNumber
     cdef list exchangeSpinSystems
@@ -55,15 +55,15 @@ cdef class SpinSystem:
     cdef dict resonanceDict, resonancesByAtomSiteName
     cdef int[:] allowedResidueView
 
-    def __init__(self, DataModel=None, ccpnResonanceGroup=None,
+    def __init__(self, dataModel=None, ccpnResonanceGroup=None,
                  allowedResidues=None, ccpCodes=None):
-        '''kwargs: DataModel, parent, root of the model
+        '''kwargs: dataModel, parent, root of the model
                    ccpnResonanceGroup:  resonanceGroup this spin system
                                         corresponds to in CCPN.
 
 
         '''
-        self.DataModel = DataModel
+        self.dataModel = dataModel
         self.ccpnResonanceGroup = ccpnResonanceGroup
         self.allowedResidues = allowedResidues or set()
         self.ccpCodes = ccpCodes or set()
@@ -114,11 +114,11 @@ cdef class SpinSystem:
         cdef int resNumber
         cdef Residue residue
 
-        if not self.DataModel or not self.DataModel.chain:
+        if not self.dataModel or not self.dataModel.chain:
 
             return
 
-        chain = self.DataModel.chain
+        chain = self.dataModel.chain
         cythonArray = cvarray(shape=(len(chain.residues) + 1,),
                               itemsize=sizeof(bint), format="i")
         self.allowedResidueView = cythonArray
@@ -165,7 +165,7 @@ cdef class SpinSystem:
         cdef SpinSystem spinSys
         cdef dict spinSystemDict
 
-        spinSystems = self.DataModel.getSpinSystemSet()
+        spinSystems = self.dataModel.getSpinSystemSet()
 
         for spinSys in spinSystems:
             if (not spinSys is self and
@@ -283,14 +283,14 @@ cdef class SpinSystem:
 
     def __getstate__(self):
 
-        return (self.DataModel, self.spinSystemNumber,
+        return (self.dataModel, self.spinSystemNumber,
                 self.isJoker, self.resonanceDict,
                 self.allowedResidues, self.ccpCodes,
                 self.solutions, self.userDefinedSolutions)
 
     def __setstate__(self, state):
 
-        (self.DataModel, self.spinSystemNumber,
+        (self.dataModel, self.spinSystemNumber,
          self.isJoker, self.resonanceDict,
          self.allowedResidues, self.ccpCodes,
          self.solutions, self.userDefinedSolutions) = state
@@ -415,7 +415,7 @@ cdef class SpinSystem:
 
             return None
 
-        ccpnResonanceGroup = self.DataModel.nmrProject.findFirstResonanceGroup(serial=self.spinSystemNumber)
+        ccpnResonanceGroup = self.dataModel.nmrProject.findFirstResonanceGroup(serial=self.spinSystemNumber)
 
         if ccpnResonanceGroup:
 

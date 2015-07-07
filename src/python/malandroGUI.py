@@ -23,7 +23,7 @@ from memops.gui.MessageReporter import showWarning, showYesNo  # showMulti
 from ccpnmr.analysis.popups.BasePopup import BasePopup
 #from ccpnmr.analysis.macros.ArgumentServer import ArgumentServer
 #from assignmentFunctions import assignSpinSystemstoResidues
-from src.cython.malandro import Malandro, myDataModel
+from src.cython.malandro import Malandro, DataModel
 import src.python.assignMentTransferTab
 reload(src.python.assignMentTransferTab)
 from src.python.assignMentTransferTab import AssignMentTransferTab
@@ -385,7 +385,7 @@ class Connector(object):
 
             if results:
 
-                if isinstance(results, myDataModel):
+                if isinstance(results, DataModel):
 
                     self.results = results
                     self.updateInfoText('File loaded succesfully.')

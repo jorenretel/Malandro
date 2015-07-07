@@ -32,7 +32,7 @@ acceptanceConstants = [0.0, 0.01, 0.015, 0.022, 0.033,
 
 cdef class Malandro:
 
-    cdef public myDataModel DataModel
+    cdef public DataModel dataModel
     cdef bint useAssignments, useTentative, typeSpinSystems
     cdef bint reTypeSpinSystems, useDimensionalAssignments
     cdef object project, shiftList, nmrProject, chain
@@ -55,7 +55,7 @@ cdef class Malandro:
 
     cdef object getResultsC(self):
 
-        return self.DataModel
+        return self.dataModel
 
     def updateSettings(self,  connector):
         ''''This method is used to fetch all important parameters from
@@ -94,13 +94,13 @@ cdef class Malandro:
         sendText = self.notifyTextObservers
 
         sendText('Setting up model for calculations...')
-        self.DataModel = myDataModel()
+        self.dataModel = DataModel()
         sendText('Setup-up all spectra...')
-        self.DataModel.project = self.project
-        self.DataModel.nmrProject = self.nmrProject
-        self.DataModel.setupSpectra(self.selectedSpectra)
-        self.DataModel.setupChain(self.chain, self.residuesInRange)
-        self.DataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups,
+        self.dataModel.project = self.project
+        self.dataModel.nmrProject = self.nmrProject
+        self.dataModel.setupSpectra(self.selectedSpectra)
+        self.dataModel.setupChain(self.chain, self.residuesInRange)
+        self.dataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups,
                                         shiftList=self.shiftList,
                                         useAssignments=self.useAssignments,
                                         useTentative=self.useTentative,
@@ -110,7 +110,7 @@ cdef class Malandro:
                                         makeJokers=True)
 
         sendText('Simulating spectra...')
-        self.DataModel.setupLinks()
+        self.dataModel.setupLinks()
         self.simulateSpectra(minIsoFrac=self.minIsoFrac)
         sendText('Evaluating possible dimensional contributions to peak in real spectra...')
         self.calculateAllPeakContributions()
@@ -130,16 +130,16 @@ cdef class Malandro:
         '''
         self.notifyTextObservers('Making a random assignment...')
 
-        cdef myDataModel DataModel
+        cdef DataModel dataModel
         cdef Residue residue
         cdef SpinSystem spinSystem
 
         choice = pyrandom.choice
         shuffle = pyrandom.shuffle
-        DataModel = self.DataModel
+        dataModel = self.dataModel
 
         usedSpinSystems = set()
-        residues = DataModel.chain.residues[:]
+        residues = dataModel.chain.residues[:]
         shuffle(residues)
 
         for residue in residues:
@@ -167,7 +167,7 @@ cdef class Malandro:
         # Only spin systems that can change assignment during the monte
         # carlo procedureare relevant, all others will stay were they
         # are anyway.
-        relevantSpinSystems = [spinSystem for spinSystem in self.DataModel.getSpinSystemSet() if spinSystem.exchangeSpinSystems]
+        relevantSpinSystems = [spinSystem for spinSystem in self.dataModel.getSpinSystemSet() if spinSystem.exchangeSpinSystems]
 
         # For every annealing I create a new instance of the mersenne
         # twister random number generator. As a seed I use a number from
@@ -198,13 +198,13 @@ cdef class Malandro:
         cdef Residue residue
         cdef SpinSystem spinSystem
 
-        for residue in self.DataModel.chain.residues:
+        for residue in self.dataModel.chain.residues:
             residue.solutions.append(residue.currentSpinSystemAssigned)
 
-        for spinSystem in self.DataModel.getSpinSystemSet():
+        for spinSystem in self.dataModel.getSpinSystemSet():
             spinSystem.solutions.append(spinSystem.currentResidueAssignment.seqCode)
 
-        self.DataModel.energies.append(self.score * -1)
+        self.dataModel.energies.append(self.score * -1)
 
     def startMonteCarlo(self, amountOfRuns=1, stepsPerTemperature=10000,
                         acceptanceConstants=acceptanceConstants,
@@ -249,15 +249,15 @@ cdef class Malandro:
         cdef Residue residue
 
         # de-assigning residues from spin systems
-        for spinSystem in self.DataModel.getSpinSystemSet():
+        for spinSystem in self.dataModel.getSpinSystemSet():
             spinSystem.currentResidueAssignment = None
 
         # de-assigning spin systems from residues
-        for residue in self.DataModel.chain.residues:
+        for residue in self.dataModel.chain.residues:
             residue.currentSpinSystemAssigned = None
 
         # Setting all peak-degeneracies back to 0
-        for spectrum in self.DataModel.spectra:
+        for spectrum in self.dataModel.spectra:
             for peak in spectrum.peaks:
                 peak.degeneracy = 0
 
@@ -275,7 +275,7 @@ cdef class Malandro:
         cdef Peak peak
         cdef PeakLink pl
 
-        residues = self.DataModel.chain.residues
+        residues = self.dataModel.chain.residues
 
         for res in residues:
 
@@ -293,11 +293,11 @@ cdef class Malandro:
 
         '''
 
-        cdef myDataModel DataModel
+        cdef DataModel dataModel
         cdef Spectrum spectrum
-        DataModel = self.DataModel
+        dataModel = self.dataModel
 
-        for spectrum in DataModel.spectra:
+        for spectrum in dataModel.spectra:
             self.notifyTextObservers('Simulating ' + spectrum.name)
             spectrum.simulate(minIsoFrac=minIsoFrac)
             spectrum.determineSymmetry()
@@ -311,8 +311,8 @@ cdef class Malandro:
         cdef dict linkDict
         cdef SpinSystemLink linkObject
 
-        DataModel = self.DataModel
-        residues = DataModel.chain.residues
+        dataModel = self.dataModel
+        residues = dataModel.chain.residues
 
         for res in residues:
             linkDict = res.linkDict
@@ -334,9 +334,9 @@ cdef class Malandro:
         cdef set peaksToLeaveOut
         cdef list peaksToLeaveOutList
 
-        DataModel = self.DataModel
-        residues = DataModel.chain.residues
-        spectra = DataModel.spectra
+        dataModel = self.dataModel
+        residues = dataModel.chain.residues
+        spectra = dataModel.spectra
 
         if fraction == 0.0:
 
@@ -369,9 +369,9 @@ cdef class Malandro:
 
         cdef Spectrum spectrum
 
-        DataModel = self.DataModel
+        dataModel = self.dataModel
 
-        for spectrum in DataModel.spectra:
+        for spectrum in dataModel.spectra:
 
             info = 'Match simulated with real spectrum: %s' % spectrum.name
             self.notifyTextObservers(info)
@@ -384,7 +384,7 @@ cdef class Malandro:
 
         # Determine for each dimension of every peak in all (used) spectra,
         # which resonances can contribute to the peak
-        for spectrum in self.DataModel.spectra:
+        for spectrum in self.dataModel.spectra:
 
             info = 'Evaluating dimensional contributions to peaks: ' + \
                    spectrum.name
@@ -396,7 +396,7 @@ cdef class Malandro:
     cdef void setupSpinSystemExchange(self):
 
         cdef SpinSystem spinSystem
-        spinSystems = self.DataModel.getSpinSystemSet()
+        spinSystems = self.dataModel.getSpinSystemSet()
         for spinSystem in spinSystems:
             spinSystem.setupExchangeSpinSystems()
 
@@ -613,7 +613,7 @@ cdef class Malandro:
         cdef SpinSystemLink link
         cdef PeakLink pl
 
-        residues = self.DataModel.chain.residues
+        residues = self.dataModel.chain.residues
         score = 0.0
 
         for res in residues:

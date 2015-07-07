@@ -1,5 +1,5 @@
 
-cdef class myDataModel:
+cdef class DataModel:
     '''Root of the  model for Malandro. Most objects in the model are
        bascically wrappers around objects from CCPN. This is done like
        this, so features can be added to the objects without changing
@@ -44,7 +44,7 @@ cdef class myDataModel:
 
             newspectrum = Spectrum(temporary_spectrum_object)
 
-            newspectrum.DataModel = self
+            newspectrum.dataModel = self
 
             self.spectra.append(newspectrum)
 
@@ -275,7 +275,7 @@ cdef class myDataModel:
         if unAllowedResidues:
             allowedResidues -= unAllowedResidues
 
-        newSpinSystem = SpinSystem(DataModel=self,
+        newSpinSystem = SpinSystem(dataModel=self,
                                    ccpnResonanceGroup=resonanceGroup,
                                    allowedResidues=allowedResidues,
                                    ccpCodes=ccpCodes)
@@ -384,7 +384,7 @@ cdef class myDataModel:
 
     def __reduce__(self):
 
-        return (generalFactory, (myDataModel,), self.__getstate__())
+        return (generalFactory, (DataModel,), self.__getstate__())
 
     def __getstate__(self):
 

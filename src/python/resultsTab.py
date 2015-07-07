@@ -389,9 +389,9 @@ class ResultsTab(object):
             self.emptyPeakTable()
             return
 
-        DataModel = self.dataModel
+        dataModel = self.dataModel
         resNumber = self.resultsResidueNumber
-        chain = DataModel.chain
+        chain = dataModel.chain
         residues = chain.residues
         solutionNumber = self.selectedSolution - 1
 
@@ -782,9 +782,9 @@ class ResultsTab(object):
             self.emptySpinSystemTable()
             return
 
-        DataModel = self.dataModel
+        dataModel = self.dataModel
 
-        residues = DataModel.chain.residues
+        residues = dataModel.chain.residues
 
         data = []
         colorMatrix = []
@@ -847,10 +847,10 @@ class ResultsTab(object):
     @lockUntillResults
     def adoptSolution(self):
 
-        DataModel = self.dataModel
+        dataModel = self.dataModel
         selectedSolution = self.selectedSolution
 
-        for res in DataModel.chain.residues:
+        for res in dataModel.chain.residues:
 
             spinSystem = res.solutions[selectedSolution - 1]
             res.userDefinedSolution = spinSystem
@@ -1011,9 +1011,9 @@ class ResultsTab(object):
 
         resNumber = self.resultsResidueNumber
 
-        DataModel = self.dataModel
+        dataModel = self.dataModel
 
-        chain = DataModel.chain
+        chain = dataModel.chain
 
         residues = chain.residues
 
@@ -1030,7 +1030,7 @@ class ResultsTab(object):
 
             ccpCode = res.ccpCode
 
-            spinSystemsWithThisCcpCode = DataModel.getSpinSystems()[ccpCode]
+            spinSystemsWithThisCcpCode = dataModel.getSpinSystems()[ccpCode]
 
             data = []
             colorMatrix = []
