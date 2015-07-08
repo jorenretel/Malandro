@@ -27,7 +27,7 @@ I wrote the algorithm in such a way that it takes almost all necessary informati
 
 ### Installation
 
-Compiled releases for linux and mac coming soon. For now, cython and a c compiler like gcc have to be install.
+Compiled releases for linux and mac coming soon. For now, cython and a c-compiler, like gcc, have to be installed.
 
 Cythonize and compile by running:
 
@@ -37,7 +37,7 @@ python setup.py build_ext --inplace
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now the macro can be open in CCPN analysis by loading the start_malandro.py macro.
+Now the macro can be opened in CCPN analysis as usual by loading the start_malandro.py macro.
 
 
 ### The Random Generator
