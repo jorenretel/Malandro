@@ -12,6 +12,7 @@
 
 from distutils.core import setup
 from distutils.extension import Extension
+from version import __version__
 
 import numpy
 import os.path
@@ -28,6 +29,10 @@ malandroExtension = Extension("malandro.backend.malandro",
                               ["malandro/backend/malandro.c"],
                               include_dirs=[numpy.get_include(), src_dir, random_dir])
 
-setup(ext_modules=[randomExtension, malandroExtension],
+setup(name='Malandro',
+      version=__version__,
+      description='CCPNMR plug-in for semi-automated sequential assignment.',
+      author='Joren Retel',
+	  ext_modules=[randomExtension, malandroExtension],
 	  packages=['randomGenerator','malandro.gui', 'malandro.backend'])
 

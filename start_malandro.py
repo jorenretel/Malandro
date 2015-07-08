@@ -1,6 +1,7 @@
 '''Just a startup script.'''
 
 import malandro.gui.malandroGUI as GUI
+from version import __version__
 
 
 def open_malandro(argServer):
@@ -8,6 +9,6 @@ def open_malandro(argServer):
        Inputs: ArgumentServer
        Output: None
     """
-    print 'version...'
+    print 'Malandro Version {}'.format(__version__)
     reload(GUI)
     GUI.Connector(argServer.parent)
