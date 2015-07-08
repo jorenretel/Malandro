@@ -1,5 +1,5 @@
 
-from src.cython.randomGenerator.cyrandom cimport Random
+from randomGenerator.cyrandom cimport Random
 
 include "main.pyx"
 include "dataModel.pyx"

@@ -1,6 +1,6 @@
 '''Just a startup script.'''
 
-import src.python.malandroGUI as GUI
+import malandro.gui.malandroGUI as GUI
 
 
 def open_malandro(argServer):

@@ -23,22 +23,22 @@ from memops.gui.MessageReporter import showWarning, showYesNo  # showMulti
 from ccpnmr.analysis.popups.BasePopup import BasePopup
 #from ccpnmr.analysis.macros.ArgumentServer import ArgumentServer
 #from assignmentFunctions import assignSpinSystemstoResidues
-from src.cython.malandro import Malandro, DataModel
-import src.python.assignMentTransferTab
-reload(src.python.assignMentTransferTab)
-from src.python.assignMentTransferTab import AssignMentTransferTab
-import src.python.spectrumSelectionTab
-reload(src.python.spectrumSelectionTab)
-from src.python.spectrumSelectionTab import SpectrumSelectionTab
-import src.python.saveLoadTab
-reload(src.python.saveLoadTab)
-from src.python.saveLoadTab import SaveLoadTab
-import src.python.annealingSettingsTab
-reload(src.python.annealingSettingsTab)
-from src.python.annealingSettingsTab import AnnealingSettingsTab
-import src.python.resultsTab
-reload(src.python.resultsTab)
-from src.python.resultsTab import ResultsTab
+from malandro.backend.malandro import Malandro, DataModel
+import malandro.gui.assignMentTransferTab
+reload(malandro.gui.assignMentTransferTab)
+from malandro.gui.assignMentTransferTab import AssignMentTransferTab
+import malandro.gui.spectrumSelectionTab
+reload(malandro.gui.spectrumSelectionTab)
+from malandro.gui.spectrumSelectionTab import SpectrumSelectionTab
+import malandro.gui.saveLoadTab
+reload(malandro.gui.saveLoadTab)
+from malandro.gui.saveLoadTab import SaveLoadTab
+import malandro.gui.annealingSettingsTab
+reload(malandro.gui.annealingSettingsTab)
+from malandro.gui.annealingSettingsTab import AnnealingSettingsTab
+import malandro.gui.resultsTab
+reload(malandro.gui.resultsTab)
+from malandro.gui.resultsTab import ResultsTab
 #import benchMark
 # reload(benchMark)
 #from benchMark import createBenchmark

@@ -23,7 +23,7 @@ from ccpnmr.analysis.core.AssignmentBasic import assignResToDim
 
 from Tkinter import VERTICAL
 
-from src.python.assignmentFunctions import assignSpinSystemstoResidues
+from malandro.gui.assignmentFunctions import assignSpinSystemstoResidues
 
 
 class AssignMentTransferTab(object):

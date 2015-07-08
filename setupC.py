@@ -4,7 +4,7 @@
    step from cython to c. The requirement is that this has been done
    before. Typical use:
 
-   python setup.py build_ext --inplace
+   python setupC.py build_ext --inplace
 
    For more installation details, read the README.
 
@@ -17,16 +17,17 @@ import numpy
 import os.path
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(current_dir, 'src/cython')
-random_dir = os.path.join(current_dir, 'src/cython/randomGenerator')
+src_dir = os.path.join(current_dir, 'malandro/backend')
+random_dir = os.path.join(current_dir, 'randomGenerator')
 
-randomExtension = Extension("src.cython.randomGenerator.cyrandom",
-                            ["src/cython/randomGenerator/cyrandom.c"],
+randomExtension = Extension("randomGenerator.cyrandom",
+                            ["randomGenerator/cyrandom.c"],
                             include_dirs=[numpy.get_include(), src_dir, random_dir])
 
-malandroExtension = Extension("src.cython.malandro",
-                              ["src/cython/malandro.c"],
+malandroExtension = Extension("malandro.backend.malandro",
+                              ["malandro/backend/malandro.c"],
                               include_dirs=[numpy.get_include(), src_dir, random_dir])
 
-setup(ext_modules=[randomExtension, malandroExtension])
+setup(ext_modules=[randomExtension, malandroExtension],
+	  packages=['randomGenerator','malandro.gui', 'malandro.backend'])
 

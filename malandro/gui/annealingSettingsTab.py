@@ -28,9 +28,9 @@ from memops.gui.Entry import Entry
 from memops.gui.MessageReporter import showWarning
 from ccpnmr.analysis.core.AssignmentBasic import getShiftLists
 
-import src.python.color
-reload(src.python.color)
-from src.python.color import colorSeries
+import malandro.gui.color
+reload(malandro.gui.color)
+from malandro.gui.color import colorSeries
 
 
 class AnnealingSettingsTab(object):
