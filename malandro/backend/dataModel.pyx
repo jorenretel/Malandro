@@ -239,7 +239,13 @@ cdef class DataModel:
            information about which residues and amino acid types
            this spin system can be assigned to.
            kwargs:  resonanceGroup: ccpn resonanceGroup that is wrapped.
-                    shiftlist:      shiftList that should be used
+                    residues: residues the spinsystem can be assigned to.
+                    ccpCodes: ccpCodes the spinsystem can be assigned to.
+                    unAllowedResidues: residues the spinsystem should
+                                       not be assigned to.
+                    minTypeScore: when the imino-acid typing is run,
+                                  consider types above this treshhold
+                                  score as a possibility.
 
         '''
         cdef Residue residue

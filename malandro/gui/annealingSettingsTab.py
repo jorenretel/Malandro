@@ -9,7 +9,7 @@
        * amino acid type information
        * whether to include untyped spin systems
        * assignments to peak dimensions
-   ALso the chain and shiftlist are selected here.
+   ALso the chain can be selected here.
    Furthermore the user can set the temperature
    regime of the annealing, the amount of times the procedure
    is repeated to obtain statistics. The fraction of peaks
@@ -43,7 +43,7 @@ class AnnealingSettingsTab(object):
            * amino acid type information
            * whether to include untyped spin systems
            * assignments to peak dimensions
-       ALso the chain and shiftlist are selected here.
+       ALso the chain can be selected here.
        Furthermore the user can set the temperature
        regime of the annealing, the amount of times the procedure
        is repeated to obtain statistics. The fraction of peaks
