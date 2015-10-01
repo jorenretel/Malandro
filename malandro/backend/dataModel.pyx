@@ -48,9 +48,9 @@ cdef class DataModel:
 
             self.spectra.append(newspectrum)
 
-    def setupSpinSystems(self, resonanceGroups, shiftList,
-                         useAssignments=True,useTentative=True,
-                         useType=True, includeUntypedSpinSystems=True,
+    def setupSpinSystems(self, resonanceGroups, useAssignments=True,
+                         useTentative=True, useType=True,
+                         includeUntypedSpinSystems=True,
                          minTypeScore=0.0, makeJokers=False):
         '''Sets up spin system objects based on CCPN resonanceGroup.
            kwarg: minTypeScore can be passed. This is used when the
@@ -138,18 +138,15 @@ cdef class DataModel:
 
             if useAssignments:
                 self._makeSpinSystem(resonanceGroup=resonanceGroup,
-                                     shiftList=shiftList,
                                      residues=residues)
 
             elif useType:
                 self._makeSpinSystem(resonanceGroup,
-                                     shiftList=shiftList,
                                      ccpCodes=ccpCodes,
                                      unAllowedResidues=ignoredResidues)
 
             else:
                 self._makeSpinSystem(resonanceGroup,
-                                     shiftList=shiftList,
                                      minTypeScore=minTypeScore,
                                      unAllowedResidues=ignoredResidues)
 
@@ -169,17 +166,14 @@ cdef class DataModel:
 
                 if useTentative:
                     self._makeSpinSystem(resonanceGroup,
-                                         shiftList=shiftList,
                                          residues=residues)
                 elif useType:
                     ccpCodes = [residue.ccpCode for residue in residues]
                     self._makeSpinSystem(resonanceGroup,
-                                         shiftList=shiftList,
                                          ccpCodes=ccpCodes,
                                          unAllowedResidues=ignoredResidues)
                 else:
                     self._makeSpinSystem(resonanceGroup,
-                                         shiftList=shiftList,
                                          unAllowedResidues=ignoredResidues,
                                          minTypeScore=minTypeScore)
 
@@ -188,12 +182,10 @@ cdef class DataModel:
             if useType:
                 ccpCodes = [resonanceGroup.ccpCode]
                 self._makeSpinSystem(resonanceGroup,
-                                     shiftList=shiftList,
                                      ccpCodes=ccpCodes,
                                      unAllowedResidues=ignoredResidues)
             else:
                 self._makeSpinSystem(resonanceGroup,
-                                     shiftList=shiftList,
                                      unAllowedResidues=ignoredResidues,
                                      minTypeScore=minTypeScore)
 
@@ -202,19 +194,16 @@ cdef class DataModel:
             if useType:
                 ccpCodes = [residueTypeProb.possibility.ccpCode for residueTypeProb in resonanceGroup.residueTypeProbs]
                 self._makeSpinSystem(resonanceGroup,
-                                     shiftList=shiftList,
                                      ccpCodes=ccpCodes,
                                      unAllowedResidues=ignoredResidues)
             else:
                 self._makeSpinSystem(resonanceGroup,
-                                     shiftList=shiftList,
                                      unAllowedResidues=ignoredResidues,
                                      minTypeScore=minTypeScore)
 
         for resonanceGroup in untypedResonanceGroups:
 
             self._makeSpinSystem(resonanceGroup,
-                                 shiftList=shiftList,
                                  unAllowedResidues=ignoredResidues,
                                  minTypeScore=minTypeScore)
 
@@ -228,7 +217,6 @@ cdef class DataModel:
                 for i in range(len(residues)):
 
                     self._makeSpinSystem(None,
-                                         shiftList=shiftList,
                                          ccpCodes=[ccpCode],
                                          unAllowedResidues=ignoredResidues)
 
@@ -241,11 +229,10 @@ cdef class DataModel:
             # optimization.
             for residue in nonOptimizedResidues:
                 self._makeSpinSystem(None,
-                                     shiftList=shiftList,
                                      residues=[residue])
 
 
-    def _makeSpinSystem(self, resonanceGroup, shiftList, residues=None,
+    def _makeSpinSystem(self, resonanceGroup, residues=None,
                         ccpCodes=None, unAllowedResidues=None,
                         minTypeScore=0.0):
         '''Generate a spin-system containing the right amount of
@@ -268,7 +255,7 @@ cdef class DataModel:
             allowedResidues = set([residue for ccpCode in ccpCodes for residue in residuesByCcpCode[ccpCode]])
         else:
             aminoAcidProbs = runAminoAcidTyping(
-                resonanceGroup, shiftList, self.chain.ccpnChain, minTypeScore)
+                resonanceGroup, self.chain.ccpnChain, minTypeScore)
             ccpCodes = set(aminoAcidProbs.keys())
             allowedResidues = set([residue for ccpCode in ccpCodes for residue in residuesByCcpCode[ccpCode]])
 

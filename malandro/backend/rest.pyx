@@ -73,8 +73,7 @@ cdef inline double scorePeak(list peakDimensions, list resonances):
 
     return z
 
-cdef dict runAminoAcidTyping(resonanceGroup, shiftList,
-                             ccpnChain, double minTypeScore):
+cdef dict runAminoAcidTyping(resonanceGroup, ccpnChain, double minTypeScore):
     '''Find all residue types the spin system could be assigned to.
        The algorithm in CCPN analysis is used for this task.
        kwargs:  minTypeScore: cut-off value (percentage). Everything
@@ -86,7 +85,7 @@ cdef dict runAminoAcidTyping(resonanceGroup, shiftList,
     shifts = []
     for resonance in resonanceGroup.resonances:
         if resonance.isotopeCode in ('1H',  '13C',  '15N'):
-            shift = resonance.findFirstShift(parentList=shiftList)
+            shift = resonance.findFirstShift()
             if shift:
                 shifts.append(shift)
 

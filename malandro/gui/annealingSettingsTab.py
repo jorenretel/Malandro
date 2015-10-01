@@ -26,7 +26,6 @@ from memops.gui.PulldownList import PulldownList
 from memops.gui.ScrolledGraph import ScrolledGraph
 from memops.gui.Entry import Entry
 from memops.gui.MessageReporter import showWarning
-from ccpnmr.analysis.core.AssignmentBasic import getShiftLists
 
 import malandro.gui.color
 reload(malandro.gui.color)
@@ -191,13 +190,6 @@ class AnnealingSettingsTab(object):
 
         row += 1
 
-        self.shiftListLabel = Label(
-            frame, text='Shift List:', grid=(row, 0), sticky='w')
-        self.shiftListPulldown = PulldownList(
-            frame, self.changeShiftList, grid=(row, 1), sticky='w')
-
-        row += 1
-
         Label(frame, text='Chain:', grid=(row, 0))
         self.molPulldown = PulldownList(
             frame, callback=self.changeMolecule, grid=(row, 1))
@@ -211,8 +203,6 @@ class AnnealingSettingsTab(object):
                                        grid=(row, 1), isArray=True, returnCallback=self.updateResidueRanges,
                                        tipText=tipText, sticky='nsew')
         self.updateResidueRanges(fromChain=True)
-
-        self.updateShiftLists()
 
         row += 1
 
@@ -250,7 +240,6 @@ class AnnealingSettingsTab(object):
             illegalButton.configure(state='disabled')
 
         self.molPulldown.disable()
-        self.shiftListPulldown.disable()
 
     def getChainName(self, chain):
         '''Get the name for a chain.
@@ -306,40 +295,6 @@ class AnnealingSettingsTab(object):
         if chain is not self.chain:
             self.chain = chain
             self.updateResidueRanges(fromChain=True)
-
-    def changeShiftList(self, shiftList):
-        '''Select a shiftList'''
-
-        if self.shiftList is not shiftList:
-            self.shiftList = shiftList
-
-    def updateShiftLists(self):
-        '''Updates the '''
-
-        index = 0
-        shiftLists = getShiftLists(self.nmrProject) + [None, ]
-        shiftListNames = self.getShiftListNames(shiftLists[:-1]) + ['None', ]
-
-        if shiftListNames:
-            self.shiftList = shiftLists[0]
-            index = 0
-
-        else:
-            self.shiftList = None
-
-        self.shiftListPulldown.setup(shiftListNames, shiftLists, index)
-
-    def getShiftListNames(self, shiftLists):
-        '''Returns a list of shiftlist names
-           for a list of shiftLists
-        '''
-        shiftListNames = []
-        for shiftList in shiftLists:
-            if not shiftList.name:
-                shiftList.name = "ShiftList " + str(shiftList.serial)
-            shiftListNames.append(shiftList.name)
-
-        return shiftListNames
 
     def updateStepEntry(self, event=None):
         '''Update the value and entry that sets the amount of

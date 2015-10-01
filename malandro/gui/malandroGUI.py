@@ -66,7 +66,6 @@ class Connector(object):
         self.amountOfRepeats = 0
         self.minTypeScore = 0.01
         self.leavePeaksOutFraction = 0.0
-        self.shiftList = None
         self.nmrProject = None
         self.project = None
         self.minIsoFrac = None
@@ -99,7 +98,6 @@ class Connector(object):
         self.amountOfSteps = self.GUI.annealingSettingsTab.amountOfSteps
         self.minTypeScore = self.GUI.annealingSettingsTab.minTypeScore
         self.leavePeaksOutFraction = self.GUI.annealingSettingsTab.leavePeaksOutFraction
-        self.shiftList = self.GUI.annealingSettingsTab.shiftList
         self.nmrProject = self.GUI.nmrProject
         self.project = self.GUI.project
         self.minIsoFrac = self.GUI.annealingSettingsTab.minIsoFrac

@@ -35,7 +35,7 @@ cdef class Malandro:
     cdef public DataModel dataModel
     cdef bint useAssignments, useTentative, typeSpinSystems
     cdef bint reTypeSpinSystems, useDimensionalAssignments
-    cdef object project, shiftList, nmrProject, chain
+    cdef object project, nmrProject, chain
     cdef double minTypeScore, minIsoFrac
     cdef list selectedSpectra
     cdef set residuesInRange
@@ -70,7 +70,6 @@ cdef class Malandro:
         self.chain = connector.chain
         self.useAssignments = connector.useAssignments
         self.useTentative = connector.useTentative
-        self.shiftList = connector.shiftList
         self.nmrProject = connector.nmrProject
         # Not really used, nmrProject is sufficient
         self.project = connector.project
@@ -101,7 +100,6 @@ cdef class Malandro:
         self.dataModel.setupSpectra(self.selectedSpectra)
         self.dataModel.setupChain(self.chain, self.residuesInRange)
         self.dataModel.setupSpinSystems(resonanceGroups=self.nmrProject.resonanceGroups,
-                                        shiftList=self.shiftList,
                                         useAssignments=self.useAssignments,
                                         useTentative=self.useTentative,
                                         useType=not self.reTypeSpinSystems,
