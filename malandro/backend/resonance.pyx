@@ -2,9 +2,8 @@
 cdef class Resonance:
 
     cdef SpinSystem spinSystem
-    cdef double CS
     cdef str isotopeCode, atomName
-    cdef dict peakDimsLib, peakDimsLibIntra
+    cdef dict peakDimsLib, peakDimsLibIntra, shifts
     cdef object ccpnResonance
     cdef int serial
 
@@ -15,9 +14,38 @@ cdef class Resonance:
         self.serial = ccpnResonance.serial
         self.isotopeCode = ccpnResonance.isotopeCode
         self.atomName = ccpnResonance.assignNames[0]
-        self.CS = ccpnResonance.findFirstShift().value
+        #self.CS = ccpnResonance.findFirstShift().value
         self.peakDimsLib = {}
         self.peakDimsLibIntra = {}
+        self.shifts = self.getShifts()
+
+    cdef dict getShifts(self):
+
+        cdef dict shiftDict
+
+        shiftDict = {}
+        shifts = self.ccpnResonance.sortedShifts()
+        for shift in shifts:
+            shiftListSerial = shift.parentList.serial
+            shiftDict[shiftListSerial] = shift.value
+        return shiftDict
+
+    cdef double getShift(self, int serial):
+
+        cdef list shifts
+
+        if not serial:
+            shifts = self.shifts.values()
+            if shifts:
+                return shifts[0]
+            #else:
+            #    return None
+
+        elif serial in self.shifts:
+            return self.shifts[serial]
+
+        #else:
+        #    return None
 
     cdef void addPeakToPeakDimsLib(self, Peak peak, PeakDimension dim):
 
@@ -86,20 +114,20 @@ cdef class Resonance:
 
     def __getstate__(self):
 
-        return (self.spinSystem, self.CS, self.isotopeCode,
+        return (self.spinSystem, self.shifts, self.isotopeCode,
                 self.atomName, self.serial)
 
     def __setstate__(self, state):
 
-        self.spinSystem, self.CS, self.isotopeCode, self.atomName, self.serial = state
+        self.spinSystem, self.shifts, self.isotopeCode, self.atomName, self.serial = state
 
     def connectToProject(self):
 
         self.ccpnResonance = self.getCcpnResonance()
 
-    def getChemicalShift(self):
+    def getChemicalShift(self, shiftListSerial=0):
 
-        return self.CS
+        return self.getShift(shiftListSerial)
 
     def getSpinSystem(self):
 

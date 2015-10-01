@@ -257,7 +257,7 @@ cdef class SpinSystem:
 
                     resonance = resonancesByName[name]
 
-                    if 100 < resonance.CS < 170:
+                    if 100 < resonance.getShift(0) < 170:
 
                         Caros.append(resonancesByName[name])
 
@@ -266,7 +266,7 @@ cdef class SpinSystem:
 
             for resonance in resonancesByAtomSiteName.get('C', []):
 
-                if 0 < resonance.CS < 100:
+                if 0 < resonance.getShift(0) < 100:
                     # if resonance.atomName != 'C' :
                     Calis.append(resonance)
 

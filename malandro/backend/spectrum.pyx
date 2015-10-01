@@ -5,7 +5,7 @@ cdef class Spectrum:
     cdef DataModel dataModel
     cdef object ccpnSpectrum, ccpnPeakList, labellingScheme, pySpectrum
     cdef list simulatedPeakMatrix, intraResidualSimulatedPeakMatrix, peaks
-    cdef int symmetry, experimentSerial, serial
+    cdef int symmetry, experimentSerial, serial, shiftListSerial
     cdef frozenset molLabelFractions
 
     def __init__(self, temporary_spectrum_object):
@@ -23,6 +23,7 @@ cdef class Spectrum:
         self.name = temporary_spectrum_object.ccpnSpectrum.name
         self.labellingScheme = temporary_spectrum_object.labellingScheme
         self.symmetry = 1
+        self.shiftListSerial = self.ccpnSpectrum.experiment.shiftList.serial
 
         if self.labellingScheme is True:
 
@@ -725,13 +726,11 @@ cdef class Spectrum:
 
         cdef list resonances
         cdef Resonance resonance
-        cdef Peak peak
+        cdef Peak peak, firstPeak
         cdef PeakDimension dim
-        cdef Peak firstPeak
         cdef object atomSite
         cdef dict dimAtomsDict
-        cdef double ppmValue
-        cdef double tolerance
+        cdef double ppmValue, shift, tolerance
 
         dimAtomsDict = {}
 
@@ -769,9 +768,8 @@ cdef class Spectrum:
                 else:
 
                     for resonance in resonances:
-
-                        if abs(resonance.CS - ppmValue) <= tolerance:
-
+                        shift = resonance.getShift(self.shiftListSerial)
+                        if shift and abs(shift - ppmValue) <= tolerance:
                             dim.possibleContributions.append(resonance)
                             resonance.addPeakToPeakDimsLib(peak, dim)
 
@@ -1000,11 +998,11 @@ cdef class Spectrum:
 
     def __getstate__(self):
 
-        return (self.name, self.peaks, self.experimentSerial, self.serial)
+        return (self.name, self.peaks, self.experimentSerial, self.serial, self.shiftListSerial)
 
     def __setstate__(self, state):
 
-        self.name, self.peaks, self.experimentSerial, self.serial = state
+        self.name, self.peaks, self.experimentSerial, self.serial, self.shiftListSerial = state
 
     def connectToProject(self, nmrProject):
 

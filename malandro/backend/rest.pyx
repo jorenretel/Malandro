@@ -52,6 +52,10 @@ cdef inline double scorePeak(list peakDimensions, list resonances):
     cdef PeakDimension dim
     cdef Resonance resonance
     cdef double k, z, top, summation, delta, tolerance
+    cdef int shiftListSerial
+
+    dim = peakDimensions[0]
+    shiftListSerial = dim.peak.spectrum.shiftListSerial
 
     k = 0.4
     top = 1.0 / (k ** 2 - 1)
@@ -61,7 +65,7 @@ cdef inline double scorePeak(list peakDimensions, list resonances):
 
     for dim, resonance in zip(peakDimensions, resonances):
 
-        delta = dim.ppmValue - resonance.CS
+        delta = dim.ppmValue - resonance.getShift(shiftListSerial)
         tolerance = dim.tolerance
         summation += ((delta / tolerance) ** 2 - 1) * top
 
