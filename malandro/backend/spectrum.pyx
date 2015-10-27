@@ -1027,3 +1027,7 @@ cdef class Spectrum:
     def getCcpnSpectrum(self):
 
         return self.ccpnSpectrum
+
+    def getShiftListSerial(self):
+
+        return self.shiftListSerial

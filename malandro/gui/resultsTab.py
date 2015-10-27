@@ -465,22 +465,17 @@ class ResultsTab(object):
         link = self.selectedLink
 
         if not link:
-
             self.emptyPeakTable()
 
         else:
 
             resA, resB = link.getResidues()
             spinSystemA, spinSystemB = link.getSpinSystems()
-
             data = []
-
             objectList = []
-
             peakLinks = link.getAllPeakLinks()
 
             if not peakLinks:
-
                 self.emptyPeakTable()
                 return
 
@@ -490,11 +485,8 @@ class ResultsTab(object):
             for peakLink in peakLinks:
 
                 serial = None
-
                 realPeak = peakLink.getPeak()
-
                 simPeak = peakLink.getSimulatedPeak()
-
                 atomTexts = [None] * maxDimenionality
                 chemicalShifts = [None] * maxDimenionality
 
@@ -516,26 +508,22 @@ class ResultsTab(object):
                         spinSystemDescription = spinSystemB.getDescription(
                             noSerialWhenSeqCodeIsPresent=True)
 
-                    atomTexts[
-                        dimNumber - 1] = '%s %s' % (spinSystemDescription, atomName)
+                    atomTexts[dimNumber - 1] = '%s %s' % (spinSystemDescription, atomName)
 
                 if realPeak:
 
                     serial = realPeak.getSerial()
-
                     for dim in realPeak.getDimensions():
-
-                        chemicalShifts[
-                            dim.getDimNumber() - 1] = dim.getChemicalShift()
+                        chemicalShifts[dim.getDimNumber() - 1] = dim.getChemicalShift()
 
                 else:
-
+                    shiftListSerial = simPeak.getSpectrum().getShiftListSerial()
                     for resonance, simulatedPeakContrib in zip(peakLink.getResonances(), simPeak.getContribs()):
 
                         if resonance:
 
                             chemicalShifts[
-                                simulatedPeakContrib.getDimNumber() - 1] = resonance.getChemicalShift()
+                                simulatedPeakContrib.getDimNumber() - 1] = resonance.getChemicalShift(shiftListSerial)
 
                         else:
 
